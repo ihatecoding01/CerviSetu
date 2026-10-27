@@ -1,4 +1,4 @@
-"""Main entry point for AegisMed Clinical AI and Dashboard Server."""
+"""Main entry point for CerviSetu Clinical AI and Dashboard Server."""
 import argparse
 import sys
 import uvicorn
@@ -18,7 +18,7 @@ from src.core.security import global_vault, global_audit
 def run_cli_demo():
     """Run an automated end-to-end multi-agent clinical case demonstration."""
     print("=" * 70)
-    print(" AegisMed - Agentic Clinical Diagnostic & Rural Tracking AI")
+    print(" CerviSetu - Agentic Clinical Diagnostic & Rural Tracking AI")
     print("=" * 70)
 
     sample_intake = """
@@ -100,12 +100,12 @@ def run_cli_demo():
 
 def start_server(host: str = "127.0.0.1", port: int = 8000):
     """Start the FastAPI application with Uvicorn."""
-    print(f"Starting AegisMed Dashboard on http://{host}:{port}...")
+    print(f"Starting CerviSetu Dashboard on http://{host}:{port}...")
     uvicorn.run("src.dashboard.app:app", host=host, port=port, reload=False)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="AegisMed Clinical Diagnostic AI & Tracker")
+    parser = argparse.ArgumentParser(description="CerviSetu Clinical Diagnostic AI & Tracker")
     parser.add_argument("--serve", action="store_true", help="Launch the FastAPI Web Dashboard")
     parser.add_argument("--demo", action="store_true", help="Run automated CLI demonstration")
     parser.add_argument("--host", type=str, default="127.0.0.1", help="Server host")

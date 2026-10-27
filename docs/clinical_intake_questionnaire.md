@@ -1,6 +1,6 @@
-# AegisMed Clinical Intake & Patient Data Specification
+# CerviSetu Clinical Intake & Patient Data Specification
 
-This document provides a comprehensive, field-tested questionnaire and data dictionary designed for oncology screening and rural patient tracking. It outlines what data is collected, who fills each section, the clinical justification, and how each field maps into the AegisMed agentic pipeline.
+This document provides a comprehensive, field-tested questionnaire and data dictionary designed for oncology screening and rural patient tracking. It outlines what data is collected, who fills each section, the clinical justification, and how each field maps into the CerviSetu agentic pipeline.
 
 ---
 
@@ -78,7 +78,7 @@ This document provides a comprehensive, field-tested questionnaire and data dict
 
 | # | Parameter | Expected Values | Purpose |
 |---|---|---|---|
-| C1 | **Image Modality** | `Gross Clinical Photograph`, `Radiology Film (X-Ray/CT/MRI)`, `Histopathology Slide (H&E)`, `Dermoscopy` | Verifies domain relevance before AI diagnostic processing. |
+| C1 | **Image Modality** | `Gross Clinical Photograph`, `Radiology Film (X-Ray/CT/MRI)`, `Histopathology Slide (H&E)`, `Dermoscopy` | Verifies domain relevance before AI assisted processing. |
 | C2 | **Anatomical Tag** | e.g. `Oral Cavity`, `Chest PA`, `Left Breast` | Cross-checks with clinical complaint. |
 | C3 | **Capture Guidelines Enforced** | `In-Focus`, `Adequate Lighting`, `No Flash Glare`, `Resolution >= 256x256` | Evaluated algorithmically by Laplacian variance and FFT high-frequency ratio. |
 

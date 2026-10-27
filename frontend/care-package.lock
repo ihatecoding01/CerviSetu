@@ -1,0 +1,7 @@
+{
+  "name": "cervisetu",
+  "version": "0.0.1",
+  "description": "CerviSetu — Rural Patient Tracking & ASHA Coordination Dashboard Platform",
+  "homepage": "https://github.com/ohcnetwork/care",
+  "care_version": ">=2.0.0"
+}

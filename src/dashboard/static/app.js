@@ -1,5 +1,5 @@
 /**
- * AegisMed - Clinical AI Dashboard Frontend Logic
+ * CerviSetu - Clinical AI Dashboard Frontend Logic
  */
 
 document.addEventListener('DOMContentLoaded', () => {

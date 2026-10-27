@@ -17,7 +17,7 @@ from src.graph.workflow import clinical_graph
 from src.tools.tracker_tools import TrackerTriageEngine
 
 app = FastAPI(
-    title="Clinical Diagnostic & Rural Patient Tracking AI",
+    title="CerviSetu - Clinical Diagnostic & Rural Patient Tracking AI",
     description="Privacy-first LangGraph multi-agent clinical diagnostic and rural cancer tracking system",
     version="1.0.0"
 )

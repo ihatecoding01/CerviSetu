@@ -1,11 +1,11 @@
-# AegisMed: Privacy-First Multi-Agent Clinical AI & Rural Patient Tracking System
+# CerviSetu: Privacy-First Multi-Agent Clinical AI & Rural Patient Tracking System
 
 [![Tests](https://img.shields.io/badge/pytest-15%20passed-brightgreen.svg)]()
 [![LangGraph](https://img.shields.io/badge/LangGraph-v1.2.11-blue.svg)]()
 [![Python](https://img.shields.io/badge/Python-3.14%2B-blue.svg)]()
 [![Security](https://img.shields.io/badge/Vault-AES--256--GCM-green.svg)]()
 
-**AegisMed** is an enterprise-grade, privacy-first multi-agent system built on **LangGraph** designed to assist oncologists and rural healthcare teams. It combines automated clinical intake, medical image quality triage (blur/anomaly detection), and an active rural patient tracking pipeline with progressive escalations for severe cancer non-responders.
+**CerviSetu** is an enterprise-grade, privacy-first multi-agent system built on **LangGraph** designed to assist oncologists and rural healthcare teams. It combines automated clinical intake, medical image quality triage (blur/anomaly detection), and an active rural patient tracking pipeline with progressive escalations for severe cancer non-responders.
 
 ---
 
@@ -134,7 +134,15 @@ health_hackathon/
 ├── conftest.py                 # Pytest configuration
 ├── main.py                     # CLI demo & server entrypoint
 ├── docs/
-│   └── 2026-08-20.md           # Requirement specifications
+│   ├── SYSTEM_ARCHITECTURE_AND_FEATURES.md # Master Architecture, DFD, Sequence & Feature Spec
+│   ├── UI_REDESIGN_SPEC.md     # Clinical CareUI design specification
+│   ├── clinical_intake_questionnaire.md # Oncology clinical data dictionary
+│   └── 2026-08-20.md           # Initial problem & requirement specifications
+├── frontend/                   # CerviSetu Web Application (React 19 + CareUI + Tailwind v4)
+│   ├── package.json
+│   ├── vite.config.ts
+│   ├── index.html
+│   └── src/
 ├── src/
 │   ├── config.py               # System thresholds & encryption keys
 │   ├── core/

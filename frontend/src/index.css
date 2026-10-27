@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --font-size-scale: 1;
+
+  /* Master Inspo Palette (font and colours.png) */
+  --color-primary: #2B66E4;        /* Cobalt Royal Blue */
+  --color-clinical-cyan: #4A91A7;  /* Slate Cyan */
+  --color-warm-gold: #D8CA21;      /* Warm Ochre Gold */
+  --color-obsidian: #111418;       /* Deep Obsidian Charcoal */
+
+  /* Surface & Canvas System */
+  --background: #F8F9FA;
+  --card: #FFFFFF;
+  --card-foreground: #111418;
+  --popover: #FFFFFF;
+  --popover-foreground: #111418;
+
+  --foreground: #111418;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --subtle-foreground: #475569;
+
+  /* Component Tokens */
+  --primary: #2B66E4;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F1F5F9;
+  --secondary-foreground: #111418;
+  --accent: #F8FAFC;
+  --accent-foreground: #111418;
+  --destructive: #E02424;
+  --destructive-foreground: #FFFFFF;
+
+  --border: #E5E7EB;
+  --input: #E5E7EB;
+  --ring: rgba(43, 102, 228, 0.25);
+  --radius: 0.75rem;
+
+  /* Sidebar Tokens */
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #111418;
+  --sidebar-primary: #111418;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-border: #E5E7EB;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Diagonal Hatch Patterns from Inspo (components3.png & homepage.png) */
+.bg-hatch {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(148, 163, 184, 0.25),
+    rgba(148, 163, 184, 0.25) 2.5px,
+    transparent 2.5px,
+    transparent 7px
+  );
+}
+
+.bg-hatch-blue {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(43, 102, 228, 0.25),
+    rgba(43, 102, 228, 0.25) 2.5px,
+    transparent 2.5px,
+    transparent 7px
+  );
+}
+
+.bg-hatch-amber {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(216, 202, 33, 0.35),
+    rgba(216, 202, 33, 0.35) 2.5px,
+    transparent 2.5px,
+    transparent 7px
+  );
+}
+
+.bg-hatch-teal {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(74, 145, 167, 0.3),
+    rgba(74, 145, 167, 0.3) 2.5px,
+    transparent 2.5px,
+    transparent 7px
+  );
+}
+
+/* Minimalist Striped Glyph from Inspo (components2.png) */
+.striped-glyph {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 16px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.striped-glyph span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  background-color: currentColor;
+  border-radius: 1px;
+}
