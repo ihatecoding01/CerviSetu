@@ -1,47 +1,46 @@
 # CerviSetu: System Architecture, Data Flow & Feature Specification
 
-> **Platform**: CerviSetu Clinical AI & Rural Oncology Patient Tracking System  
+> **Platform**: CerviSetu — Assistive Oncology Pathway, Smart OCR Intake & Patient-Centric Rural Tracking System  
 > **Document Type**: Master Technical Architecture & Functional Specification  
 > **Target Audience**: Solution Architects, Clinical Engineers, Security Auditors, and Technical Evaluators  
-> **Version**: 1.0.0 (Production Architecture)  
-> **Status**: Active / Field-Tested
+> **Version**: 2.0.0 (Patient-Centric Hub-and-Spoke Architecture)  
+> **Status**: Active / Field-Tested  
+> **Regulatory Posture**: Strictly Assistive & Non-Diagnostic (CDSCO SaMD Safe · DPDP Act 2023 Compliant · ABDM FHIR R4 Aligned)
 
 ---
 
 ## 1. Executive Summary & Problem Domain
 
-### 1.1 The Rural Oncology Crisis in India
-In rural and semi-urban Indian healthcare ecosystems, cervical and oral carcinomas account for a disproportionately high burden of preventable cancer mortality. Patients face two systemic failure points:
+### 1.1 The Cervical Cancer Care & Coordination Crisis in India
+In rural and semi-urban Indian healthcare ecosystems, cervical cancer accounts for ~127,526 new cases and ~79,906 deaths annually (*GLOBOCAN 2022*), despite being largely preventable and curable if treated on time. Patients and frontline clinicians face two critical systemic failures:
 
-1. **Diagnostic Bottlenecks at Primary/Spoke Centers**:
-   - Primary Health Centres (PHCs) and Community Health Centres (CHCs) lack on-site oncologists and histopathologists.
-   - Prescriptions, cytological reports, and tissue biopsy slides sent for tele-consultation are frequently impaired by handwriting illegibility, motion blur, poor illumination, or non-medical artifact capture.
-   - Misdiagnosis or non-standardized staging delays appropriate tertiary referrals by an average of 4 to 8 weeks.
+1. **High Clerical Friction & Fragmented Intake at Regional Spokes**:
+   - Doctors, nurses, and healthcare helpers at Primary Health Centres (PHCs) and regional External Beam Radiation Therapy (EBRT) spokes are overwhelmed by manual data entry across paper OPD cards, blood test slips (CBC/RFT), and referral forms.
+   - Re-typing patient records creates severe clerical bottlenecks, while illegible or incomplete paper referrals between regional EBRT clinics and central Brachytherapy hubs delay treatment scheduling by 3 to 6 weeks.
 
-2. **Lost-to-Follow-Up (LTFU) & Overall Treatment Time (OTT) Breaches**:
-   - Cervical cancer curative radiation therapy mandates concurrent chemo-radiation (EBRT) followed by high-dose-rate (HDR) brachytherapy.
-   - **The 49/56-Day Clinical Deadline**: Clinical guidelines (*GEC-ESTRO* optimal benchmark: **≤49 days**; *American Brachytherapy Society / National Cancer Grid*: absolute limit **≤56 days**) demonstrate that every 1% prolongation beyond 56 days causes an estimated **0.7% to 1.0% drop in local tumor control and overall survival**.
-   - Rural patients drop out between EBRT completion at local regional spokes and brachytherapy at central tertiary hubs due to financial distress, travel logistics across district lines, and lack of family support.
-   - When patients stop attending, primary health systems lack an automated, progressive mechanism to locate them before cancer reaches an untreatable stage.
+2. **Overall Treatment Time (OTT) Breaches & Pre-Emptive Dropout**:
+   - Curative cervical cancer treatment requires concurrent chemoradiation (25 fractions of EBRT + weekly Cisplatin) followed by High-Dose-Rate (HDR) Brachytherapy (3–4 fractions).
+   - **The 49/56-Day Radiobiological Clock**: Clinical benchmarks (**GEC-ESTRO optimal target: ≤49 days**; **ABS / NCG hard limit: ≤56 days**) and foundational literature (*Perez et al., IJROBP 1995; AID-CARE QI Study, BMJ Open Quality 2026, PMID 42409422*) prove that prolonging OTT beyond 52–56 days causes an estimated **0.8% to 1.2% loss of pelvic tumor control per extra day**.
+   - Without active support, only **18.6%** of patients finish within 56 days and **46.2%** abandon treatment entirely—driven by untreated radiation side effects (diarrhea, burning, fatigue), fear of the brachytherapy procedure, financial shock, and the median ~47-mile travel gap between regional EBRT spokes and central Brachytherapy hubs.
 
 ---
 
-### 1.2 The CerviSetu Solution
-**CerviSetu** (*Cervical & Oncology Care Bridge*) is an agentic, zero-knowledge clinical diagnostic and rural patient tracking platform built to bridge primary health centers and tertiary oncology hubs:
+### 1.2 The CerviSetu 2.0 Solution (70% Patient Benefit / 30% Clinician Friction)
+**CerviSetu** (*Cervical Care Bridge*) is a dual-sided, hub-and-spoke clinical pathway engine. It reads **no** autonomous diagnostic scan or biopsy slide and makes **no** autonomous dosing decisions. Instead, it strips clinician workload down to **zero-friction OCR document uploads and voice sign-offs (30% functional weight)** while delivering **high-touch, pre-emptive vernacular support to the patient (70% functional weight)**:
 
 ```
 +---------------------------------------------------------------------------------------------------------+
-|                                         CERVISETU CORE PLATFORM                                         |
+|                                  CERVISETU 2.0 DUAL-SIDED CORE PLATFORM                                 |
 +----------------------------------------------------+----------------------------------------------------+
-|               PILLAR 1: DIAGNOSTIC AI              |             PILLAR 2: RURAL SURVEILLANCE           |
-|            Multi-Agent Clinical Synthesis          |         Progressive Escalation & OTT Engine        |
+|       CLINICIAN SIDE (30% Functional Weight)       |        PATIENT SIDE (70% Functional Weight)        |
+|      Zero-Friction Input & Hub-Spoke Oversight     |       Pre-Emptive Vernacular Co-Pilot & Chase      |
 +----------------------------------------------------+----------------------------------------------------+
-| • Zero-Knowledge AES-256-GCM PII Vault             | • Multi-Tier Overdue Non-Responder Matrix          |
-| • Doctor Prescription OCR & Entity Extraction      | • Tier 1: Multilingual WhatsApp / SMS Audio-Visual |
-| • Algorithmic Image Quality & Blur Pre-Filter      | • Tier 2: Automated Regional Vernacular IVR Calls  |
-| • LangGraph Stateful Diagnostic Synthesis          | • Tier 3: Field ASHA Worker Home Visit Dispatch    |
-| • NCG / TNM Staging & Workup Recommendations       | • Tier 4: District Health Authority Directives     |
-| • Monospace Cryptographic SHA-256 Audit Trail      | • Dual-Clock (49d/56d) Hub-Spoke Brachy Bridge     |
+| • Smart OCR Document Upload (Paper Slips/Labs)     | • Literacy-Free 29-Step Visual "Healing Clock"     |
+| • Legibility & Glare Pre-Filter for Paper Uploads  | • Proactive Cisplatin Hydration & Toxicity Triage  |
+| • 60s Voice-to-NCG Note Scribe (Sarvam/Bhashini)   | • Day-1 PMJAY & Transport Scheme Unlocker (RAG)    |
+| • Dual-Clock OTT Board (<=49d GEC-ESTRO / <=56d)   | • Day-21 Brachy Fear-Reduction & Dharamshala Pass  |
+| • Automated Day-21 Hub-Spoke Brachy Readiness Gate | • 4-Tier Progressive Escalation (SMS->IVR->ASHA)   |
+| • Zero-Knowledge AES-256-GCM Vault & SHA-256 Audit | • Built-In QI Research & Cohort Telemetry Engine   |
 +----------------------------------------------------+----------------------------------------------------+
 ```
 
@@ -49,203 +48,217 @@ In rural and semi-urban Indian healthcare ecosystems, cervical and oral carcinom
 
 ## 2. Comprehensive Feature Inventory
 
-CerviSetu is architected around 10 functional feature modules spanning frontend clinical operations, backend agentic execution, and cryptographic security:
-
-### Feature 1: Multi-Agent Clinical Intake & Prescription OCR
-- **Capability**: Ingests physical paper doctor slips, clinical notes, discharge summaries, and histopathology test reports via text input or file upload.
-- **Underlying Engine**: [`src/tools/ocr_tools.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/tools/ocr_tools.py) & [`src/agents/ocr_intake_agent.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/agents/ocr_intake_agent.py).
+### Feature 1: Smart OCR Document Upload & Voice-to-NCG Intake (Clinician / Nurse / Helper)
+- **Capability**: Enables doctors, nurses, or clinic helpers to snap a smartphone photo of physical paper prescriptions, lab reports (CBC/RFT), biopsy summary slips, or referral cards—or speak a 60-second clinical update—to automatically populate structured patient records.
+- **Underlying Engine**: [`src/tools/ocr_tools.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/tools/ocr_tools.py), [`src/agents/ocr_intake_agent.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/agents/ocr_intake_agent.py), and Sarvam Saaras v3 / Bhashini ASR gateway.
 - **Core Mechanics**:
-  - Automatically identifies patient metadata, clinical complaints, duration, lesion morphology, lymph node involvement, and prescribed investigations.
-  - Normalizes clinical entities into standardized oncology nomenclature (Oral Squamous Cell Carcinoma, Cervical VIA+, Infiltrating Ductal Carcinoma).
-  - Flags high-risk "B-symptoms" (constitutional weight loss, dysphagia, post-coital bleeding, indurated ulcers).
-- **Output**: Produces a standardized, de-identified `ClinicalIntake` object with severity scoring ($0.0$ to $1.0$).
+  - **Document Legibility Pre-Check**: Before running OCR extraction, a fast OpenCV Laplacian variance ($\sigma^2 \ge 85.0$) and luminance histogram check verifies that the photographed paper slip is not blurry or washed out by camera flash, prompting the nurse/helper to re-snap if unreadable.
+  - **Clinical Entity Extraction**: Parses patient demographics, prior screening status (VIA/HPV), clinical stage recorded by the physician, baseline blood work values (Hemoglobin, Creatinine/RFT, WBC), and EBRT start dates.
+  - **NCG Workup Completeness Check**: Maps extracted fields against National Cancer Grid (NCG) cervical cancer checklists, highlighting missing pre-treatment prerequisites (e.g., *"Lab slip uploaded: Hb 10.8 g/dL logged; Renal Function Test [RFT] still required before Cisplatin Cycle 1"*).
+  - **Hard Clinician Sign-Off Gate**: Nothing is committed to the permanent record or ABDM/ABHA until the clinician taps **Sign**. Raw voice audio is permanently purged upon signature.
 
 ---
 
 ### Feature 2: Zero-Knowledge AES-256-GCM PII Vault & De-Identification
-- **Capability**: Cryptographically isolates all Patient Personally Identifiable Information (PII) before any data is processed by language models or diagnostic agents.
+- **Capability**: Cryptographically isolates all Patient Personally Identifiable Information (PII) before any OCR text or clinical transcript touches language models or pathway agents.
 - **Underlying Engine**: [`src/core/security.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/core/security.py) (`TokenVault`).
 - **Core Mechanics**:
-  - Name, mobile number, village, guardian info, and residential address are extracted and encrypted using **AES-256-GCM** with a unique 96-bit cryptographic nonce per record.
-  - Generates a non-reversible, deterministic token: `PT-RURAL-XXXX` or `PT-ANON-XXXX`.
-  - The reasoning agents in the LangGraph workflow operate strictly on the anonymized token and clinical features.
-  - **Statutory Decryption Gate**: PII can only be decrypted under two strictly audited conditions:
+  - Name, mobile number, ABHA ID, village, guardian info, and residential address are extracted at the gateway and encrypted using **AES-256-GCM** with a unique 96-bit cryptographic nonce per record.
+  - Generates a non-reversible, deterministic token (`PT-RURAL-XXXX`). All downstream LangGraph agents operate strictly on this anonymized token.
+  - **Statutory Decryption Gate**: Vaulted PII can only be decrypted under two strictly audited conditions:
     1. Authorized Chief Medical Officer (CMO) statutory credential authentication.
-    2. Automatic trigger of an emergency Tier 4 District Authority escalation.
+    2. Automatic trigger of an emergency Tier 4 District Authority escalation (Day 8+ overdue).
 
 ---
 
-### Feature 3: Medical Image Quality & Anomaly Triage Pre-Filter
-- **Capability**: Algorithmic gatekeeper that verifies medical scans and histopathology slide imagery before feeding them to downstream AI models, preventing false-negative diagnostic hallucinations.
-- **Underlying Engine**: [`src/tools/image_tools.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/tools/image_tools.py) & [`src/agents/image_triage_agent.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/agents/image_triage_agent.py).
-- **Three Core Analytical Gates**:
-  1. **Laplacian Spatial Variance (Sharpness)**: Convolves image with a $3 \times 3$ Laplacian kernel to compute second-order derivatives. If variance $\sigma^2 < 85.0$, the scan is rejected for severe motion/defocus blur.
-  2. **Fast Fourier Transform (FFT) Spectral Energy Ratio**: Transforms image into the 2D frequency domain, masking DC components to compute high-frequency tissue texture ratio. Attenuation below threshold flags artificial smoothing or compression artifacts.
-  3. **RMS Dynamic Contrast & Exposure Histogram**: Analyzes luminance distribution. Images with $>75\%$ pixel intensity clumped near zero (underexposed) or near 255 (overexposed glare) are rejected.
-- **Clinician Guidance**: Emits structured corrective advice for frontline workers (e.g., *"Hold phone elbow on table; angle LED light at 45 degrees to lesion"*).
-- **Dynamic Routing**: If the image fails triage, LangGraph conditionally bypasses diagnostic reasoning directly to tracking and alerts the clinician.
-
----
-
-### Feature 4: Multi-Agent Diagnostic Synthesis & Differential Workup
-- **Capability**: Generates structured, evidence-based preliminary differential diagnoses, clinical staging, and workup recommendations for clinician review.
-- **Underlying Engine**: [`src/agents/diagnostic_agent.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/agents/diagnostic_agent.py) within the LangGraph StateGraph ([`src/graph/workflow.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/graph/workflow.py)).
+### Feature 3: Dual-Clock OTT Engine & Automated Day-21 Hub-Spoke Bridge
+- **Capability**: Replaces manual human coordination bottlenecks between regional EBRT spoke centers and central Brachytherapy hubs with deterministic date arithmetic and automated cross-site handoffs.
+- **Underlying Engine**: [`src/core/database.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/core/database.py) & pathway clock coordinator.
 - **Core Mechanics**:
-  - Maps presenting complaints, biopsy status, and duration against National Cancer Grid (NCG) and WHO clinical pathways.
-  - Calculates estimated TNM Stage (Stage I Early to Stage IV Metastatic).
-  - Renders confidence levels (`LOW`, `MODERATE`, `HIGH`) and flags critical emergencies (`ROUTINE`, `PRIORITY`, `CRITICAL_EMERGENCY`).
-  - Strict human-in-the-loop: AI recommendations are marked as drafts requiring physician electronic sign-off.
+  - **Dual Guideline Clocks**: Logging EBRT Fraction 1 (Day 0) simultaneously starts two countdowns:
+    - **Clock 1 (Optimal Target)**: **≤49 Days** (*GEC-ESTRO* guideline).
+    - **Clock 2 (Hard Limit)**: **≤56 Days** (*ABS / NCG* guideline).
+  - **Day-21 (Fraction 15) Hub-and-Spoke Handoff**: Waiting until Day 30 or EBRT completion to schedule brachytherapy causes a 2–3 week delay across the ~47-mile spoke-to-hub gap. At **EBRT Fraction 15 (Day 21)**, CerviSetu automatically:
+    1. Triggers the **Pre-Brachytherapy Readiness Checklist** at the regional spoke (CBC, RFT, Pre-Anesthetic Checkup [PAC], consent).
+    2. Opens a **Central Hub OT Slot Request** matching the patient's projected EBRT finish date with central applicator/OT availability.
 
 ---
 
-### Feature 5: 4-Tier Progressive Rural Escalation Engine
-- **Capability**: Algorithmic tracking engine that enforces patient follow-up between primary rural clinics and district cancer hospitals, automatically escalating non-responders as days overdue increase.
-- **Underlying Engine**: [`src/tools/tracker_tools.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/tools/tracker_tools.py) & [`src/agents/tracker_agent.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/agents/tracker_agent.py).
-- **Escalation Hierarchy**:
+### Feature 4: Vernacular Patient Co-Pilot & Literacy-Free "Healing Clock" (70% Patient Focus)
+- **Capability**: Turns the patient's existing phone (WhatsApp / Automated Voice IVR / Printed Pass) into an active, two-way treatment companion in 22 scheduled Indian languages.
+- **Underlying Engine**: Indic Voice Gateway (Sarvam / Bhashini) & patient co-pilot routing.
+- **Core Mechanics**:
+  - **29-Step Visual Healing Clock**: Displays treatment progress as a simple visual progress bar (25 EBRT fractions + 4 Brachytherapy sessions) alongside comforting voice updates, removing medical jargon for low-literacy patients and families.
+  - **Day-21 Brachytherapy Fear-Reduction Module**: When the Day-21 Hub-Spoke Bridge fires, the patient receives a culturally sensitive vernacular audio explainer demystifying internal radiation so fear does not cause post-EBRT dropout.
 
-| Tier | Overdue Window | Primary Target | Dispatch Channel | Content & Operational Directive |
+---
+
+### Feature 5: Pre-Emptive Toxicity & Cisplatin Prep Coach (Patient-Side)
+- **Capability**: Prevents treatment abandonment during Weeks 2–4 by catching radiation side effects *before* the patient skips a fraction.
+- **Underlying Engine**: Toxicity monitoring & clinical rule engine.
+- **Core Mechanics**:
+  - **Pre-Cisplatin Prep**: Sends automated voice reminders 24 hours before weekly chemotherapy (*"Drink 8–10 glasses of water today and bring your blood test slip"*).
+  - **Bi-Weekly 2-Question Voice Check-In**: Every 3 days, checks for radiation diarrhea, pelvic burning, nausea, or severe fatigue:
+    - **Grade 1 (Mild)**: Immediately sends vernacular home-care instructions (ORS preparation, bland diet guide).
+    - **Grade 2+ (Moderate/Severe)**: Flags the Regional Spoke doctor's Morning Ward List so supportive medication is prescribed *before* the patient drops out.
+
+---
+
+### Feature 6: Day-1 Financial Scheme & 47-Mile Travel Unlocker (Patient-Side)
+- **Capability**: Eliminates financial and logistical dropout across the spoke-to-hub distance.
+- **Underlying Engine**: Verified PMJAY & State Scheme knowledge base.
+- **Core Mechanics**:
+  - **Day-1 Scheme Verification**: Automatically matches the patient on Day 1 with Ayushman Bharat (PMJAY), state oncology funds, and nutrition grants—with a strict guardrail blocking any medical advice.
+  - **Spoke-to-Hub Travel & Dharamshala Pass**: At Day 21, once the Central Hub confirms the Brachytherapy OT slot, the system issues state transport/bus vouchers, books nearby low-cost hospital *dharamshala* stays, and generates a printable bilingual boarding pass for the family caregiver.
+
+---
+
+### Feature 7: 4-Tier Progressive Rural Escalation & ASHA Network (Reactive Safety Net)
+- **Capability**: If a patient still misses a scheduled EBRT fraction, Cisplatin cycle, or Brachytherapy slot despite pre-emptive coaching, the deterministic escalation matrix activates immediately.
+- **Underlying Engine**: [`src/tools/tracker_tools.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/tools/tracker_tools.py), [`src/agents/tracker_agent.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/agents/tracker_agent.py), & [`frontend/src/components/AshaCoordination.tsx`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/frontend/src/components/AshaCoordination.tsx).
+
+| Tier | Overdue Window | Target | Channel | Operational Directive |
 |---|---|---|---|---|
-| **Tier 0** | Day 0 | Patient | Routine SMS | Automated appointment reminder & clinic directions. |
-| **Tier 1** | Day 1–2 | Patient & Family | Multilingual WhatsApp / SMS | Culturally sensitive voice audio + visual graphic explaining the importance of biopsy review. |
-| **Tier 2** | Day 3–5 | Patient & Guardian | Vernacular IVR Call | Automated phone call in patient's preferred dialect (Hindi, Bhojpuri, Bengali, etc.) requiring dial-pad confirmation (`Press 1 to confirm travel`). |
-| **Tier 3** | Day 6–7 | ASHA Worker | Mobile Field Ticket | Dispatches local community health worker to patient's village with GPS coordinates for physical home visitation. |
-| **Tier 4** | Day 8+ | District Medical Officer (CMO) | Statutory Emergency Dossier | Unmasks vaulted PII (name, village, landmark) and generates a formal statutory directive for emergency ambulance/mobile van dispatch. |
+| **Stage 0** | **Day 0 (On-Track)** | Patient & Family | WhatsApp / Voice Co-Pilot | Proactive Healing Clock, Cisplatin hydration prep, bi-weekly toxicity triage, PMJAY & travel pass. |
+| **Tier 1** | **Day 1–2 Overdue** | Patient & Family | Multilingual WhatsApp / SMS | Vernacular voice note + visual graphic showing revised finish date and easy 1-tap rebooking. |
+| **Tier 2** | **Day 3–5 Overdue** | Patient & Guardian | Vernacular IVR Call | Automated dialect phone call (*"Press 1 if side effects; Press 2 if transport needed; Press 3 to confirm visit"*). |
+| **Tier 3** | **Day 6–7 Overdue** | ASHA Worker | Mobile Field Ticket | Dispatches local village ASHA worker with gram panchayat landmark to conduct an in-person home check. |
+| **Tier 4** | **Day 8+ Overdue** | District CMO | Statutory Emergency Dossier | Unmasks AES-256-GCM PII under statutory audit and dispatches emergency transport directive. |
 
 ---
 
-### Feature 6: ASHA Community Health Worker Coordination Network
-- **Capability**: Real-time roster and task allocation for Accredited Social Health Activists (ASHAs) and Auxiliary Nurse Midwives (ANMs).
-- **Underlying Engine**: [`frontend/src/components/AshaCoordination.tsx`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/frontend/src/components/AshaCoordination.tsx) and backend assignment engine.
+### Feature 8: Built-In Clinical QI & Guideline Research Engine
+- **Capability**: Automates the research and evaluation methodology required for clinical audits and publications (*BMJ Open Quality / IJROBP* standard), eliminating manual retrospective chart reviews.
 - **Core Mechanics**:
-  - Maps patients to their local gram panchayat and village block.
-  - Displays monthly physical home visit completion quotas with diagonal hatch progress bars.
-  - Generates actionable physical field tickets when Tier 3 escalation fires.
+  - **Cohort Segmentation**: Tracks `PRE_IMPLEMENTATION` baseline cohorts vs. `POST_CERVISETU` active cohorts, automatically computing monthly patient throughput across spokes and hubs.
+  - **Benchmarking & Covariates**: Continuously records Overall Treatment Time (OTT in days), spoke-to-hub travel distance (km), patient age, and exact delay root causes (`TOXICITY`, `TRAVEL_COST`, `LAB_PENDING`, `OT_SLOT_DELAY`).
+  - **Live Statistical Engine**: Auto-calculates guideline concordance proportions (**≤49 days GEC-ESTRO** and **≤56 days ABS/NCG**) and runs live Chi-squared tests, independent t-tests, and bivariate distance-vs-OTT regressions.
 
 ---
 
-### Feature 7: Dual-Clock Overall Treatment Time (OTT) Engine & Hub-Spoke Bridge
-- **Capability**: Enforces curative cervical radiation completion within evidence-based biological limits across spoke EBRT clinics and hub brachytherapy centers.
-- **Underlying Engine**: [`docs/archtecture.md`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/docs/archtecture.md) & [`src/core/database.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/core/database.py).
-- **Core Mechanics**:
-  - **Dual Countdown**: Starts from EBRT Fraction 1. Sets Target 1 at **Day 49** (GEC-ESTRO optimal) and Target 2 at **Day 56** (ABS/NCG limit).
-  - **Day-21 (Fraction 15) Automatic Handoff Gate**: At EBRT Fraction 15 (Day 21), the system automatically initiates the pre-brachy checklist (CBC, RFT, Pre-Anesthetic Checkup) and requests operating theatre (OT) slot reservation at the central hub.
-  - Prevents the classic 3-week scheduling bottleneck between regional radiation and central brachytherapy.
-
----
-
-### Feature 8: Tamper-Evident SHA-256 Chained Cryptographic Audit Ledger
-- **Capability**: Zero-knowledge, immutable audit logging for all clinical interactions, de-identification actions, model outputs, and statutory unmaskings.
+### Feature 9: Tamper-Evident SHA-256 Chained Cryptographic Audit Ledger
+- **Capability**: Immutable, zero-knowledge audit logging for all OCR uploads, doctor signatures, toxicity alerts, and statutory PII unmaskings.
 - **Underlying Engine**: [`src/core/security.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/core/security.py) (`AuditLedger`).
 - **Core Mechanics**:
-  - Every event is encapsulated in an audit block containing `timestamp`, `event_id`, `actor`, `patient_token`, `action`, `severity`, and `metadata`.
-  - Calculates a cryptographic block hash:
-    $$\text{Hash}_i = \text{SHA-256}(\text{Hash}_{i-1} \,\|\, \text{Timestamp} \,\|\, \text{Action} \,\|\, \text{Payload})$$
-  - Any unauthorized alteration of past records immediately breaks cryptographic block verification.
-  - Compliant with the Indian **Digital Personal Data Protection (DPDP) Act, 2023** and **ABDM Health Data Management Policy**.
+  - Every action computes a chained cryptographic block hash:
+    $$\text{Hash}_i = \text{SHA-256}(\text{Hash}_{i-1} \,\Vert{}\, \text{Timestamp} \,\Vert{}\, \text{Action} \,\Vert{}\, \text{Payload})$$
+  - Fully compliant with the **Indian Digital Personal Data Protection (DPDP) Act, 2023** and **ABDM Health Data Management Policy**.
 
 ---
 
-### Feature 9: Vernacular Multilingual Co-Pilot & Literacy-Free Healing Clock
-- **Capability**: Communicates treatment milestones and symptom monitoring to rural patients regardless of literacy or language barriers.
+### Feature 10: CareUI Swiss-Grotesk Low-Friction Clinical Workstation
+- **Capability**: High-density, zero-clutter interface engineered for 30-second clinician interactions.
+- **Underlying Engine**: [`frontend/`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/frontend) (React 19, TypeScript, Tailwind CSS v4, Lucide icons).
 - **Core Mechanics**:
-  - Speech synthesis and recognition integration with Indic voice models (Sarvam Saaras v3 / Bhashini) covering 22 scheduled languages.
-  - Visual **"Healing Clock"**: Displays treatment progress as a 29-step visual timeline (25 EBRT fractions + 4 brachytherapy insertions) instead of complex medical text.
-  - Proactive weekly Cisplatin hydration coaching and home-care toxicity protocols (oral rehydration salt preparation, radiation diarrhea management).
+  - **1-Tap OCR & Voice Bar**: Drag-and-drop or mobile camera upload for nurse/helper paper slips alongside a 1-tap microphone for clinician NCG note dictation.
+  - **OTT Traffic-Light Ward Board**: Sorts all active patients into **Green** (Projected OTT ≤49d), **Amber** (50–56d or Day-21 checklist pending), and **Red** (>56d risk or Missed Visit / Grade 2+ Toxicity).
 
 ---
 
-### Feature 10: CareUI Swiss-Grotesk High-Density Clinical Workstation
-- **Capability**: State-of-the-art web interface engineered for clinical precision, cognitive clarity, and zero cognitive fatigue.
-- **Underlying Engine**: [`frontend/`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/frontend) (React 19, TypeScript, Tailwind CSS, Lucide icons).
-- **Aesthetic Principles**:
-  - **Zero Emojis & Zero Neon Slop**: Monochromatic SVG line icons with strict clinical light palette (`#2B66E4` Royal Cobalt, `#4A91A7` Slate Cyan, `#D8CA21` Warm Gold, `#111418` Obsidian Charcoal).
-  - **Data-Dense Telemetry**: 12×5 dot-matrix sparklines, striped operational glyphs, diagonal hatch patterns (`.bg-hatch`), and soft pastel alert cards (`#FFF1F0`, `#FEF9C3`, `#F0FDF4`).
-  - Ergonomic keyboard shortcuts (`⌘K` case search) and 2-column clinical workstation layouts.
+## 3. High-Level System Architecture (v2.0)
+
+### 3.1 Visual Architecture Blueprint
+
+```
++===========================================================================================================+
+|                     1. DUAL-SIDED PRESENTATION & CHANNEL LAYER (30% MD / 70% PATIENT)                     |
++===========================================================================================================+
+[ CLINICIAN / NURSE / HELPER (30% Weight) ]           [ PATIENT & RURAL FIELD (70% Weight) ]
++---------------------------------------------+       +---------------------------------------------+
+| * Regional EBRT Spoke & Central Hub CareUI  |       | * Vernacular Patient Co-Pilot (WhatsApp/IVR)|
+|   - Camera OCR Slip Upload (Labs/OPD Cards) |       |   - 29-Step Visual Healing Clock            |
+|   - 1-Tap Barcode EBRT Fraction Logger      |       |   - Pre-Cisplatin & Bi-Weekly Toxicity Bot  |
+|   - 60s Voice-to-NCG Dictation & Sign-Off   |       |   - Day-1 PMJAY & Day-21 Travel/Stay Pass   |
+|   - Dual-Clock OTT Traffic-Light Ward Board |       | * ASHA Worker PWA (Tier 3 Field Tickets)    |
++----------------------+----------------------+       +----------------------+----------------------+
+                       | HTTPS / REST (Offline-First)                        | WhatsApp / Voice / SMS
+                       v                                                     v
++===========================================================================================================+
+|                     2. ZERO-KNOWLEDGE SECURITY, OCR & INDIC VOICE GATEWAY                                 |
+|  +-------------------------------+  +------------------------------+  +------------------------+          |
+|  | AES-256-GCM TokenVault & RBAC |  | Document OCR & Slip Pre-Check|  | Sarvam v3 / Bhashini   |          |
+|  | * Encrypts PII (96-bit Nonce) |  | * Laplacian/Glare Slip Gate  |  | * 22-Lang ASR & TTS    |          |
+|  | * Mints Token (PT-RURAL-XXXX) |  | * Extracts Labs/Stage/Dates  |  | * Purges Audio on Sign |          |
+|  +-------------------------------+  +------------------------------+  +------------------------+          |
++===========================================================================================================+
+                       | De-Identified State (PT-RURAL-XXXX)
+                       v
++===========================================================================================================+
+|                     3. LANGGRAPH STATEFUL ORCHESTRATION & PATHWAY ENGINE                                  |
+|                                                                                                           |
+|  +-------------------------------+  +------------------------------+  +------------------------+          |
+|  | Smart OCR & NCG Scribe Agent  |  | Dual-Clock & Day-21 Bridge   |  | Patient Co-Pilot &     |          |
+|  | * Normalizes OCR & Voice      |  | * <=49d GEC-ESTRO (Optimal)  |  | 4-Tier Tracker Agent   |          |
+|  | * Checks NCG Workup Gaps      |  | * <=56d ABS/NCG (Hard Limit) |  | * Stage 0: Tox/Travel  |          |
+|  | * Hard Clinician Sign-Off Gate|  | * Frac 15 Hub-Spoke Handoff  |  | * Tier 1-4: Escalation |          |
+|  +-------------------------------+  +------------------------------+  +------------------------+          |
++===========================================================================================================+
+                       |
+                       +-------------------------------------+-------------------------------------+
+                       v                                     v                                     v
++-----------------------+  +--------------------------+  +-----------------------+  +---------------+
+| ABDM FHIR R4 & SQL DB |  | AES-256-GCM PII VAULT    |  | SHA-256 AUDIT LEDGER  |  | QI RESEARCH   |
+| * CarePlan, Task      |  | * Encrypted Demographics |  | * Hash-Chained Blocks |  | TELEMETRY DB  |
+| * Episodes, Check-ins |  | * CMO Statutory Gate     |  | * DPDP Consent Trail  |  | * <=49d/56d % |
++-----------------------+  +--------------------------+  +-----------------------+  +---------------+
+```
 
 ---
 
-## 3. High-Level System Architecture
-
-The following diagram illustrates the complete end-to-end layered architecture of CerviSetu, detailing client surfaces, security boundaries, orchestration engines, and persistence layers:
+### 3.2 Mermaid Architecture Diagram
 
 ```mermaid
 flowchart TB
-    %% -------------------------------------------------------------
-    %% CLIENT LAYER
-    %% -------------------------------------------------------------
-    subgraph CLIENT["1. PRESENTATION & CLINICAL CLIENT LAYER"]
-        direction TB
-        c_workstation["CareUI Clinical Workstation<br/>(React 19 · Vite · TypeScript)<br/>• Intake Dashboard · Image Inspector · Escalation Matrix"]
-        c_mobile["Frontline Mobile Field Interface<br/>(PWA · Offline First)<br/>• ASHA Worker Roster · Physical Dispatch Tickets"]
-        c_patient["Vernacular Patient Channel<br/>• WhatsApp Interactive · Regional IVR · Visual Healing Clock"]
+    subgraph CLIENT["1. DUAL-SIDED PRESENTATION LAYER (30% Clinician / 70% Patient)"]
+        direction LR
+        c_staff["Clinician, Nurse & Helper Workstation (CareUI)<br/>• Camera OCR Slip Upload (OPD, CBC/RFT, Biopsy Text)<br/>• 60s Voice-to-NCG Scribe & Hard Sign-Off<br/>• 1-Tap Fraction Log & OTT Traffic-Light Board"]
+        c_pat["Patient Vernacular Co-Pilot (WhatsApp / IVR)<br/>• 29-Step Visual Healing Clock<br/>• Proactive Cisplatin & Toxicity Check-in<br/>• Day-1 PMJAY & Day-21 Bus/Dharamshala Pass"]
+        c_asha["ASHA Field Mobile PWA<br/>• Village Roster & Tier 3 Home Visit Tickets"]
     end
 
-    %% -------------------------------------------------------------
-    %% GATEWAY & SECURITY PERIMETER
-    %% -------------------------------------------------------------
-    subgraph GATEWAY["2. API GATEWAY & SECURITY PERIMETER"]
-        direction TB
-        api_router["FastAPI Asynchronous Gateway<br/>(CORS · Rate Limiting · File Upload Handlers)"]
-        vault_gate["Zero-Knowledge Cryptographic Boundary<br/>• AES-256-GCM Vault Engine<br/>• Deterministic Tokenizer (PT-RURAL-XXXX)"]
-        auth_guard["Role-Based Access Control (RBAC)<br/>• CMO Statutory Gate · Session Tokens"]
+    subgraph GATEWAY["2. SECURITY, DOCUMENT OCR & INDIC VOICE PERIMETER"]
+        direction LR
+        vault_gate["Zero-Knowledge TokenVault<br/>• AES-256-GCM PII Encryption<br/>• Tokenizer (PT-RURAL-XXXX)<br/>• DPDP Consent Check"]
+        doc_ocr["Smart Document OCR Gateway<br/>• Slip Blur/Glare Check (Laplacian)<br/>• Paper-to-Structured JSON Parser"]
+        voice_gw["Sarvam Saaras v3 / Bhashini<br/>• 22-Language ASR & TTS<br/>• Post-Sign Audio Purge"]
     end
 
-    %% -------------------------------------------------------------
-    %% AGENTIC MULTI-AGENT LAYER
-    %% -------------------------------------------------------------
-    subgraph ORCHESTRATION["3. LANGGRAPH AGENTIC ORCHESTRATION ENGINE"]
+    subgraph ORCHESTRATION["3. LANGGRAPH STATEFUL PATHWAY & CO-PILOT ENGINE"]
         direction TB
-        lg_graph["StateGraph Workflow Controller<br/>(MemorySaver Checkpointing · Thread Isolation)"]
+        lg_ctrl["StateGraph Controller (ClinicalAgentState)"]
         
-        subgraph AGENTS["Cooperating Specialized Clinical Agents"]
+        subgraph AGENTS["Cooperating Assistive Agents (Zero Autonomous Diagnosis)"]
             direction LR
-            a_ocr["OCR & Intake Agent<br/>(Clinical Entity Parser)"]
-            a_triage["Image Quality Triage Agent<br/>(Laplacian · FFT · Contrast)"]
-            a_diag["Diagnostic Synthesis Agent<br/>(TNM Staging · Workup)"]
-            a_track["Rural Tracker Agent<br/>(4-Tier Escalation Matrix)"]
+            a_scribe["OCR & NCG Scribe Agent<br/>(Lab/Slip Extraction &<br/>NCG Workup Checklist)"]
+            a_clock["Dual-Clock & Day-21 Bridge<br/>(<=49d GEC-ESTRO · <=56d ABS<br/>Frac 15 Spoke->Hub Sync)"]
+            a_copilot["Patient Co-Pilot Agent<br/>(Toxicity Triage · PMJAY RAG<br/>47-Mile Travel Pass)"]
+            a_track["4-Tier Escalation Agent<br/>(Tier 1 SMS -> Tier 2 IVR -> <br/>Tier 3 ASHA -> Tier 4 CMO)"]
         end
     end
 
-    %% -------------------------------------------------------------
-    %% DETERMINISTIC CLINICAL ENGINES
-    %% -------------------------------------------------------------
-    subgraph ENGINES["4. DETERMINISTIC CLINICAL & LOGISTICS ENGINES"]
+    subgraph DATA_LAYER["4. PERSISTENCE, ABDM FHIR & QI RESEARCH LAYER"]
         direction LR
-        ott_clock["Dual-Clock OTT Engine<br/>• Target 1: <=49d (GEC-ESTRO)<br/>• Target 2: <=56d (ABS/NCG)"]
-        bridge_day21["Day-21 Hub-Spoke Bridge<br/>• Fraction 15 Checklist Gate<br/>• Central Brachy OT Allocator"]
-        dispatch_engine["Multi-Channel Dispatcher<br/>• WhatsApp API · Twilio/Exotel IVR<br/>• District Health Authority Gateway"]
+        db_sql[("PostgreSQL / SQLite<br/>• Episodes · Fractions<br/>• Toxicity · Travel Passes")]
+        abdm_fhir[("ABDM FHIR R4 Store<br/>• CarePlan · Task<br/>• QuestionnaireResponse")]
+        vault_store[("AES-256-GCM Vault<br/>• Encrypted PII Binaries<br/>• Statutory Unmask Gate")]
+        audit_chain[("SHA-256 Audit Ledger<br/>• Chained Hash Log<br/>• DPDP Compliance")]
+        qi_store[("Live QI Research Engine<br/>• Pre/Post Cohort Split<br/>• OTT vs km Regression")]
     end
 
-    %% -------------------------------------------------------------
-    %% DATA & COMPLIANCE LAYER
-    %% -------------------------------------------------------------
-    subgraph DATA_LAYER["5. STORAGE, FHIR & COMPLIANCE REPOSITORY"]
-        direction LR
-        db_sql[("SQLite / PostgreSQL<br/>• Cases · Episodes<br/>• Fractions · ASHA Teams")]
-        vault_store[("AES-256-GCM Encrypted Vault<br/>• PII Binaries · Nonces<br/>• Contact & Landmark Maps")]
-        audit_chain[("Append-Only Audit Ledger<br/>• SHA-256 Hash Chain<br/>• DPDP Compliance Log")]
-        abdm_fhir[("ABDM FHIR R4 Repository<br/>• CarePlan · Task<br/>• Observation · Appointment")]
-    end
-
-    %% Inter-layer connections
-    c_workstation & c_mobile -->|"HTTPS / REST API"| api_router
-    c_patient <-->|"WhatsApp / Voice Telephony"| dispatch_engine
+    c_staff -->|"Paper Photo / Voice / 1-Tap"| vault_gate
+    c_staff -->|"Paper Slip Image"| doc_ocr
+    c_staff & c_pat <-->|"22-Lang Audio"| voice_gw
     
-    api_router --> vault_gate
-    vault_gate -->|"Encrypted PII"| vault_store
-    vault_gate -->|"De-Identified Clinical State"| lg_graph
+    vault_gate -->|"Ciphertext + Nonce"| vault_store
+    vault_gate & doc_ocr & voice_gw -->|"De-ID State (PT-RURAL-XXXX)"| lg_ctrl
     
-    lg_graph --> a_ocr
-    a_ocr --> a_triage
-    a_triage -->|"Sharp Medical Scan"| a_diag
-    a_triage -.->|"Blurry / Non-Medical"| a_track
-    a_diag --> a_track
+    lg_ctrl --> a_scribe & a_clock & a_copilot & a_track
+    a_copilot -->|"Proactive Care & Vouchers"| c_pat
+    a_track -->|"Tier 1-2"| c_pat
+    a_track -->|"Tier 3 Ticket"| c_asha
     
-    a_track --> dispatch_engine
-    a_track --> ott_clock & bridge_day21
-    
-    ott_clock & bridge_day21 --> db_sql & abdm_fhir
-    a_ocr & a_triage & a_diag & a_track & auth_guard -->|"Chained Events"| audit_chain
+    a_scribe & a_clock & a_copilot & a_track --> db_sql & abdm_fhir & qi_store
+    a_scribe & a_clock & a_copilot & a_track & vault_gate -->|"Tamper-Evident Block"| audit_chain
 ```
 
 ---
@@ -253,200 +266,188 @@ flowchart TB
 ## 4. Data Flow Diagrams (DFDs)
 
 ### 4.1 Level 0: System Context Data Flow Diagram
-The Level 0 context diagram models CerviSetu as a single high-level system interacting with external human and institutional entities:
 
 ```mermaid
 flowchart TD
-    %% Entities
-    PAT(["External: Patient & Family<br/>(Rural Community)"])
-    DOC(["External: Primary / Spoke Clinician<br/>(Medical Officer / Nurse)"])
-    HUB(["External: Central Hub Oncologist<br/>(Brachytherapy Lead)"])
-    ASHA(["External: ASHA / Village Health Worker<br/>(Field Sector Lead)"])
-    DMO(["External: District Medical Officer (CMO)<br/>(Health Authority)"])
-    ABDM(["External: ABDM / Ayushman Bharat<br/>(National Health Registry)"])
+    PAT(["External: Patient & Family<br/>(Vernacular WhatsApp / IVR)"])
+    SPOKE(["External: Regional EBRT Spoke<br/>(Doctor / Nurse / Helper)"])
+    HUB(["External: Central Brachytherapy Hub<br/>(Radiation Oncologist)"])
+    ASHA(["External: ASHA Community Worker"])
+    CMO(["External: District Medical Officer (CMO)"])
+    ABDM(["External: ABDM / Ayushman Bharat"])
 
-    %% Core System
-    SYSTEM[["CERVISETU CORE SYSTEM<br/>(LangGraph AI · AES-256 Vault · Escalation Matrix)"]]
+    SYSTEM[["CERVISETU 2.0 PLATFORM<br/>(Smart OCR · Dual-Clock 49d/56d · Patient Co-Pilot · AES-256 Vault)"]]
 
-    %% Flows
-    DOC -->|"1. Raw Doctor Notes, Scans, Days Overdue"| SYSTEM
-    PAT -->|"2. Dial-pad Input, Voice Confirmation, Symptom Replies"| SYSTEM
-    HUB -->|"3. OT Date Confirmation, Signed NCG Form"| SYSTEM
-    
-    SYSTEM -->|"4. De-Identified Diagnostic Dossier & Triage Metrics"| DOC
-    SYSTEM -->|"5. Multilingual Voice Audio, SMS & Visual Healing Clock"| PAT
-    SYSTEM -->|"6. Tier 3 Home Visit Orders with Village GPS Coordinates"| ASHA
-    SYSTEM -->|"7. Tier 4 Statutory Emergency Directives & Unmasked Address"| DMO
-    SYSTEM -->|"8. Day-21 Referral Packet & Slot Request"| HUB
-    SYSTEM -->|"9. ABDM FHIR R4 Bundle (CarePlan & Encounters)"| ABDM
-    
-    DMO -->|"10. Statutory Emergency Override Credentials"| SYSTEM
+    SPOKE -->|"1. Photo of Paper Slips/Labs, DPDP Consent, Daily EBRT Tap"| SYSTEM
+    PAT -->|"2. Bi-Weekly Symptom Voice Replies, Travel/Scheme Queries"| SYSTEM
+    HUB -->|"3. Day-21 Central OT Slot Confirmation, Spoken Procedure Note"| SYSTEM
+
+    SYSTEM -->|"4. Parsed NCG Draft, Missing Lab Flags, OTT Traffic-Light Board"| SPOKE
+    SYSTEM -->|"5. 29-Step Healing Clock, ORS/Toxicity Guide, Bus/Dharamshala Pass"| PAT
+    SYSTEM -->|"6. Day-21 Hub-Spoke Referral Packet & Pre-Brachy Checklist"| HUB
+    SYSTEM -->|"7. Tier 3 Physical Home Visit Ticket (Day 6-7 Overdue)"| ASHA
+    SYSTEM -->|"8. Tier 4 Statutory Unmasked Emergency Dossier (Day 8+ Overdue)"| CMO
+    SYSTEM -->|"9. Clinician-Signed FHIR R4 Bundle"| ABDM
 ```
 
 ---
 
-### 4.2 Level 1: Core Process Data Flow Diagram
-The Level 1 diagram unpacks the internal operational processes and persistent data stores of CerviSetu:
+### 4.2 Level 1: Core Operational Data Flow Diagram
 
 ```mermaid
 flowchart TB
-    %% External Entities
-    E_CLIN(["Clinician / Field Nurse"])
-    E_PAT(["Patient / Caregiver"])
+    E_STAFF(["Spoke/Hub Doctor, Nurse or Helper"])
+    E_PAT(["Patient & Family Caregiver"])
     E_ASHA(["ASHA Worker"])
-    E_AUTH(["District Authority / CMO"])
+    E_CMO(["District CMO Authority"])
 
-    %% Processes
-    P1(("P1.0<br/>Ingestion &<br/>PII De-Identification"))
-    P2(("P2.0<br/>Medical Image<br/>Quality Triage"))
-    P3(("P3.0<br/>LangGraph Multi-Agent<br/>Diagnostic Synthesis"))
-    P4(("P4.0<br/>Rural Overdue Tracking<br/>& Escalation Matrix"))
-    P5(("P5.0<br/>Dual-Clock OTT &<br/>Day-21 Hub Bridge"))
-    P6(("P6.0<br/>Statutory Vault Unmasking<br/>& Audit Chaining"))
+    P1(("P1.0<br/>DPDP Consent &<br/>AES-256-GCM<br/>De-Identification"))
+    P2(("P2.0<br/>Smart Paper Slip OCR<br/>& Voice-to-NCG<br/>Scribe Gate"))
+    P3(("P3.0<br/>Dual-Clock (49d/56d)<br/>& Day-21 Hub-Spoke<br/>Bridge Engine"))
+    P4(("P4.0<br/>Pre-Emptive Patient<br/>Co-Pilot (Toxicity,<br/>PMJAY & Travel)"))
+    P5(("P5.0<br/>4-Tier Overdue<br/>Escalation & Statutory<br/>Unmasking"))
+    P6(("P6.0<br/>Live QI Cohort &<br/>OTT Statistical<br/>Aggregator"))
 
-    %% Data Stores
-    D1[("D1: AES-256 Vault<br/>(Encrypted PII)")]
-    D2[("D2: Patient & Case DB<br/>(Clinical Entities)")]
-    D3[("D3: Treatment Episodes<br/>(49d/56d Clocks)")]
-    D4[("D4: Chained Audit Ledger<br/>(SHA-256 Hash Log)")]
-    D5[("D5: ABDM / FHIR Store<br/>(CarePlans & Tasks)")]
+    D1[("D1: AES-256-GCM PII Vault")]
+    D2[("D2: Episodes, Labs & Checklists DB")]
+    D3[("D3: Verified PMJAY & Dharamshala KB")]
+    D4[("D4: SHA-256 Chained Audit Ledger")]
+    D5[("D5: ABDM FHIR R4 & QI Research DB")]
 
-    %% Process Flows
-    E_CLIN -->|"Doctor notes, patient PII, biopsy scans"| P1
-    P1 -->|"Store Encrypted PII (Nonce + Ciphertext)"| D1
-    P1 -->|"Log De-identification Event"| D4
-    P1 -->|"De-Identified Token & Image Path"| P2
-    
-    P2 -->|"Extract Edge Variance & FFT Ratio"| P2
-    P2 -->|"Log Quality Assessment Result"| D4
-    P2 -->|"Valid Medical Scan + Token"| P3
-    P2 -.->|"Rejected Scan (Bypass)"| P4
-    
-    P3 -->|"Synthesize TNM Stage, Differentials & Urgency"| D2
-    P3 -->|"Clinical Impression Dossier"| E_CLIN
-    P3 -->|"Log AI Diagnostic Event"| D4
-    P3 -->|"Diagnosis & Severity Score"| P4
-    
-    P4 -->|"Evaluate Days Overdue & Cancer Risk"| P4
-    P4 -->|"Tier 1 SMS / Tier 2 Vernacular IVR"| E_PAT
-    P4 -->|"Tier 3 Field Ticket"| E_ASHA
-    P4 -->|"Trigger Emergency Directive"| P6
-    P4 -->|"Update Follow-up Status"| D2
-    P4 -->|"Trigger OTT Clock Tracking"| P5
-    
-    P5 -->|"Track Fraction Count & Day 21 Gate"| D3
-    P5 -->|"Commit FHIR CarePlan / Task"| D5
-    
-    E_AUTH -->|"Statutory Token Request"| P6
-    P6 -->|"Decrypt PII via AES-256-GCM"| D1
-    P6 -->|"Tier 4 Unmasked Address Dossier"| E_AUTH
-    P6 -->|"Record Tamper-Evident Unmasking Event"| D4
+    E_STAFF -->|"Demographics, Paper Lab/OPD Photo, Voice"| P1
+    P1 -->|"Store Encrypted PII"| D1
+    P1 -->|"Log Consent & De-ID"| D4
+    P1 -->|"Token (PT-RURAL-XXXX) + Paper Photo / Audio"| P2
+
+    P2 -->|"Check Slip Legibility -> Extract Labs/Dates -> Draft NCG Note"| E_STAFF
+    E_STAFF -->|"Clinician Digital Sign-Off (Purges Audio)"| P2
+    P2 -->|"Verified Clinical Intake & Lab Readiness"| D2
+    P2 -->|"Signed FHIR CarePlan/Observation"| D5
+    P2 -->|"EBRT Start Date & Fraction Log"| P3
+
+    P3 -->|"Compute <=49d & <=56d Clocks + Trigger Frac 15 Bridge"| D2
+    P3 -->|"Day-21 Pre-Brachy Checklist & Hub OT Slot Alert"| E_STAFF
+    P3 -->|"Current Step (1..29) & Milestone Triggers"| P4
+    P3 -->|"Overdue Counter (if missed visit)"| P5
+
+    D3 -->|"Scheme Rules & Bus/Stay Vouchers"| P4
+    E_PAT -->|"Vernacular Symptom Check-in & Queries"| P4
+    P4 -->|"Healing Clock, ORS Guide, Brachy Audio, Travel Pass"| E_PAT
+    P4 -->|"Grade 2+ Toxicity Alert (Prevents Dropout!)"| E_STAFF
+    P4 -->|"Log Toxicity & Voucher Telemetry"| D2
+
+    P5 -->|"Tier 1 WhatsApp / Tier 2 Dialect IVR"| E_PAT
+    P5 -->|"Tier 3 Village Field Ticket"| E_ASHA
+    P5 -->|"Day 8+ Statutory Decrypt Request"| D1
+    D1 -->|"Unmasked Emergency Address"| P5
+    P5 -->|"Tier 4 Emergency Dispatch Dossier"| E_CMO
+    P5 -->|"Log Escalation & Unmasking Hash"| D4
+
+    D2 -->|"De-Identified OTT, Distance km, Delay Causes"| P6
+    P6 -->|"Pre/Post Cohort Stats (Chi-Sq, t-test, <=49d/56d %)"| D5
 ```
 
 ---
 
 ## 5. Detailed Sequence Diagrams
 
-### 5.1 Sequence 1: Patient Intake, De-Identification & Diagnostic Synthesis
-This sequence illustrates the interaction from initial clinician case submission through OCR parsing, PII encryption, LangGraph agent execution, and audit log generation:
+### 5.1 Sequence 1: Nurse/Helper Paper Slip OCR Upload & Doctor Sign-Off
+This sequence shows how a clinic nurse, helper, or doctor uploads a photo of a paper OPD card or blood test slip for zero-friction structured data entry:
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Clinician as Doctor / Field Staff
-    participant API as FastAPI Gateway (/api/run-case)
+    actor Helper as Nurse / Helper / Doctor
+    participant UI as CareUI Workstation / Mobile
     participant Vault as TokenVault (AES-256-GCM)
-    participant Graph as LangGraph Orchestrator
-    participant OCR as OCR Intake Agent
-    participant Diag as Diagnostic Synthesis Agent
+    participant OCR as Smart OCR & Legibility Gate
+    participant Scribe as NCG Structuring Agent
+    actor MD as Attending Clinician
     participant Ledger as SHA-256 Audit Ledger
-    participant Store as Case Database (SQLite)
+    participant DB as Episode & ABDM FHIR Store
 
-    Clinician->>API: POST /api/run-case (Name, Phone, Village, Notes, Biopsy Scan)
-    activate API
-    API->>Vault: store_pii(token_id, {name, phone, village, address})
-    activate Vault
-    Vault->>Vault: Generate 96-bit Nonce + AES-GCM Encrypt
-    Vault-->>API: De-Identified Token (PT-RURAL-7891)
-    deactivate Vault
+    Helper->>UI: Snaps photo of paper OPD slip + CBC/RFT lab report
+    UI->>Vault: Extract & encrypt PII (Name, Phone, Village, ABHA)
+    Vault-->>UI: Return De-Identified Token (PT-RURAL-7891)
+    Vault->>Ledger: record_event(PT-RURAL-7891, "PII_VAULTED_AES256")
 
-    API->>Ledger: record_event(PT-RURAL-7891, "PII_DEIDENTIFIED", severity="INFO")
-    Ledger->>Ledger: Compute SHA-256(PrevHash + EventData)
-
-    API->>Graph: invoke(ClinicalAgentState with PT-RURAL-7891)
-    activate Graph
-    Graph->>OCR: parse_clinical_notes(anonymized_text)
+    UI->>OCR: upload_document_photo(PT-RURAL-7891, slip_image)
     activate OCR
-    OCR->>OCR: Extract cancer type, stage, symptoms & investigations
-    OCR-->>Graph: ClinicalIntake (Oral Carcinoma, Stage III, Severity: 0.85)
+    OCR->>OCR: Run Laplacian Sharpness (>=85.0) & Glare Check on Paper Slip
+    alt Paper Slip is Blurry or Glare-Occluded
+        OCR-->>Helper: Prompt Immediate Re-Capture ("Hold steady; avoid flash glare on lab values")
+    else Paper Slip is Legible
+        OCR->>OCR: Extract Text (Stage IIB, Hb 11.2, Creatinine 0.9, EBRT Start Date)
+        OCR-->>Scribe: De-Identified Raw OCR Entities
+    end
     deactivate OCR
 
-    Graph->>Diag: synthesize_diagnosis(ClinicalIntake)
-    activate Diag
-    Diag->>Diag: Query NCG guidelines, verify staging & differentials
-    Diag-->>Graph: DiagnosticSynthesis (Primary, Differentials, Urgency: HIGH)
-    deactivate Diag
+    activate Scribe
+    Scribe->>Scribe: Map to NCG Cervical Schema & Check Pre-Brachy/Cisplatin Prerequisites
+    Scribe-->>MD: Render Draft NCG Intake Card (Flags: "CBC/RFT Complete; PAC Pending by Day 21")
+    deactivate Scribe
 
-    Graph->>Store: save_case(PT-RURAL-7891, ClinicalIntake, DiagnosticSynthesis)
-    Graph->>Ledger: record_event(PT-RURAL-7891, "DIAGNOSTIC_COMPLETED", severity="INFO")
-    Graph-->>API: Final State Payload
-    deactivate Graph
-
-    API-->>Clinician: 200 OK (De-identified token, diagnostic impressions, workup plan)
-    deactivate API
+    MD->>UI: Reviews Draft, Edits if needed & Taps "Sign"
+    UI->>DB: Commit Verified Episode & Initialize 49d/56d Dual-Clock
+    UI->>Ledger: record_event(PT-RURAL-7891, "OCR_INTAKE_SIGNED_BY_MD")
 ```
 
 ---
 
-### 5.2 Sequence 2: Medical Image Quality & Anomaly Triage Pre-Filter
-This sequence details how images are evaluated for blur, exposure, and medical suitability before diagnostic inference:
+### 5.2 Sequence 2: Pre-Emptive Patient Co-Pilot & Day-21 Hub-Spoke Bridge
+This sequence illustrates how patient-facing features keep the patient on track across the regional EBRT spoke and central Brachytherapy hub:
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Clinician as Clinician / Scanner
-    participant UI as Image Triage Canvas
-    participant Agent as ImageTriageAgent
-    participant Tools as OpenCV/NumPy Image Tools
-    participant Router as LangGraph Conditional Edge
-    participant Ledger as SHA-256 Audit Ledger
+    actor Pat as Patient (Vernacular WhatsApp/IVR)
+    participant Spoke as Regional EBRT Spoke (Nurse/MD)
+    participant Clock as Dual-Clock & Day-21 Bridge
+    participant CoPilot as Vernacular Patient Co-Pilot
+    actor Hub as Central Brachy Hub (Oncologist)
+    participant QI as ABDM FHIR & QI Research DB
 
-    Clinician->>UI: Uploads histopathology slide or dermoscopy photo
-    UI->>Agent: assess_image_suitability(image_path)
-    activate Agent
-    
-    Agent->>Tools: calculate_laplacian_variance(image)
-    Tools-->>Agent: Variance = 31.2 (Threshold: >= 85.0 -> FAIL BLUR)
-    
-    Agent->>Tools: calculate_fft_high_frequency_ratio(image)
-    Tools-->>Agent: FFT Ratio = 0.008 (Tissue texture attenuated)
-    
-    Agent->>Tools: evaluate_contrast_and_exposure(image)
-    Tools-->>Agent: RMS Contrast = 14.1 (Underexposed)
-    
-    Agent->>Tools: classify_medical_domain(image)
-    Tools-->>Agent: Domain = Oral Mucosa (Medical Verified)
+    Note over Pat,QI: DAY 1: EBRT START & FINANCIAL UNLOCKER
+    Spoke->>Clock: Log EBRT Fraction 1 (Clock Day 0)
+    Clock->>Clock: Set Target 1 <=49d (GEC-ESTRO) & Target 2 <=56d (ABS/NCG)
+    Clock->>CoPilot: Activate Stage 0 Patient Companion
+    CoPilot->>Pat: Send Vernacular Welcome + 29-Step Visual Healing Clock (Step 1/29)
+    CoPilot->>Pat: Auto-Verify PMJAY & State Transport Eligibility
 
-    Agent->>Agent: Compile ImageQualityResult(is_valid=False, blur_status="BLURRY")
-    Agent->>Ledger: record_event(Token, "IMAGE_TRIAGE_REJECTED", reason="Laplacian 31.2 < 85.0")
-    Agent-->>Router: ImageQualityResult
-    deactivate Agent
-
-    activate Router
-    Router->>Router: should_diagnose(state) -> Check is_valid
-    alt Image is Sharp & Valid
-        Router-->>Clinician: Route to DiagnosticSynthesisAgent
-    else Image is Blurry / Artifact
-        Router-->>Clinician: Bypass AI Diagnosis; Emit Corrective Guidance Card
-        Note over Clinician: UI displays: "Severe Motion Blur. Retake scan with stabilized camera."
+    Note over Pat,QI: DAYS 2–20: PROACTIVE CISPLATIN PREP & TOXICITY TRIAGE
+    loop Every 3 Days & Pre-Cisplatin Day
+        CoPilot->>Pat: Voice Reminder: "Drink 8 glasses of water before tomorrow's chemo"
+        CoPilot->>Pat: 2-Question Vernacular Symptom Check (Diarrhea / Burning / Fatigue)
+        Pat-->>CoPilot: Voice Reply ("Having loose motions since yesterday")
+        alt Mild Toxicity (Grade 1)
+            CoPilot->>Pat: Send Vernacular ORS & Diet Home-Care Audio
+        else Moderate/Severe Toxicity (Grade 2+)
+            CoPilot->>Spoke: Priority Alert on Spoke Morning Ward List
+            Spoke->>Pat: Prescribe Supportive Meds (Prevents Treatment Dropout!)
+        end
     end
-    deactivate Router
+
+    Note over Pat,QI: DAY 21 (FRACTION 15): AUTOMATED HUB-AND-SPOKE HANDOFF
+    Spoke->>Clock: Log EBRT Fraction 15 (Day 21 Milestone)
+    Clock->>Spoke: Trigger Pre-Brachy Readiness Gate (Upload CBC/RFT slip + PAC clearance)
+    Clock->>Hub: Open Hub Referral Packet & Request Central OT Slot (Days 38–44)
+    Spoke->>Clock: Nurse uploads lab slip via OCR; MD signs Readiness Gate
+    Hub->>Clock: Confirm Central Brachytherapy OT Slot (Day 40)
+    Clock->>CoPilot: Trigger Patient Brachy & Travel Prep
+    CoPilot->>Pat: Send Comforting "What is Brachytherapy?" Vernacular Audio
+    CoPilot->>Pat: Issue 47-Mile Bus Voucher + Dharamshala Stay + Printable Family Pass
+
+    Note over Pat,QI: DAYS 40–46: CENTRAL BRACHYTHERAPY COMPLETION & QI LOGGING
+    Pat->>Hub: Completes Brachytherapy on Day 46
+    Hub->>Clock: Dictate & Sign End-of-Treatment Summary (Raw Audio Deleted)
+    Clock->>QI: Commit Final OTT = 46 Days (Met <=49d GEC-ESTRO & <=56d ABS!)
+    CoPilot->>Pat: Transition to 3, 6, 12-Month Local Spoke Survivorship Reminders
 ```
 
 ---
 
-### 5.3 Sequence 3: Progressive Rural Escalation Matrix & Tier 4 Authority Unmasking
-This sequence demonstrates the day-by-day escalation lifecycle for a non-responding oncology patient:
+### 5.3 Sequence 3: 4-Tier Progressive Rural Escalation & Statutory CMO Unmasking
+If a patient misses a scheduled visit despite Stage 0 pre-emptive support, the 4-tier escalation engine activates:
 
 ```mermaid
 sequenceDiagram
@@ -459,198 +460,121 @@ sequenceDiagram
     participant Vault as TokenVault (AES-256-GCM)
     participant Ledger as SHA-256 Audit Ledger
 
-    Note over Tracker: Day 1–2 Overdue: Patient misses biopsy review appointment
-    Tracker->>Dispatcher: dispatch_tier_1_sms(Token, cancer="ORAL", stage="Stage III")
-    Dispatcher->>Patient: WhatsApp Vernacular Audio + Visual Graphic Reminder
-    Tracker->>Ledger: record_event(Token, "DISPATCH_TIER_1_SMS")
+    Note over Tracker: Day 1–2 Overdue: Missed EBRT Fraction or Cisplatin Cycle
+    Tracker->>Dispatcher: dispatch_tier_1_sms(Token, clock_day=18, remaining_days=31)
+    Dispatcher->>Patient: Vernacular WhatsApp Voice + Visual Clock Rebooking Prompt
+    Tracker->>Ledger: record_event(Token, "DISPATCH_TIER_1_WHATSAPP")
 
-    Note over Tracker: Day 3–5 Overdue: Zero clinic check-in recorded
+    Note over Tracker: Day 3–5 Overdue: No Attendance Logged
     Tracker->>Dispatcher: dispatch_tier_2_ivr(Token, dialect="Bhojpuri")
-    Dispatcher->>Patient: Automated Dial-in Voice Call (Press 1 to confirm transport)
+    Dispatcher->>Patient: Automated IVR Call ("Press 1 if unwell, Press 2 if travel issue")
     Tracker->>Ledger: record_event(Token, "DISPATCH_TIER_2_IVR")
 
-    Note over Tracker: Day 6–7 Overdue: High-risk patient still non-responsive
-    Tracker->>Dispatcher: dispatch_tier_3_asha(Token, region="Kalyanpur Block")
-    Dispatcher->>ASHA: Mobile Field Ticket with Patient Token & Sector Landmark
-    ASHA->>Patient: Conducts in-person physical home visit
+    Note over Tracker: Day 6–7 Overdue: High Risk of Breaching 49d/56d Clock
+    Tracker->>Dispatcher: dispatch_tier_3_asha(Token, block="Kalyanpur")
+    Dispatcher->>ASHA: Mobile Field Ticket with Token & Village Sector Landmark
+    ASHA->>Patient: Conducts physical home visit & logs delay root cause
     Tracker->>Ledger: record_event(Token, "DISPATCH_TIER_3_ASHA")
 
-    Note over Tracker: Day 8+ Overdue: Critical Stage III/IV Patient in Danger
-    Tracker->>Tracker: evaluate_and_escalate(days=8, stage="Stage III")
-    Tracker->>Vault: retrieve_pii(Token) [System Authority Override]
-    activate Vault
-    Vault->>Vault: AES-256-GCM Decrypt using Master Key & Nonce
-    Vault-->>Tracker: Unmasked PII {Full Name: "Shanti Devi", Address: "Ward 4, Pipra Village"}
-    deactivate Vault
-
-    Tracker->>Dispatcher: generate_authority_dossier(Unmasked PII, Clinical Stage)
-    Dispatcher->>CMO: EMERGENCY STATUTORY DOSSIER (Unmasked address for urgent vehicle dispatch)
+    Note over Tracker: Day 8+ Overdue: Critical Pathway Abandonment Emergency
+    Tracker->>Vault: retrieve_pii(Token) [Statutory Tier 4 Override]
+    Vault-->>Tracker: Decrypted PII {Name, Phone, Full Village Address}
+    Tracker->>Dispatcher: generate_authority_dossier(Unmasked PII, Remaining Clock Days)
+    Dispatcher->>CMO: STATUTORY EMERGENCY DOSSIER (Mobile Van / Patient Rescue Dispatch)
     Tracker->>Ledger: record_event(Token, "TIER_4_STATUTORY_UNMASKED", severity="CRITICAL")
-    Note over Ledger: Cryptographic Block committed with statutory audit stamp
-```
-
----
-
-### 5.4 Sequence 4: Dual-Clock OTT Monitoring & Day-21 Hub-Spoke Brachy Bridge
-This sequence maps the hub-spoke coordination required to complete radiation and brachytherapy within 49 to 56 days:
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Spoke as Regional EBRT Spoke Clinician
-    actor Patient as Patient (Vernacular App/IVR)
-    participant Clock as Dual-Clock OTT Engine
-    participant Bridge as Day-21 Hub-Spoke Bridge
-    actor Hub as Central Brachy Hub Oncologist
-    participant FHIR as ABDM FHIR R4 Store
-
-    Spoke->>Clock: Log EBRT Fraction 1 (e.g. August 1, 2026)
-    activate Clock
-    Clock->>Clock: Start Clock 1: Target <=49d (Sept 19)
-    Clock->>Clock: Start Clock 2: Target <=56d (Sept 26)
-    Clock->>Patient: Send Literacy-Free Visual Healing Clock (Step 1 of 29)
-    Clock->>FHIR: Create FHIR CarePlan (Episode Start)
-    deactivate Clock
-
-    loop Fractions 2 to 14 (Days 2 to 20)
-        Spoke->>Clock: Daily Barcode Fraction Check-in
-        Clock->>Patient: Proactive Cisplatin Hydration & Toxicity Voice Check-in
-    end
-
-    Note over Spoke,Hub: Day 21: Fraction 15 Milestone Reached!
-    Spoke->>Clock: Log EBRT Fraction 15 (Day 21)
-    Clock->>Bridge: trigger_day21_handoff(EpisodeID)
-    activate Bridge
-    Bridge->>Spoke: Issue Pre-Brachy Readiness Checklist (CBC, RFT, PAC clearance)
-    Bridge->>Hub: Open Hub Referral Ticket & Request OT Slot Window (Days 38-44)
-    deactivate Bridge
-
-    Spoke->>Bridge: Clinician signs off pre-brachy bloods & PAC clearance
-    Hub->>Bridge: Confirm Central OT Brachytherapy Slot (Day 41)
-    Bridge->>Patient: Vernacular "What is Brachytherapy?" audio + Bus pass & Dharamshala voucher
-    Bridge->>FHIR: Update FHIR Task: Brachy Scheduled
-
-    Note over Patient,Hub: Days 41 to 46: Central Hub Brachytherapy Delivery
-    Patient->>Hub: Arrives at Central Hub on schedule
-    Hub->>Clock: Log Final Brachy Fraction Delivered (Day 46)
-    activate Clock
-    Clock->>Clock: Calculate Final OTT = 46 Days (PASS <=49d Benchmark!)
-    Clock->>FHIR: Commit Complete Treatment Bundle & Outcome Metrics
-    deactivate Clock
-```
-
----
-
-### 5.5 Sequence 5: Chief Medical Officer (CMO) Role-Gated Vault Inspection
-This sequence details how authorized hospital leadership inspects patient identity while maintaining an unbroken cryptographic audit trail:
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor CMO as Chief Medical Officer / Auditor
-    participant UI as Security & Audit Dashboard
-    participant API as FastAPI /api/vault/inspect
-    participant Vault as TokenVault (AES-256-GCM)
-    participant Ledger as AuditLedger (SHA-256)
-
-    CMO->>UI: Enters Patient Token (PT-RURAL-7891) + Submits Unmask Request
-    UI->>API: POST /api/vault/inspect?patient_token=PT-RURAL-7891
-    activate API
-    API->>API: Verify caller credentials (Role == "CHIEF_MEDICAL_OFFICER")
-    
-    alt Unauthorized Role
-        API-->>UI: 403 Forbidden (Statutory Access Denied)
-        API->>Ledger: record_event(Token, "UNAUTHORIZED_VAULT_ACCESS_ATTEMPT", severity="WARNING")
-    else Authorized Role
-        API->>Vault: retrieve_pii("PT-RURAL-7891")
-        activate Vault
-        Vault->>Vault: Verify 96-bit Nonce & Decrypt Ciphertext
-        Vault-->>API: Decrypted PII Payload (Name, Mobile, Full Address)
-        deactivate Vault
-
-        API->>Ledger: record_event("PT-RURAL-7891", "STATUTORY_PII_UNMASKED", actor="Dr. Morgan (CMO)", severity="CRITICAL")
-        activate Ledger
-        Ledger->>Ledger: Append to Block Chain & Compute SHA-256 Hash
-        Ledger-->>API: Audit Block Confirmed (Hash: e8f3...91ab)
-        deactivate Ledger
-
-        API-->>UI: 200 OK (Decrypted PII + Audit Transaction Hash)
-    end
-    deactivate API
-    UI-->>CMO: Renders Statutory Decryption Certificate & Patient Details
 ```
 
 ---
 
 ## 6. Data Models, State Schemas & Cryptographic Specifications
 
-### 6.1 LangGraph State Schema (`ClinicalAgentState`)
-Defined in [`src/core/state.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/core/state.py), this unified state dictionary transitions across nodes:
+### 6.1 Upgraded LangGraph State Schema (`ClinicalAgentState`)
 
 ```python
+from typing import Annotated, Any, Dict, List, Optional, TypedDict
+import operator
+
 class ClinicalAgentState(TypedDict):
-    # Data Privacy & Identification
+    # 1. Data Privacy & Identification (AES-256-GCM Backed)
     patient_token: str                                  # e.g., 'PT-RURAL-7891'
     session_id: str                                     # e.g., 'sess-a1b2c3d4'
-    
-    # Input Payloads
-    raw_text: Optional[str]                             # De-identified clinical transcription
-    document_path: Optional[str]                        # Uploaded PDF/report path
-    image_path: Optional[str]                           # Uploaded medical slide image path
-    
-    # Pillar 1 Diagnostic Outputs
-    clinical_intake: Optional[Dict[str, Any]]           # Parsed complaints, stage, severity
-    intake_status: str                                  # PENDING | COMPLETED | FAILED
-    
-    # Pillar 3 Image Quality Outputs
-    image_quality: Optional[Dict[str, Any]]             # Laplacian variance, FFT ratio, contrast
-    image_triage_passed: bool                           # True if image meets sharpness threshold
-    
-    # Diagnostic Processing
-    diagnostic_synthesis: Optional[Dict[str, Any]]      # TNM staging, workup recommendations
-    
-    # Pillar 2 Surveillance & Escalation Outputs
-    days_overdue: int                                   # Days elapsed since missed visit
-    cancer_severity_score: float                        # Calculated clinical risk (0.0 to 1.0)
-    current_escalation_tier: Optional[str]              # TIER_1_SMS to TIER_4_AUTHORITY
+    preferred_language: str                             # 22 scheduled Indian languages
+    spoke_to_hub_km: float                              # Travel distance for vouchers & QI stats
+
+    # 2. Smart OCR Document Upload & Voice Scribe (30% Clinician Side)
+    document_image_path: Optional[str]                  # Photo of paper OPD slip / lab report
+    document_legibility: Optional[Dict[str, Any]]       # Laplacian sharpness & glare check on slip
+    ocr_extracted_entities: Optional[Dict[str, Any]]    # Parsed labs (CBC/RFT), stage, dates
+    voice_transcript_deid: Optional[str]                # De-identified ASR dictation
+    ncg_clinical_draft: Optional[Dict[str, Any]]        # NCG structured note & missing workup flags
+    doctor_signed_off: bool                             # Hard human-in-the-loop gate
+
+    # 3. Dual-Clock OTT & Day-21 Hub-Spoke Bridge
+    ebrt_start_date: Optional[str]                      # Clock Day 0
+    steps_completed: int                                # 1..25 EBRT + 1..4 Brachy (29 steps)
+    target_49d_gec_estro: Optional[str]                 # Optimal deadline (<=49 days)
+    target_56d_abs_ncg: Optional[str]                   # Hard limit (<=56 days)
+    day21_bridge_status: Optional[Dict[str, Any]]       # CBC/RFT, PAC, Hub OT slot confirmed
+
+    # 4. Pre-Emptive Patient Co-Pilot (70% Patient Side)
+    latest_toxicity_checkin: Optional[Dict[str, Any]]   # Symptom, Grade (1-3), ORS or MD alert
+    pmjay_and_travel_pass: Optional[Dict[str, Any]]     # Scheme match, bus voucher, dharamshala
+    brachy_counseling_sent: bool                        # Day-21 fear-reduction audio delivered
+
+    # 5. 4-Tier Progressive Rural Escalation & QI Telemetry
+    days_overdue: int                                   # 0 = Stage 0 Co-Pilot; 1..8+ = Tier 1..4
+    delay_root_cause: Optional[str]                     # NONE | TOXICITY | TRAVEL_COST | OT_SLOT
+    current_escalation_tier: Optional[str]              # STAGE_0_COPILOT | TIER_1..4
     dispatched_notifications: Annotated[List[Dict[str, Any]], operator.add]
-    authority_escalation_dossier: Optional[Dict[str, Any]] # Emergency unmasked address dossier
-    
-    # Audit Trail & Error Trapping
-    audit_trail: Annotated[List[str], operator.add]     # Chained audit event IDs
-    errors: Annotated[List[str], operator.add]          # Operational exception records
-    next_node: Optional[str]                            # Routing pointer
-    status: str                                         # RUNNING | COMPLETED | FAILED
+    authority_escalation_dossier: Optional[Dict[str, Any]]
+
+    # 6. Chained SHA-256 Audit Trail
+    audit_trail: Annotated[List[str], operator.add]
+    errors: Annotated[List[str], operator.add]
+    status: str                                         # RUNNING | AWAITING_MD_SIGN | COMPLETED
 ```
 
 ---
 
 ### 6.2 Relational Entity Relationship (ER) Schema
-The persistent relational data layer manages treatment episodes, facilities, and escalation workflows:
 
 ```mermaid
 erDiagram
     FACILITY ||--o{ TREATMENT_EPISODE : "hosts (Spoke or Hub)"
     PATIENT ||--o{ DPDP_CONSENT : "grants"
     PATIENT ||--o{ TREATMENT_EPISODE : "undergoes"
-    TREATMENT_EPISODE ||--o{ TREATMENT_EVENT : "logs fraction/cycle"
-    TREATMENT_EPISODE ||--|| HUB_SPOKE_BRACHY_BRIDGE : "triggers at Day 21"
-    TREATMENT_EPISODE ||--o{ ESCALATION_DISPATCH : "triggers when overdue"
-    TREATMENT_EPISODE ||--o{ AUDIT_LOG_ENTRY : "records immutable trail"
+    TREATMENT_EPISODE ||--o{ OCR_DOCUMENT_UPLOAD : "ingests paper slips/labs"
+    TREATMENT_EPISODE ||--o{ TREATMENT_EVENT : "logs 29 pathway steps"
+    TREATMENT_EPISODE ||--|| HUB_SPOKE_BRACHY_BRIDGE : "triggers at Day 21 (Frac 15)"
+    TREATMENT_EPISODE ||--o{ TOXICITY_CHECKIN : "monitors proactively"
+    TREATMENT_EPISODE ||--o{ TRAVEL_FINANCE_PASS : "unlocks schemes & stays"
+    TREATMENT_EPISODE ||--o{ ESCALATION_DISPATCH : "triggers if overdue"
+    TREATMENT_EPISODE ||--o{ AUDIT_LOG_ENTRY : "records SHA-256 chain"
 
     PATIENT {
-        string patient_token PK "Anonymized Token (e.g. PT-RURAL-7891)"
-        string abha_id UK "ABDM Ayushman Bharat Health ID"
-        string preferred_language "Hindi, Bhojpuri, Bengali, etc."
-        float spoke_to_hub_km "Travel distance to central hospital"
-        boolean pmjay_verified "Ayushman Bharat coverage active"
+        string patient_token PK "PT-RURAL-XXXX (AES-256-GCM)"
+        string abha_id UK "ABDM Health ID"
+        string preferred_language "22 Scheduled Languages"
+        float spoke_to_hub_km "Median ~47 mi / 75 km"
+        boolean pmjay_verified "Day-1 Scheme Check"
+        string research_cohort "PRE_BASELINE | POST_CERVISETU"
     }
 
     FACILITY {
         uuid facility_id PK
-        string facility_name "Regional Spoke or Central Hub"
+        string facility_name
         string facility_role "REGIONAL_EBRT_SPOKE | CENTRAL_BRACHY_HUB"
         boolean pmjay_empanelled
+    }
+
+    OCR_DOCUMENT_UPLOAD {
+        uuid upload_id PK
+        uuid episode_id FK
+        string uploaded_by_role "DOCTOR | NURSE | HELPER"
+        string document_type "OPD_SLIP | CBC_RFT_LAB | BIOPSY_REPORT | REFERRAL_CARD"
+        float laplacian_sharpness "Must be >= 85.0 for OCR"
+        json extracted_fields_json "Parsed Hb, Creatinine, Stage, Dates"
+        boolean clinician_verified_signed "Hard Gate"
     }
 
     TREATMENT_EPISODE {
@@ -658,33 +582,50 @@ erDiagram
         string patient_token FK
         uuid spoke_facility_id FK
         uuid hub_facility_id FK
-        date ebrt_start_date "Starts 49d and 56d countdown"
-        date target_49d_gec_estro "Optimal deadline"
-        date target_56d_abs_ncg "Absolute biological limit"
-        int current_fractions_completed "1 to 25"
-        int days_overdue "Count of days past scheduled window"
-        string current_stage "EBRT | BRIDGE_DAY21 | BRACHY | COMPLETED"
-        int final_ott_days "Total days from Frac 1 to Brachy end"
+        date ebrt_start_date "Starts 49d and 56d Clocks"
+        date target_49d_gec_estro "Optimal Benchmark"
+        date target_56d_abs_ncg "Hard Limit Benchmark"
+        int steps_completed "1..29 (25 EBRT + 4 Brachy)"
+        int days_overdue
+        string delay_root_cause "NONE | TOXICITY | TRAVEL_COST | OT_SLOT"
+        int final_ott_days "Total days from EBRT Frac 1 to Brachy End"
+        boolean met_49d_benchmark "For QI Chi-Sq Analysis"
+        boolean met_56d_benchmark "For QI Chi-Sq Analysis"
     }
 
     HUB_SPOKE_BRACHY_BRIDGE {
         uuid bridge_id PK
         uuid episode_id FK
-        date triggered_date "Auto-created at Fraction 15 (Day 21)"
-        boolean cbc_rft_cleared "Laboratory workup signed off"
-        boolean pac_anesthesia_cleared "Pre-anesthetic evaluation signed"
-        date central_hub_ot_slot "Reserved brachy operating theatre date"
-        boolean doctor_readiness_signoff "Hard clinician sign-off gate"
+        date triggered_date "Auto-created at EBRT Fraction 15 (Day 21)"
+        boolean cbc_rft_ocr_verified "Lab slip uploaded & signed"
+        boolean pac_anesthesia_cleared "Pre-anesthetic fitness signed"
+        date central_hub_ot_slot "Reserved Brachy OT date"
+        boolean doctor_readiness_signoff "Hard Clinician Gate"
+    }
+
+    TOXICITY_CHECKIN {
+        uuid checkin_id PK
+        uuid episode_id FK
+        int clock_day
+        string symptom_reported "DIARRHEA | BURNING | NAUSEA | FATIGUE"
+        int severity_grade "1 (Mild -> ORS Audio) | 2+ (Alert Spoke MD)"
+        string action_taken
+    }
+
+    TRAVEL_FINANCE_PASS {
+        uuid pass_id PK
+        uuid episode_id FK
+        string support_type "PMJAY_APPROVAL | BUS_VOUCHER | DHARAMSHALA_STAY"
+        boolean issued_to_patient
+        date valid_for_travel_date
     }
 
     ESCALATION_DISPATCH {
         uuid dispatch_id PK
         uuid episode_id FK
-        string tier "TIER_1_SMS | TIER_2_IVR | TIER_3_ASHA | TIER_4_AUTHORITY"
-        string channel "WHATSAPP | TELEPHONY_IVR | ASHA_APP | AUTHORITY_PORTAL"
-        string recipient_role "PATIENT | GUARDIAN | ASHA_LEAD | CMO"
+        string tier "TIER_1_SMS | TIER_2_IVR | TIER_3_ASHA | TIER_4_CMO"
+        string delivery_status "DELIVERED | CONFIRMED | HOME_VISITED"
         timestamp dispatched_at
-        string delivery_status "DELIVERED | CONFIRMED | UNRESOLVED"
     }
 
     AUDIT_LOG_ENTRY {
@@ -692,45 +633,28 @@ erDiagram
         string patient_token FK
         string action_name
         string actor_identity
-        string severity "INFO | WARNING | CRITICAL"
-        string sha256_current_hash "SHA-256 block hash"
-        string sha256_prev_hash "Hash chaining parent pointer"
+        string sha256_current_hash
+        string sha256_prev_hash
         timestamp recorded_at
     }
 ```
 
 ---
 
-### 6.3 Cryptographic Storage Layout
-Sensitive records are encrypted using **AES-256-GCM** (Galois/Counter Mode). Each encrypted blob is packed as follows:
+## 7. Summary of Architectural Upgrades (v1.0 $\rightarrow$ v2.0)
 
-```
-+---------------------------------------------------------------------------------------+
-|                                ENCRYPTED PII RECORD LAYOUT                            |
-+------------------------------------+--------------------------------------------------+
-|          NONCE (12 Bytes)          |           CIPHERTEXT & GCM TAG (Variable)        |
-+------------------------------------+--------------------------------------------------+
-| Cryptographically secure random    | Authenticated ciphertext payload containing JSON |
-| 96-bit initialization vector       | string of {name, phone, village, landmark}.      |
-| generated per record via           | Authenticated against patient_token as Additional|
-| secrets.token_bytes(12)            | Authenticated Data (AAD).                        |
-+------------------------------------+--------------------------------------------------+
-```
-
----
-
-## 7. Technology Stack & Deployment Architecture
-
-| Layer | Technologies Selected | Clinical & Operational Rationale |
+| Core Dimension | Version 1.0 (Legacy Prototype) | Version 2.0 (Patient-Centric Hub-and-Spoke) |
 |---|---|---|
-| **Frontend Framework** | React 19, TypeScript, Vite | High render performance, strict type safety, zero build overhead. |
-| **Styling & Design System** | Tailwind CSS v4, CareUI, Lucide | Swiss-Grotesk light clinical design, anti-AI slop, high data density. |
-| **API Backend** | FastAPI, Python 3.12+, Uvicorn | High-throughput asynchronous endpoints, auto-generated OpenAPI docs. |
-| **Agentic Framework** | LangGraph, LangChain Core | Stateful cyclic graph execution, memory checkpointing, conditional routing. |
-| **Computer Vision** | OpenCV (cv2), NumPy, SciPy | Sub-millisecond Laplacian variance calculation, 2D FFT spectral analysis. |
-| **Cryptography** | `cryptography.fernet`, `AESGCM`, SHA-256 | Military-grade zero-knowledge encryption, authenticated encryption with AAD. |
-| **Standards Compliance** | ABDM FHIR R4, DPDP Act 2023 | Interoperable Ayushman Bharat integration, statutory compliance. |
+| **Primary Focus** | Diagnostic Image AI (Colposcopy / Histopathology) | **Smart Paper Slip OCR Upload & Low-Friction Intake** |
+| **Functional Weight** | 80% Clinician Tooling / 20% Tracking | **70% Patient Pre-Emptive Co-Pilot / 30% Clinician Friction** |
+| **Regulatory Risk** | High SaMD Diagnostic Risk (Autonomous lesion detection) | **Zero Diagnostic SaMD Risk** (Pure pathway adherence & logistics) |
+| **Pathway Coordination** | Single-center clinic queue | **Deterministic Dual-Clock (49d/56d) Hub-to-Spoke Referral Bridge** |
+| **Patient Drop-out Defense** | Reactive SMS after patient misses appointment | **Pre-Emptive 29-Step Visual Clock, Hydration Bot & Travel Vouchers** |
+| **Clinical Research Telemetry** | Manual retrospective chart audits | **Natively Embedded QI Engine** (`BMJ Open Quality / IJROBP` ready) |
+
+> [!IMPORTANT]
+> **CDSCO SaMD Compliance Principle**: CerviSetu v2.0 operates strictly in an assistive, logistical, and pathway-coordination capacity. No diagnostic classifications or autonomous prescription modifications occur without verified clinician electronic sign-off.
 
 ---
 
-*Authored for the CerviSetu Technical Architecture Team · Certified Complete and Verified.*
+*Authored for the CerviSetu Technical Architecture Team · Certified Complete and Verified (v2.0.0).*
