@@ -1,6 +1,6 @@
 """Integration tests for FastAPI endpoints."""
 from fastapi.testclient import TestClient
-from src.dashboard.app import app
+from backend.dashboard.app import app
 
 client = TestClient(app)
 
@@ -46,3 +46,37 @@ def test_api_audit_logs_endpoint():
     assert response.status_code == 200
     data = response.json()
     assert "audit_logs" in data
+
+
+def test_api_facilities_search():
+    response = client.get("/api/facilities/search?district=Varanasi")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["query"] == "Varanasi"
+    assert len(data["facilities"]) >= 2
+
+
+def test_spa_static_and_fallback_routes():
+    # Root returns index.html
+    root_res = client.get("/")
+    assert root_res.status_code == 200
+    assert "text/html" in root_res.headers.get("content-type", "")
+
+    # SPA subroutes (/staff, /patient/PT-SAMPLE, /demo) return index.html fallback
+    staff_res = client.get("/staff")
+    assert staff_res.status_code == 200
+    assert "text/html" in staff_res.headers.get("content-type", "")
+
+    patient_res = client.get("/patient/PT-DEMO-01")
+    assert patient_res.status_code == 200
+    assert "text/html" in patient_res.headers.get("content-type", "")
+
+    demo_res = client.get("/demo")
+    assert demo_res.status_code == 200
+    assert "text/html" in demo_res.headers.get("content-type", "")
+
+    # Unknown /api route returns 404 JSON instead of HTML fallback
+    api_404 = client.get("/api/nonexistent-route-endpoint")
+    assert api_404.status_code == 404
+    assert api_404.json()["detail"] == "API route not found"
+

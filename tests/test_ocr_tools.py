@@ -1,5 +1,5 @@
-"""Tests for OCR entity extraction and clinical intake pipeline."""
-from src.tools.ocr_tools import ClinicalEntityExtractorTool, OCRIntakePipeline
+﻿"""Tests for OCR entity extraction and clinical intake pipeline."""
+from backend.tools.ocr_tools import ClinicalEntityExtractorTool, OCRIntakePipeline
 
 
 def test_clinical_entity_extractor():

@@ -1,6 +1,6 @@
-"""Tests for AES-256 vault, PII de-identification, and audit ledger."""
+﻿"""Tests for AES-256 vault, PII de-identification, and audit ledger."""
 import pytest
-from src.core.security import TokenVault, PIIShield, AuditLedger
+from backend.core.security import TokenVault, PIIShield, AuditLedger
 
 
 def test_token_vault_encryption():
@@ -31,8 +31,9 @@ def test_pii_shield_masking():
     assert "1234 5678 9012" not in masked
 
 
-def test_audit_ledger_chain():
-    ledger = AuditLedger()
+def test_audit_ledger_chain(tmp_path):
+    test_log_file = tmp_path / "test_audit_ledger.jsonl"
+    ledger = AuditLedger(log_file=test_log_file)
     evt1 = ledger.record_event(
         action="TEST_ACTION_1",
         actor="TEST_AGENT",
@@ -48,3 +49,6 @@ def test_audit_ledger_chain():
 
     assert evt2["previous_hash"] == evt1["current_hash"]
     assert len(evt2["current_hash"]) == 64
+    is_valid, count, err = ledger.verify_chain_integrity()
+    assert is_valid is True
+    assert count == 2

@@ -1,7 +1,7 @@
-"""Tests for LangGraph multi-agent clinical workflow execution."""
+﻿"""Tests for LangGraph multi-agent clinical workflow execution."""
 import cv2
 import numpy as np
-from src.graph.workflow import clinical_graph
+from backend.graph.workflow import clinical_graph
 
 
 def test_workflow_document_case_execution():

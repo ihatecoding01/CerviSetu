@@ -1,8 +1,8 @@
-"""Tests for medical image quality evaluation and blur detection."""
+﻿"""Tests for medical image quality evaluation and blur detection."""
 import numpy as np
 import cv2
 from pathlib import Path
-from src.tools.image_tools import (
+from backend.tools.image_tools import (
     BlurDetectorTool,
     ExposureContrastTool,
     DomainRelevanceClassifierTool,

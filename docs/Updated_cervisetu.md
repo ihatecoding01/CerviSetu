@@ -1,4 +1,4 @@
-Below is your updated, production-ready SYSTEM_ARCHITECTURE_AND_FEATURES.md (Version 2.0.0).
+﻿Below is your updated, production-ready SYSTEM_ARCHITECTURE_AND_FEATURES.md (Version 2.0.0).
 
 It completely removes the legacy colposcopy/histopathology image model, repurposes your image pipeline strictly into a Smart Document OCR & Referral Slip Upload Engine (so doctors, nurses, or clinic helpers can snap a photo of paper slips, lab reports, or discharge cards for instant data entry), and integrates the 70/30 Patient-to-Clinician split, the Pre-Emptive Patient Co-Pilot, the Dual-Clock (49d/56d) Day-21 Hub-Spoke Bridge, your AES-256-GCM / SHA-256 security architecture, and the Built-in QI Research Telemetry Engine.   
 MD
@@ -57,7 +57,7 @@ In rural and semi-urban Indian healthcare ecosystems, cervical cancer accounts f
 
 ### Feature 1: Smart OCR Document Upload & Voice-to-NCG Intake (Clinician / Nurse / Helper)
 - **Capability**: Enables doctors, nurses, or clinic helpers to snap a smartphone photo of physical paper prescriptions, lab reports (CBC/RFT), biopsy summary slips, or referral cards—or speak a 60-second clinical update—to automatically populate structured patient records.
-- **Underlying Engine**: [`src/tools/ocr_tools.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/tools/ocr_tools.py), [`src/agents/ocr_intake_agent.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/agents/ocr_intake_agent.py), and Sarvam Saaras v3 / Bhashini ASR gateway.
+- **Underlying Engine**: [`backend/tools/ocr_tools.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/backend/tools/ocr_tools.py), [`backend/agents/ocr_intake_agent.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/backend/agents/ocr_intake_agent.py), and Sarvam Saaras v3 / Bhashini ASR gateway.
 - **Core Mechanics**:
   - **Document Legibility Pre-Check**: Before running OCR extraction, a fast OpenCV Laplacian variance ($\sigma^2 \ge 85.0$) and luminance histogram check verifies that the photographed paper slip is not blurry or washed out by camera flash, prompting the nurse/helper to re-snap if unreadable.
   - **Clinical Entity Extraction**: Parses patient demographics, prior screening status (VIA/HPV), clinical stage recorded by the physician, baseline blood work values (Hemoglobin, Creatinine/RFT, WBC), and EBRT start dates.
@@ -68,7 +68,7 @@ In rural and semi-urban Indian healthcare ecosystems, cervical cancer accounts f
 
 ### Feature 2: Zero-Knowledge AES-256-GCM PII Vault & De-Identification
 - **Capability**: Cryptographically isolates all Patient Personally Identifiable Information (PII) before any OCR text or clinical transcript touches language models or pathway agents.
-- **Underlying Engine**: [`src/core/security.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/core/security.py) (`TokenVault`).
+- **Underlying Engine**: [`backend/core/security.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/backend/core/security.py) (`TokenVault`).
 - **Core Mechanics**:
   - Name, mobile number, ABHA ID, village, guardian info, and residential address are extracted at the gateway and encrypted using **AES-256-GCM** with a unique 96-bit cryptographic nonce per record.
   - Generates a non-reversible, deterministic token (`PT-RURAL-XXXX`). All downstream LangGraph agents operate strictly on this anonymized token.
@@ -80,7 +80,7 @@ In rural and semi-urban Indian healthcare ecosystems, cervical cancer accounts f
 
 ### Feature 3: Dual-Clock OTT Engine & Automated Day-21 Hub-Spoke Bridge
 - **Capability**: Replaces manual human coordination bottlenecks between regional EBRT spoke centers and central Brachytherapy hubs with deterministic date arithmetic and automated cross-site handoffs.
-- **Underlying Engine**: [`src/core/database.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/core/database.py) & pathway clock coordinator.
+- **Underlying Engine**: [`backend/core/database.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/backend/core/database.py) & pathway clock coordinator.
 - **Core Mechanics**:
   - **Dual Guideline Clocks**: Logging EBRT Fraction 1 (Day 0) simultaneously starts two countdowns:
     - **Clock 1 (Optimal Target)**: **≤49 Days** (*GEC-ESTRO* guideline).
@@ -122,7 +122,7 @@ In rural and semi-urban Indian healthcare ecosystems, cervical cancer accounts f
 
 ### Feature 7: 4-Tier Progressive Rural Escalation & ASHA Network (Reactive Safety Net)
 - **Capability**: If a patient still misses a scheduled EBRT fraction, Cisplatin cycle, or Brachytherapy slot despite pre-emptive coaching, the deterministic escalation matrix activates immediately.
-- **Underlying Engine**: [`src/tools/tracker_tools.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/tools/tracker_tools.py), [`src/agents/tracker_agent.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/agents/tracker_agent.py), & [`frontend/src/components/AshaCoordination.tsx`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/frontend/src/components/AshaCoordination.tsx).
+- **Underlying Engine**: [`backend/tools/tracker_tools.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/backend/tools/tracker_tools.py), [`backend/agents/tracker_agent.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/backend/agents/tracker_agent.py), & [`frontend/backend/components/AshaCoordination.tsx`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/frontend/backend/components/AshaCoordination.tsx).
 
 | Tier | Overdue Window | Target | Channel | Operational Directive |
 |---|---|---|---|---|
@@ -145,7 +145,7 @@ In rural and semi-urban Indian healthcare ecosystems, cervical cancer accounts f
 
 ### Feature 9: Tamper-Evident SHA-256 Chained Cryptographic Audit Ledger
 - **Capability**: Immutable, zero-knowledge audit logging for all OCR uploads, doctor signatures, toxicity alerts, and statutory PII unmaskings.
-- **Underlying Engine**: [`src/core/security.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/core/security.py) (`AuditLedger`).
+- **Underlying Engine**: [`backend/core/security.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/backend/core/security.py) (`AuditLedger`).
 - **Core Mechanics**:
   - Every action computes a chained cryptographic block hash:
     $$\text{Hash}_i = \text{SHA-256}(\text{Hash}_{i-1} \,\Vert{}\, \text{Timestamp} \,\Vert{}\, \text{Action} \,\Vert{}\, \text{Payload})$$

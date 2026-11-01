@@ -47,13 +47,35 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isSignedOff, setIsSignedOff] = useState(false);
+  const [signingLoading, setSigningLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDoctorSignOff = async () => {
+    if (!result?.patient_token) return;
+    setSigningLoading(true);
+    try {
+      await api.logDoctorSignOff({
+        doctor_id: "DR-ONCO-CAREUI",
+        patient_token: result.patient_token,
+        case_id: result.session_id,
+        notes: "Attending Oncologist reviewed and validated NCG clinical workup intake.",
+        ncg_verified: true,
+      });
+      setIsSignedOff(true);
+    } catch (err) {
+      console.error("Sign-off error", err);
+    } finally {
+      setSigningLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setResult(null);
     setError(null);
+    setIsSignedOff(false);
 
     const formData = new FormData();
     formData.append("patient_name", form.patient_name);
@@ -398,6 +420,26 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
                 <div className="flex items-center gap-2 pt-1 text-xs text-emerald-700 font-medium">
                   <CheckCircle2 className="size-4 text-emerald-600" />
                   <span>Chained audit block generated and hashed with SHA-256</span>
+                </div>
+
+                <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
+                  {isSignedOff ? (
+                    <div className="flex items-center gap-1.5 text-xs text-emerald-800 font-bold bg-emerald-50 px-3 py-2 rounded-lg border border-emerald-200 w-full justify-center">
+                      <CheckCircle2 className="size-4 text-emerald-600" />
+                      Doctor Electronic Sign-Off Verified &amp; Chained
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleDoctorSignOff}
+                      disabled={signingLoading}
+                      className="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-medium text-xs py-2"
+                    >
+                      <FileCheck2 className="size-4 mr-1.5" />
+                      {signingLoading ? "Recording Sign-Off..." : "Doctor Electronic Sign-Off (Hard Clinician Gate)"}
+                    </Button>
+                  )}
                 </div>
               </div>
             )}

@@ -1,4 +1,4 @@
-# CerviSetu: System Architecture, Data Flow & Feature Specification
+﻿# CerviSetu: System Architecture, Data Flow & Feature Specification
 
 > **Platform**: CerviSetu — Assistive Oncology Pathway, Smart OCR Intake & Patient-Centric Rural Tracking System  
 > **Document Type**: Master Technical Architecture & Functional Specification  
@@ -50,7 +50,7 @@ In rural and semi-urban Indian healthcare ecosystems, cervical cancer accounts f
 
 ### Feature 1: Smart OCR Document Upload & Voice-to-NCG Intake (Clinician / Nurse / Helper)
 - **Capability**: Enables doctors, nurses, or clinic helpers to snap a smartphone photo of physical paper prescriptions, lab reports (CBC/RFT), biopsy summary slips, or referral cards—or speak a 60-second clinical update—to automatically populate structured patient records.
-- **Underlying Engine**: [`src/tools/ocr_tools.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/tools/ocr_tools.py), [`src/agents/ocr_intake_agent.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/agents/ocr_intake_agent.py), and Sarvam Saaras v3 / Bhashini ASR gateway.
+- **Underlying Engine**: [`backend/tools/ocr_tools.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/backend/tools/ocr_tools.py), [`backend/agents/ocr_intake_agent.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/backend/agents/ocr_intake_agent.py), and Sarvam Saaras v3 / Bhashini ASR gateway.
 - **Core Mechanics**:
   - **Document Legibility Pre-Check**: Before running OCR extraction, a fast OpenCV Laplacian variance ($\sigma^2 \ge 85.0$) and luminance histogram check verifies that the photographed paper slip is not blurry or washed out by camera flash, prompting the nurse/helper to re-snap if unreadable.
   - **Clinical Entity Extraction**: Parses patient demographics, prior screening status (VIA/HPV), clinical stage recorded by the physician, baseline blood work values (Hemoglobin, Creatinine/RFT, WBC), and EBRT start dates.
@@ -61,7 +61,7 @@ In rural and semi-urban Indian healthcare ecosystems, cervical cancer accounts f
 
 ### Feature 2: Zero-Knowledge AES-256-GCM PII Vault & De-Identification
 - **Capability**: Cryptographically isolates all Patient Personally Identifiable Information (PII) before any OCR text or clinical transcript touches language models or pathway agents.
-- **Underlying Engine**: [`src/core/security.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/core/security.py) (`TokenVault`).
+- **Underlying Engine**: [`backend/core/security.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/backend/core/security.py) (`TokenVault`).
 - **Core Mechanics**:
   - Name, mobile number, ABHA ID, village, guardian info, and residential address are extracted at the gateway and encrypted using **AES-256-GCM** with a unique 96-bit cryptographic nonce per record.
   - Generates a non-reversible, deterministic token (`PT-RURAL-XXXX`). All downstream LangGraph agents operate strictly on this anonymized token.
@@ -73,7 +73,7 @@ In rural and semi-urban Indian healthcare ecosystems, cervical cancer accounts f
 
 ### Feature 3: Dual-Clock OTT Engine & Automated Day-21 Hub-Spoke Bridge
 - **Capability**: Replaces manual human coordination bottlenecks between regional EBRT spoke centers and central Brachytherapy hubs with deterministic date arithmetic and automated cross-site handoffs.
-- **Underlying Engine**: [`src/core/database.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/core/database.py) & pathway clock coordinator.
+- **Underlying Engine**: [`backend/core/database.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/backend/core/database.py) & pathway clock coordinator.
 - **Core Mechanics**:
   - **Dual Guideline Clocks**: Logging EBRT Fraction 1 (Day 0) simultaneously starts two countdowns:
     - **Clock 1 (Optimal Target)**: **≤49 Days** (*GEC-ESTRO* guideline).
@@ -115,7 +115,7 @@ In rural and semi-urban Indian healthcare ecosystems, cervical cancer accounts f
 
 ### Feature 7: 4-Tier Progressive Rural Escalation & ASHA Network (Reactive Safety Net)
 - **Capability**: If a patient still misses a scheduled EBRT fraction, Cisplatin cycle, or Brachytherapy slot despite pre-emptive coaching, the deterministic escalation matrix activates immediately.
-- **Underlying Engine**: [`src/tools/tracker_tools.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/tools/tracker_tools.py), [`src/agents/tracker_agent.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/agents/tracker_agent.py), & [`frontend/src/components/AshaCoordination.tsx`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/frontend/src/components/AshaCoordination.tsx).
+- **Underlying Engine**: [`backend/tools/tracker_tools.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/backend/tools/tracker_tools.py), [`backend/agents/tracker_agent.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/backend/agents/tracker_agent.py), & [`frontend/backend/components/AshaCoordination.tsx`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/frontend/backend/components/AshaCoordination.tsx).
 
 | Tier | Overdue Window | Target | Channel | Operational Directive |
 |---|---|---|---|---|
@@ -136,12 +136,21 @@ In rural and semi-urban Indian healthcare ecosystems, cervical cancer accounts f
 
 ---
 
-### Feature 9: Tamper-Evident SHA-256 Chained Cryptographic Audit Ledger
-- **Capability**: Immutable, zero-knowledge audit logging for all OCR uploads, doctor signatures, toxicity alerts, and statutory PII unmaskings.
-- **Underlying Engine**: [`src/core/security.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/src/core/security.py) (`AuditLedger`).
-- **Core Mechanics**:
-  - Every action computes a chained cryptographic block hash:
-    $$\text{Hash}_i = \text{SHA-256}(\text{Hash}_{i-1} \,\Vert{}\, \text{Timestamp} \,\Vert{}\, \text{Action} \,\Vert{}\, \text{Payload})$$
+### Feature 9: Tamper-Evident SHA-256 Chained Cryptographic Audit Ledger & 3-Role User Logging
+- **Capability**: Immutable, zero-knowledge audit logging partitioned across **three distinct user archetypes** (Patients, Doctors, and Nurses/Healthcare Professionals) for all OCR uploads, doctor signatures, toxicity alerts, fraction logs, field tickets, and statutory PII unmaskings.
+- **Underlying Engine**: [`backend/core/security.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/backend/core/security.py) (`AuditLedger`, `UserRole`) & [`backend/core/database.py`](file:///c:/Users/perci/Documents/projects_2026/health_hackathon/backend/core/database.py) (`user_activity_logs`).
+- **Core Mechanics & 3-Role Taxonomy**:
+  - **1. Patient & Family Caregivers (`PATIENT`)**:
+    - Omnichannel intake via vernacular WhatsApp, IVR dial-ins, and Web/PWA companion.
+    - Logs bi-weekly toxicity check-ins (Grade 1/2+ diarrhea, burning, fatigue), Cisplatin hydration confirmations, 29-step Healing Clock progress views, Day-1 PMJAY eligibility lookups, and Day-21 47-mile travel voucher/dharamshala pass downloads.
+  - **2. Doctors & Radiation Oncologists (`DOCTOR`)**:
+    - High-density CareUI clinical workstation interactions.
+    - Logs electronic sign-off on OCR paper slip drafts (Hard Clinician Gate), voice-to-NCG transcription approvals with audio purges, Grade 2+ morning ward toxicity alert triage, Day-21 Pre-Brachy readiness approvals, Brachy OT slot confirmations, and CMO statutory unmask overrides.
+  - **3. Nurses & Frontline Healthcare Professionals (`NURSE_HEALTHCARE_WORKER`)**:
+    - Frontline Spoke terminal and mobile ASHA PWA interactions.
+    - Logs paper OPD card and lab slip camera uploads, OpenCV Laplacian sharpness/glare verification, daily 1-tap EBRT fraction completions (Step 1..25), Pre-Brachy PAC checklist submissions, Tier 3 ASHA home visit tickets, and clinical delay root cause classifications.
+  - **Cryptographic Chaining**:
+    $$\text{Hash}_i = \text{SHA-256}(\text{Hash}_{i-1} \,\Vert{}\, \text{Timestamp} \,\Vert{}\, \text{UserRole} \,\Vert{}\, \text{Action} \,\Vert{}\, \text{ActorID} \,\Vert{}\, \text{Payload})$$
   - Fully compliant with the **Indian Digital Personal Data Protection (DPDP) Act, 2023** and **ABDM Health Data Management Policy**.
 
 ---
@@ -631,11 +640,26 @@ erDiagram
     AUDIT_LOG_ENTRY {
         uuid entry_id PK
         string patient_token FK
+        string user_role "DOCTOR | NURSE_HEALTHCARE_WORKER | PATIENT"
         string action_name
         string actor_identity
+        string channel "WEB_CAREUI | WHATSAPP | IVR | ASHA_PWA | REST_API"
         string sha256_current_hash
         string sha256_prev_hash
         timestamp recorded_at
+    }
+
+    USER_ACTIVITY_LOG {
+        uuid log_id PK
+        string user_role "DOCTOR | NURSE_HEALTHCARE_WORKER | PATIENT"
+        string actor_id "DR-XXX | NURSE-YYY | ASHA-ZZZ | PT-TOKEN"
+        string patient_token FK
+        string action_type
+        string channel
+        string severity "INFO | WARNING | CRITICAL"
+        json payload_json
+        string sha256_hash
+        timestamp created_at
     }
 ```
 
@@ -651,9 +675,152 @@ erDiagram
 | **Pathway Coordination** | Single-center clinic queue | **Deterministic Dual-Clock (49d/56d) Hub-to-Spoke Referral Bridge** |
 | **Patient Drop-out Defense** | Reactive SMS after patient misses appointment | **Pre-Emptive 29-Step Visual Clock, Hydration Bot & Travel Vouchers** |
 | **Clinical Research Telemetry** | Manual retrospective chart audits | **Natively Embedded QI Engine** (`BMJ Open Quality / IJROBP` ready) |
+| **User Role Audit Logging** | Unstructured monolithic log | **Chained SHA-256 Logging across Doctors, Nurses/Helpers & Patients** |
 
 > [!IMPORTANT]
 > **CDSCO SaMD Compliance Principle**: CerviSetu v2.0 operates strictly in an assistive, logistical, and pathway-coordination capacity. No diagnostic classifications or autonomous prescription modifications occur without verified clinician electronic sign-off.
+
+---
+
+## 8. Multi-Role User Logging Architecture (Patients, Doctors & Nurses/Healthcare Professionals)
+
+### 8.1 Architectural Purpose & Regulatory Alignment
+Under the **Indian Digital Personal Data Protection (DPDP) Act, 2023**, the **ABDM Health Data Management Policy**, and **CDSCO SaMD Software Lifecycle Guidelines**, clinical audit trails cannot treat all interactions as homogeneous system events. Different user roles carry distinct legal, clinical, and data-protection accountabilities:
+- **Patients** exercise statutory data principal rights (DPDP Section 6 consent, withdrawal, and symptom disclosures).
+- **Doctors** exercise legal clinical governance (NMC Medical Ethics, prescription liability, and hard sign-off gates).
+- **Nurses & Frontline Healthcare Professionals** perform evidentiary clinical execution (document intake, radiation delivery counters, pre-op verification, and field tracing).
+
+To uphold zero-knowledge privacy, all 3 user roles log into the tamper-evident SHA-256 cryptographic chain using the patient's non-reversible token (`PT-RURAL-XXXX`), completely isolating identity while preserving immutable clinical provenance.
+
+### 8.2 Three-Role User Archetypes & Scope
+
+```mermaid
+flowchart TD
+    subgraph ROLES["Three Core User Archetypes in CerviSetu"]
+        direction LR
+        r_doc["1. DOCTOR<br/>(Attending Oncologist, CMO, Spoke/Hub MD)"]
+        r_nurse["2. NURSE & HEALTHCARE WORKER<br/>(Spoke Nurse, Helper, ASHA Worker, Tech)"]
+        r_pat["3. PATIENT & FAMILY<br/>(Cancer Patient, Designated Caregiver)"]
+    end
+
+    subgraph CHANNELS["Role Interaction Channels"]
+        direction LR
+        c_careui["CareUI Clinician Workstation (Web)"]
+        c_spoke["CareUI Spoke Terminal & ASHA Mobile PWA"]
+        c_pat_ch["Vernacular WhatsApp, IVR & Voice Co-Pilot"]
+    end
+
+    subgraph ENGINE["Chained Audit & Activity Logging Subsystem"]
+        direction TB
+        sec_ledger["AuditLedger (SHA-256 Cryptographic Block Chain)"]
+        db_logs[("user_activity_logs (SQLite / PostgreSQL)")]
+    end
+
+    r_doc --> c_careui
+    r_nurse --> c_spoke
+    r_pat --> c_pat_ch
+
+    c_careui & c_spoke & c_pat_ch -->|"Structured Event Payload<br/>(Role + Actor + Token + Hash)"| sec_ledger
+    sec_ledger --> db_logs
+```
+
+### 8.3 Detailed Event Taxonomy by User Role
+
+#### Role 1: DOCTORS (`DOCTOR`)
+Interactions focused on clinical governance, electronic validation, and emergency statutory override.
+
+| Action Identifier | Triggering Event | Channel | Severity | Clinical & Legal Purpose |
+|---|---|---|---|---|
+| `DOCTOR_OCR_INTAKE_SIGN` | Clinician reviews drafted NCG slip & taps "Sign" | `WEB_CAREUI` | `INFO` | Hard human sign-off gate; authorizes permanent ABDM commit. |
+| `DOCTOR_VOICE_SCRIBE_APPROVE` | Review of 60s voice dictation transcript | `WEB_CAREUI` | `INFO` | Commits clinical note and immediately purges raw voice audio. |
+| `DOCTOR_TOXICITY_ALERT_TRIAGE` | Review of Grade 2+ toxicity flag on Morning Ward list | `WEB_CAREUI` | `WARNING` | Logs medical intervention/prescription preventing dropout. |
+| `DOCTOR_DAY21_READINESS_SIGN` | Fraction 15 Pre-Brachy checklist review | `WEB_CAREUI` | `INFO` | Clears patient for central Brachytherapy OT handoff. |
+| `DOCTOR_HUB_OT_SLOT_CONFIRM` | Hub radiation oncologist confirms OT date & applicator | `WEB_CAREUI` | `INFO` | Reserves central procedure slot; triggers patient travel pass. |
+| `DOCTOR_TREATMENT_COMPLETION_SIGN`| Hub oncologist signs final discharge summary | `WEB_CAREUI` | `INFO` | Finalizes radiobiological OTT calculation (<=49d / <=56d). |
+| `DOCTOR_CMO_STATUTORY_UNMASK` | CMO unmasks AES-256 PII during Tier 4 emergency | `REST_API` | `CRITICAL` | DPDP statutory audit record for emergency patient rescue. |
+
+#### Role 2: NURSES & FRONTLINE HEALTHCARE PROFESSIONALS (`NURSE_HEALTHCARE_WORKER`)
+Interactions focused on paper digitization, treatment delivery verification, and community tracking.
+
+| Action Identifier | Triggering Event | Channel | Severity | Clinical & Legal Purpose |
+|---|---|---|---|---|
+| `NURSE_PAPER_SLIP_UPLOAD` | Nurse snaps photo of paper OPD card or CBC/RFT slip | `WEB_CAREUI` | `INFO` | Provenance record of physical document ingestion. |
+| `NURSE_LEGIBILITY_CHECK_ACK` | Laplacian sharpness/glare pre-check outcome | `WEB_CAREUI` | `INFO` | Logs image quality compliance ($\sigma^2 \ge 85.0$) or re-take. |
+| `NURSE_EBRT_FRACTION_LOG` | 1-tap barcode/fraction completion (Step 1..25) | `WEB_CAREUI` | `INFO` | Increments OTT radiobiological clock and updates ward board. |
+| `NURSE_PRE_BRACHY_CHECKLIST_SUBMIT`| Uploads PAC clearance & consent documentation | `WEB_CAREUI` | `INFO` | Assembles Day-21 referral packet for Central Hub review. |
+| `ASHA_FIELD_TICKET_RECEIVE` | Sector ASHA worker receives Tier 3 overdue alert | `ASHA_PWA` | `WARNING` | Confirms community worker dispatch for Day 6–7 overdue. |
+| `ASHA_HOME_VISIT_COMPLETE` | ASHA logs in-person home visit & delay root cause | `ASHA_PWA` | `INFO` | Records root cause (`TOXICITY`, `TRAVEL_COST`, etc.) in DB. |
+| `HEALTHCARE_WORKER_VITALS_LOG` | Frontline vital signs & weight entry | `WEB_CAREUI` | `INFO` | Baseline and concurrent oncology monitoring record. |
+
+#### Role 3: PATIENTS & FAMILY CAREGIVERS (`PATIENT`)
+Interactions focused on proactive symptom reporting, adherence confirmations, and welfare scheme navigation.
+
+| Action Identifier | Triggering Event | Channel | Severity | Clinical & Legal Purpose |
+|---|---|---|---|---|
+| `PATIENT_SYMPTOM_CHECKIN` | Bi-weekly symptom report (Diarrhea, Burning, Fatigue)| `WHATSAPP` / `IVR` | `INFO` / `WARNING` | Pre-emptive toxicity capture; grades severity 1 vs 2+. |
+| `PATIENT_CISPLATIN_PREP_ACK` | 24h pre-chemo hydration prompt confirmation | `WHATSAPP` / `IVR` | `INFO` | Confirms compliance with kidney hydration protocol. |
+| `PATIENT_HEALING_CLOCK_VIEW` | Patient views 29-step visual Healing Clock | `WEB_PWA` | `INFO` | Validates patient engagement & cognitive understanding. |
+| `PATIENT_SCHEME_QUERY` | Day-1 PMJAY / State scheme eligibility check | `WHATSAPP` / `IVR` | `INFO` | Audit trail for financial navigation without medical advice. |
+| `PATIENT_TRAVEL_PASS_DOWNLOAD` | Downloads 47-mile bus voucher & dharamshala pass | `WHATSAPP` / `PWA` | `INFO` | Validates logistical entitlement claim for central hub travel. |
+| `PATIENT_BRACHY_COUNSELING_LISTEN`| Listens to Day-21 Brachy fear-reduction audio | `WHATSAPP` / `IVR` | `INFO` | Verifies culturally sensitive psychosocial counseling delivery.|
+| `PATIENT_IVR_RESPONSE` | Dialect IVR automated keypad selections (Press 1/2/3) | `IVR` | `INFO` | Telephony interaction audit trail for non-smartphone users. |
+| `PATIENT_DPDP_CONSENT_LOG` | Grants or updates vernacular communication consent | `WHATSAPP` / `WEB` | `INFO` | DPDP Section 6 statutory consent documentation. |
+
+### 8.4 Cryptographic Block Chaining Specification for 3-User Logs
+
+Each logged user action creates an immutable cryptographic block linked to the prior ledger block:
+
+$$\text{Block}_i = \left\{ \text{log\_id}, \text{timestamp}, \text{user\_role}, \text{actor\_id}, \text{patient\_token}, \text{action\_type}, \text{channel}, \text{severity}, \text{payload}, \text{previous\_hash} \right\}$$
+
+$$\text{Hash}_i = \text{SHA-256}\left(\text{JSON\_SORTED}(\text{Block}_i)\right)$$
+
+Any modification to historical records breaks the hash chain:
+$$\text{Hash}_{i+1}.\text{previous\_hash} \ne \text{SHA-256}(\text{Block}_i)$$
+
+### 8.5 Sequence Flow: Multi-Role Collaborative Logging Lifecycle
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Nurse as Nurse / Helper (Spoke)
+    actor MD as Doctor (Attending Clinician)
+    actor Pat as Patient / Family
+    actor ASHA as ASHA Field Worker
+    participant CareUI as CareUI Workstation
+    participant API as Logging REST Gateway
+    participant Ledger as SHA-256 Audit Ledger
+    participant DB as user_activity_logs (SQL)
+
+    Note over Nurse,DB: STEP 1: NURSE PAPER SLIP UPLOAD & FRACTION LOG
+    Nurse->>CareUI: Uploads CBC/RFT slip & logs EBRT Fraction 1
+    CareUI->>API: POST /api/logs/nurse/fraction (Token, Step=1)
+    API->>Ledger: record_user_event("NURSE_HEALTHCARE_WORKER", "NURSE_EBRT_FRACTION_LOG", ...)
+    Ledger->>DB: INSERT user_activity_logs (Chained Hash 1)
+
+    Note over MD,DB: STEP 2: DOCTOR CLINICAL REVIEW & HARD SIGN-OFF
+    MD->>CareUI: Reviews OCR NCG draft & clicks "Sign"
+    CareUI->>API: POST /api/logs/doctor/sign-off (Token, CaseID)
+    API->>Ledger: record_user_event("DOCTOR", "DOCTOR_OCR_INTAKE_SIGN", ...)
+    Ledger->>DB: INSERT user_activity_logs (Chained Hash 2)
+
+    Note over Pat,DB: STEP 3: PATIENT BI-WEEKLY TOXICITY CHECK-IN
+    Pat->>API: Reports Moderate Diarrhea via WhatsApp Voice Check-in
+    API->>Ledger: record_user_event("PATIENT", "PATIENT_SYMPTOM_CHECKIN", Severity="WARNING", ...)
+    Ledger->>DB: INSERT user_activity_logs (Chained Hash 3)
+
+    Note over MD,DB: STEP 4: DOCTOR TRIAGE OF TOXICITY ALERT
+    API-->>CareUI: Flags Spoke Morning Ward List (Grade 2+ Diarrhea)
+    MD->>CareUI: Prescribes supportive loperamide & hydration
+    CareUI->>API: POST /api/logs/doctor/triage (Action="ORS+Loperamide Prescribed")
+    API->>Ledger: record_user_event("DOCTOR", "DOCTOR_TOXICITY_ALERT_TRIAGE", ...)
+    Ledger->>DB: INSERT user_activity_logs (Chained Hash 4)
+
+    Note over ASHA,DB: STEP 5: OVERDUE ESCALATION & ASHA FIELD VISIT
+    API->>CareUI: Patient 6 Days Overdue -> Tier 3 Field Ticket
+    ASHA->>API: Logs in-person home visit (Delay cause: "TRAVEL_COST")
+    API->>Ledger: record_user_event("NURSE_HEALTHCARE_WORKER", "ASHA_HOME_VISIT_COMPLETE", ...)
+    Ledger->>DB: INSERT user_activity_logs (Chained Hash 5)
+```
 
 ---
 

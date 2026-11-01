@@ -8,6 +8,7 @@ erDiagram
     TREATMENT_EPISODE ||--o{ TRAVEL_FINANCE_SUPPORT : "unlocks logistics"
     TREATMENT_EPISODE ||--o{ CLINICAL_NOTE : "documents via ASR"
     TREATMENT_EPISODE ||--o{ AUDIT_LOG : "records immutable trail"
+    TREATMENT_EPISODE ||--o{ USER_ACTIVITY_LOG : "tracks 3-role actions"
 
     PATIENT {
         uuid patient_id PK
@@ -66,4 +67,30 @@ erDiagram
         boolean pac_anesthesia_cleared
         boolean brachy_explainer_sent_to_patient
         date central_hub_ot_slot
-        boolean doctor_readiness_signoff "Hard Gate
+        boolean doctor_readiness_signoff "Hard Gate"
+    }
+
+    AUDIT_LOG {
+        uuid entry_id PK
+        uuid episode_id FK
+        string user_role "DOCTOR | NURSE_HEALTHCARE_WORKER | PATIENT"
+        string action_name
+        string actor_identity
+        string channel "WEB_CAREUI | WHATSAPP | IVR | ASHA_PWA | REST_API"
+        string sha256_current_hash
+        string sha256_prev_hash
+        timestamp recorded_at
+    }
+
+    USER_ACTIVITY_LOG {
+        uuid log_id PK
+        string user_role "DOCTOR | NURSE_HEALTHCARE_WORKER | PATIENT"
+        string actor_id "DR-XXX | NURSE-YYY | ASHA-ZZZ | PT-TOKEN"
+        string patient_token FK
+        string action_type
+        string channel
+        string severity "INFO | WARNING | CRITICAL"
+        json payload_json
+        string sha256_hash
+        timestamp created_at
+    }

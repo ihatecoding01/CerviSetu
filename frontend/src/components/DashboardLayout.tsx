@@ -13,14 +13,26 @@ import {
   ChevronRight,
   Activity,
   LogOut,
+  Smartphone,
+  Tablet,
+  Building2,
 } from "lucide-react";
 import { Button } from "./careui/button";
 
-export type Tab = "intake-tab" | "image-tab" | "tracker-tab" | "privacy-tab" | "asha-tab" | "overview-tab";
+export type Tab =
+  | "intake-tab"
+  | "image-tab"
+  | "tracker-tab"
+  | "privacy-tab"
+  | "asha-tab"
+  | "overview-tab"
+  | "patient-tab"
+  | "dual-tab";
 
 interface Props {
   activeTab: Tab;
   onTabChange: (tab: Tab) => void;
+  onLogoutToGateway?: () => void;
   children: ReactNode;
 }
 
@@ -33,6 +45,8 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { id: "overview-tab", label: "Dashboard", icon: LayoutDashboard, description: "Real-time case stats & triage" },
+  { id: "patient-tab", label: "Patient Companion", icon: Smartphone, description: "29-Step clock & vouchers (70%)" },
+  { id: "dual-tab", label: "Dual-Screen Demo", icon: Tablet, description: "Clinic Tablet | Patient Phone" },
   { id: "intake-tab", label: "Clinical Intake", icon: FileSpreadsheet, description: "Multi-agent LangGraph engine" },
   { id: "image-tab", label: "Image Quality Triage", icon: ScanLine, description: "Laplacian blur & FFT check" },
   { id: "tracker-tab", label: "Rural Tracker", icon: Flame, description: "Tier 1-4 escalation matrix" },
@@ -40,7 +54,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "privacy-tab", label: "Security & Audit", icon: ShieldCheck, description: "AES-256 Vault & SHA-256 log" },
 ];
 
-export function DashboardLayout({ activeTab, onTabChange, children }: Props) {
+export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, children }: Props) {
   const currentNav = NAV_ITEMS.find((item) => item.id === activeTab) || NAV_ITEMS[0];
 
   return (
@@ -110,9 +124,19 @@ export function DashboardLayout({ activeTab, onTabChange, children }: Props) {
             <span className="text-[11px] font-mono text-gray-400 bg-gray-50 border border-gray-200 px-1.5 py-0.5 rounded">v1.0</span>
           </div>
 
+          {onLogoutToGateway && (
+            <button
+              onClick={onLogoutToGateway}
+              className="flex items-center gap-2 text-xs text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 py-1.5 px-2 rounded-lg border border-emerald-200/60 transition-colors cursor-pointer font-medium"
+            >
+              <Building2 className="size-3.5" />
+              <span>CARE Gateway Login</span>
+            </button>
+          )}
+
           <button
             onClick={() => onTabChange("overview-tab")}
-            className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-800 transition-colors pt-1 cursor-pointer"
+            className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-800 transition-colors pt-0.5 cursor-pointer"
           >
             <LogOut className="size-3.5" />
             <span>Switch Session</span>

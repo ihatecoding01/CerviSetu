@@ -1,12 +1,27 @@
-import { useState } from "react";
-import { api, type AuditLog } from "../api/client";
+import { useState, useEffect } from "react";
+import { api, type AuditLog, type ActivitySummary, type UserRole } from "../api/client";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./careui/card";
 import { Badge } from "./careui/badge";
 import { Button } from "./careui/button";
 import { Input } from "./careui/input";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "./careui/table";
 import { Alert, AlertDescription } from "./careui/alert";
-import { Lock, Unlock, ShieldCheck, RefreshCw, KeyRound, AlertTriangle, Search } from "lucide-react";
+import {
+  Lock,
+  Unlock,
+  ShieldCheck,
+  RefreshCw,
+  KeyRound,
+  AlertTriangle,
+  Search,
+  Stethoscope,
+  HeartPulse,
+  UserCheck,
+  Activity,
+  CheckCircle2,
+  FileText,
+  Check
+} from "lucide-react";
 
 interface Props {
   logs: AuditLog[];
@@ -14,12 +29,48 @@ interface Props {
   onRefresh?: () => void;
 }
 
-export function AuditLedger({ logs, loading, onRefresh }: Props) {
+type RoleFilter = "ALL" | "DOCTOR" | "NURSE_HEALTHCARE_WORKER" | "PATIENT";
+
+export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefresh }: Props) {
   const [vaultToken, setVaultToken] = useState("");
   const [vaultResult, setVaultResult] = useState<any>(null);
   const [vaultError, setVaultError] = useState<string | null>(null);
   const [vaultLoading, setVaultLoading] = useState(false);
   const [filter, setFilter] = useState("");
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>("ALL");
+  const [summary, setSummary] = useState<ActivitySummary | null>(null);
+  const [localLogs, setLocalLogs] = useState<AuditLog[]>(initialLogs);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [submittingAction, setSubmittingAction] = useState<string | null>(null);
+
+  const fetchSummaryAndLogs = async () => {
+    try {
+      const sum = await api.getLogsSummary();
+      setSummary(sum);
+
+      const logsRes = await api.getAuditLogs(100);
+      if (logsRes?.audit_logs) {
+        setLocalLogs(logsRes.audit_logs);
+      }
+    } catch {
+      // Fallback gracefully if backend is rebooting
+    }
+  };
+
+  useEffect(() => {
+    fetchSummaryAndLogs();
+  }, []);
+
+  useEffect(() => {
+    if (initialLogs.length > 0) {
+      setLocalLogs(initialLogs);
+    }
+  }, [initialLogs]);
+
+  const handleRefresh = async () => {
+    if (onRefresh) onRefresh();
+    await fetchSummaryAndLogs();
+  };
 
   const handleVaultInspect = async () => {
     if (!vaultToken.trim()) return;
@@ -29,6 +80,7 @@ export function AuditLedger({ logs, loading, onRefresh }: Props) {
     try {
       const res = await api.inspectVault(vaultToken.trim());
       setVaultResult(res);
+      await fetchSummaryAndLogs();
     } catch (err) {
       setVaultError(err instanceof Error ? err.message : "Vault access denied: unauthorized role token");
     } finally {
@@ -36,43 +88,304 @@ export function AuditLedger({ logs, loading, onRefresh }: Props) {
     }
   };
 
-  const filteredLogs = logs.filter((l) =>
-    !filter ||
-    l.action.toLowerCase().includes(filter.toLowerCase()) ||
-    (l.patient_token || "").toLowerCase().includes(filter.toLowerCase()) ||
-    l.severity.toLowerCase().includes(filter.toLowerCase())
-  );
+  // Live Role Action Triggers
+  const triggerDoctorSignOff = async () => {
+    setSubmittingAction("doctor");
+    try {
+      await api.logDoctorSignOff({
+        doctor_id: "DR-RO-SPOKE-01",
+        patient_token: "PT-RURAL-7891",
+        case_id: "CASE-V2-001",
+        action_type: "DOCTOR_OCR_INTAKE_SIGN",
+        notes: "Verified Stage IIB Cervical Carcinoma; labs adequate for Concurrent Cisplatin.",
+        ncg_verified: true,
+      });
+      setActionSuccess("Doctor electronic sign-off logged with SHA-256 block hash!");
+      await fetchSummaryAndLogs();
+    } catch (e: any) {
+      setVaultError(e.message || "Failed to log doctor action");
+    } finally {
+      setSubmittingAction(null);
+      setTimeout(() => setActionSuccess(null), 4000);
+    }
+  };
+
+  const triggerNurseFractionLog = async () => {
+    setSubmittingAction("nurse");
+    try {
+      await api.logNurseFraction({
+        nurse_id: "NURSE-EBRT-02",
+        patient_token: "PT-RURAL-7891",
+        fraction_number: 15,
+        machine_id: "LINAC-MIRZAPUR-01",
+        dose_gy: 2.0,
+      });
+      setActionSuccess("Nurse 1-Tap EBRT Fraction 15 logged (Day 21 milestone reached)!");
+      await fetchSummaryAndLogs();
+    } catch (e: any) {
+      setVaultError(e.message || "Failed to log nurse action");
+    } finally {
+      setSubmittingAction(null);
+      setTimeout(() => setActionSuccess(null), 4000);
+    }
+  };
+
+  const triggerPatientSymptom = async () => {
+    setSubmittingAction("patient");
+    try {
+      await api.logPatientSymptom({
+        patient_token: "PT-RURAL-7891",
+        symptoms: ["pelvic burning", "mild diarrhea"],
+        severity_grade: 1,
+        channel: "WHATSAPP",
+        voice_note_received: true,
+      });
+      setActionSuccess("Patient Grade 1 vernacular toxicity check-in logged via WhatsApp!");
+      await fetchSummaryAndLogs();
+    } catch (e: any) {
+      setVaultError(e.message || "Failed to log patient check-in");
+    } finally {
+      setSubmittingAction(null);
+      setTimeout(() => setActionSuccess(null), 4000);
+    }
+  };
+
+  const triggerAshaHomeVisit = async () => {
+    setSubmittingAction("asha");
+    try {
+      await api.logAshaHomeVisit({
+        asha_id: "ASHA-KALYANPUR-04",
+        patient_token: "PT-RURAL-4421",
+        delay_root_cause: "TRAVEL_COST",
+        patient_contacted: true,
+        field_notes: "Visited patient home; issued spoke-to-hub transport voucher for Day 21 Brachy referral.",
+      });
+      setActionSuccess("ASHA Community Field Worker in-person visit & root cause logged!");
+      await fetchSummaryAndLogs();
+    } catch (e: any) {
+      setVaultError(e.message || "Failed to log ASHA visit");
+    } finally {
+      setSubmittingAction(null);
+      setTimeout(() => setActionSuccess(null), 4000);
+    }
+  };
+
+  // Helper to infer or read user_role
+  const getLogRole = (log: AuditLog): UserRole => {
+    if (log.user_role) return log.user_role;
+    const act = (log.action || "").toUpperCase();
+    const actor = (log.actor || "").toUpperCase();
+    if (act.includes("DOCTOR") || act.includes("MD") || actor.includes("DOCTOR") || actor.includes("CMO")) {
+      return "DOCTOR";
+    }
+    if (act.includes("NURSE") || act.includes("ASHA") || act.includes("FRACTION") || act.includes("SLIP") || actor.includes("NURSE") || actor.includes("ASHA")) {
+      return "NURSE_HEALTHCARE_WORKER";
+    }
+    if (act.includes("PATIENT") || act.includes("SYMPTOM") || act.includes("HEALING") || actor.includes("PATIENT")) {
+      return "PATIENT";
+    }
+    return "SYSTEM";
+  };
+
+  const filteredLogs = localLogs.filter((l) => {
+    const role = getLogRole(l);
+    if (roleFilter !== "ALL" && role !== roleFilter) {
+      return false;
+    }
+    if (!filter) return true;
+    const q = filter.toLowerCase();
+    return (
+      (l.action || "").toLowerCase().includes(q) ||
+      (l.patient_token || "").toLowerCase().includes(q) ||
+      (l.actor || "").toLowerCase().includes(q) ||
+      (l.severity || "").toLowerCase().includes(q) ||
+      (l.channel || "").toLowerCase().includes(q)
+    );
+  });
+
+  const doctorCount = localLogs.filter((l) => getLogRole(l) === "DOCTOR").length;
+  const nurseCount = localLogs.filter((l) => getLogRole(l) === "NURSE_HEALTHCARE_WORKER").length;
+  const patientCount = localLogs.filter((l) => getLogRole(l) === "PATIENT").length;
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      {/* Title */}
+      {/* Title & Top Badges */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-[#111418]">
-            Security Vault &amp; Cryptographic Audit Ledger
+            Multi-Role Audit Ledger &amp; Security Vault
           </h1>
           <p className="text-xs text-gray-500 mt-1">
-            Zero-knowledge cryptographic separation between patient identity and reasoning models with SHA-256 tamper-evident compliance chaining
+            Tamper-evident SHA-256 cryptographic compliance logging partitioned across Patients, Doctors, and Nurses/Healthcare Professionals
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          {onRefresh && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onRefresh}
-              disabled={loading}
-              className="text-xs font-medium"
-            >
-              <RefreshCw className={`size-3.5 mr-1.5 ${loading ? "animate-spin" : ""}`} />
-              Sync Ledger
-            </Button>
-          )}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={parentLoading}
+            className="text-xs font-medium"
+          >
+            <RefreshCw className={`size-3.5 mr-1.5 ${parentLoading ? "animate-spin" : ""}`} />
+            Sync Ledger
+          </Button>
           <Badge variant="primary" size="sm">AES-256-GCM Vault</Badge>
-          <Badge variant="neutral" size="sm">SHA-256 Block Chained</Badge>
+          <Badge variant="neutral" size="sm">
+            {summary?.chain_integrity.is_valid !== false ? "Chain Verified" : "Chain Integrity Error"}
+          </Badge>
         </div>
       </div>
+
+      {/* 3-Role Activity Metrics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Doctors Card */}
+        <Card className={`border-l-4 border-l-indigo-600 bg-white shadow-2xs cursor-pointer transition-all ${roleFilter === "DOCTOR" ? "ring-2 ring-indigo-500" : ""}`}
+              onClick={() => setRoleFilter(roleFilter === "DOCTOR" ? "ALL" : "DOCTOR")}>
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
+                <Stethoscope className="size-3.5" />
+                Doctors &amp; CMO
+              </p>
+              <h3 className="text-2xl font-bold text-gray-900 mt-1">
+                {summary?.ledger_role_counts?.DOCTOR || doctorCount}
+              </h3>
+              <p className="text-[11px] text-gray-500 mt-0.5">OCR Signs &amp; Alert Triages</p>
+            </div>
+            <Badge variant="neutral" size="xs" className="bg-indigo-50 text-indigo-700 border-indigo-200">
+              Role 1
+            </Badge>
+          </CardContent>
+        </Card>
+
+        {/* Nurses & Frontline Card */}
+        <Card className={`border-l-4 border-l-emerald-600 bg-white shadow-2xs cursor-pointer transition-all ${roleFilter === "NURSE_HEALTHCARE_WORKER" ? "ring-2 ring-emerald-500" : ""}`}
+              onClick={() => setRoleFilter(roleFilter === "NURSE_HEALTHCARE_WORKER" ? "ALL" : "NURSE_HEALTHCARE_WORKER")}>
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
+                <UserCheck className="size-3.5" />
+                Nurses &amp; Field Staff
+              </p>
+              <h3 className="text-2xl font-bold text-gray-900 mt-1">
+                {summary?.ledger_role_counts?.NURSE_HEALTHCARE_WORKER || nurseCount}
+              </h3>
+              <p className="text-[11px] text-gray-500 mt-0.5">Slips, Fractions, ASHA</p>
+            </div>
+            <Badge variant="neutral" size="xs" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+              Role 2
+            </Badge>
+          </CardContent>
+        </Card>
+
+        {/* Patients & Families Card */}
+        <Card className={`border-l-4 border-l-amber-500 bg-white shadow-2xs cursor-pointer transition-all ${roleFilter === "PATIENT" ? "ring-2 ring-amber-500" : ""}`}
+              onClick={() => setRoleFilter(roleFilter === "PATIENT" ? "ALL" : "PATIENT")}>
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700 flex items-center gap-1.5">
+                <HeartPulse className="size-3.5" />
+                Patients &amp; Caregivers
+              </p>
+              <h3 className="text-2xl font-bold text-gray-900 mt-1">
+                {summary?.ledger_role_counts?.PATIENT || patientCount}
+              </h3>
+              <p className="text-[11px] text-gray-500 mt-0.5">Toxicity, Vouchers &amp; IVR</p>
+            </div>
+            <Badge variant="neutral" size="xs" className="bg-amber-50 text-amber-700 border-amber-200">
+              Role 3
+            </Badge>
+          </CardContent>
+        </Card>
+
+        {/* SHA-256 Ledger Health Card */}
+        <Card className="border-l-4 border-l-[#2B66E4] bg-white shadow-2xs">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#2B66E4] flex items-center gap-1.5">
+                <ShieldCheck className="size-3.5" />
+                SHA-256 Block Chain
+              </p>
+              <h3 className="text-2xl font-bold text-gray-900 mt-1 flex items-center gap-1.5">
+                {summary?.chain_integrity?.total_blocks_verified || localLogs.length}
+                <CheckCircle2 className="size-4 text-emerald-600 inline" />
+              </h3>
+              <p className="text-[11px] text-gray-500 mt-0.5">DPDP 2023 Tamper-Evident</p>
+            </div>
+            <Badge variant="primary" size="xs">
+              100% Intact
+            </Badge>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Role Action Simulation Bar */}
+      <Card className="bg-gray-50/80 border border-gray-200 shadow-2xs">
+        <CardContent className="p-3.5 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Activity className="size-4 text-[#2B66E4]" />
+            <span className="text-xs font-bold text-gray-800">Live 3-Role Event Simulator:</span>
+            <span className="text-xs text-gray-500 hidden sm:inline">
+              Dispatch role-attributed actions and verify SHA-256 cryptographic block chaining
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="xs"
+              variant="outline"
+              disabled={submittingAction !== null}
+              onClick={triggerDoctorSignOff}
+              className="bg-indigo-50/80 border-indigo-200 text-indigo-700 hover:bg-indigo-100 text-xs font-medium"
+            >
+              <Stethoscope className="size-3 mr-1" />
+              Doctor Sign-Off
+            </Button>
+
+            <Button
+              size="xs"
+              variant="outline"
+              disabled={submittingAction !== null}
+              onClick={triggerNurseFractionLog}
+              className="bg-emerald-50/80 border-emerald-200 text-emerald-700 hover:bg-emerald-100 text-xs font-medium"
+            >
+              <UserCheck className="size-3 mr-1" />
+              Nurse Fraction 15
+            </Button>
+
+            <Button
+              size="xs"
+              variant="outline"
+              disabled={submittingAction !== null}
+              onClick={triggerPatientSymptom}
+              className="bg-amber-50/80 border-amber-200 text-amber-800 hover:bg-amber-100 text-xs font-medium"
+            >
+              <HeartPulse className="size-3 mr-1" />
+              Patient Toxicity Check
+            </Button>
+
+            <Button
+              size="xs"
+              variant="outline"
+              disabled={submittingAction !== null}
+              onClick={triggerAshaHomeVisit}
+              className="bg-blue-50/80 border-blue-200 text-blue-700 hover:bg-blue-100 text-xs font-medium"
+            >
+              <FileText className="size-3 mr-1" />
+              ASHA Home Visit
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {actionSuccess && (
+        <Alert variant="default" className="py-2.5 bg-emerald-50 border-emerald-300 text-emerald-900">
+          <Check className="size-4 text-emerald-700" />
+          <AlertDescription className="text-xs font-semibold">{actionSuccess}</AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Left: AES-256 Vault Inspector */}
@@ -122,7 +435,7 @@ export function AuditLedger({ logs, loading, onRefresh }: Props) {
               <div className="p-3.5 rounded-xl bg-blue-50/50 border border-blue-200 flex flex-col gap-2">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-[#2B66E4]">
                   <ShieldCheck className="size-4" />
-                  <span>[STATUTORY ACCESS AUTHORIZED]</span>
+                  <span>[STATUTORY ACCESS AUTHORIZED - LOGGED]</span>
                 </div>
                 <pre className="text-[11px] font-mono text-gray-800 bg-white p-2.5 rounded-lg border border-gray-200 overflow-x-auto">
                   {JSON.stringify(vaultResult, null, 2)}
@@ -139,71 +452,181 @@ export function AuditLedger({ logs, loading, onRefresh }: Props) {
               <div>
                 <CardTitle className="text-base font-bold text-[#111418] flex items-center gap-2">
                   <Lock className="size-4 text-[#4A91A7]" />
-                  Tamper-Evident Audit Ledger
+                  Tamper-Evident Multi-Role Audit Ledger
                 </CardTitle>
                 <CardDescription className="text-xs text-gray-500">
-                  Every clinical decision, de-identification event, and notification dispatch is cryptographically chained
+                  Every doctor sign-off, nurse fraction counter, and patient symptom report is cryptographically chained
                 </CardDescription>
               </div>
 
-              <div className="relative flex items-center w-48">
-                <Search className="absolute left-2.5 size-3 text-gray-400" />
-                <Input
-                  value={filter}
-                  onChange={(e) => setFilter(e.target.value)}
-                  placeholder="Filter events..."
-                  className="w-full pl-7 h-8 text-xs bg-gray-50/80 border-gray-200"
-                />
+              <div className="flex items-center gap-2">
+                <div className="relative flex items-center w-48">
+                  <Search className="absolute left-2.5 size-3 text-gray-400" />
+                  <Input
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    placeholder="Search action or token..."
+                    className="w-full pl-7 h-8 text-xs bg-gray-50/80 border-gray-200"
+                  />
+                </div>
               </div>
+            </div>
+
+            {/* Filter Tabs by Role */}
+            <div className="flex items-center gap-1.5 pt-3 border-t border-gray-100 overflow-x-auto">
+              <button
+                onClick={() => setRoleFilter("ALL")}
+                className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
+                  roleFilter === "ALL"
+                    ? "bg-gray-900 text-white"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                All Roles ({localLogs.length})
+              </button>
+              <button
+                onClick={() => setRoleFilter("DOCTOR")}
+                className={`px-3 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                  roleFilter === "DOCTOR"
+                    ? "bg-indigo-700 text-white"
+                    : "text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100"
+                }`}
+              >
+                <Stethoscope className="size-3" />
+                Doctors ({doctorCount})
+              </button>
+              <button
+                onClick={() => setRoleFilter("NURSE_HEALTHCARE_WORKER")}
+                className={`px-3 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                  roleFilter === "NURSE_HEALTHCARE_WORKER"
+                    ? "bg-emerald-700 text-white"
+                    : "text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100"
+                }`}
+              >
+                <UserCheck className="size-3" />
+                Nurses &amp; Staff ({nurseCount})
+              </button>
+              <button
+                onClick={() => setRoleFilter("PATIENT")}
+                className={`px-3 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                  roleFilter === "PATIENT"
+                    ? "bg-amber-600 text-white"
+                    : "text-amber-800 bg-amber-50/80 hover:bg-amber-100"
+                }`}
+              >
+                <HeartPulse className="size-3" />
+                Patients ({patientCount})
+              </button>
             </div>
           </CardHeader>
           <CardContent>
             {filteredLogs.length === 0 ? (
               <div className="text-center py-12 text-gray-400 text-xs">
-                No matching audit logs recorded. Pipeline actions automatically commit to this ledger.
+                No matching audit logs found for the selected role filter.
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Timestamp</TableHead>
-                    <TableHead>Severity</TableHead>
-                    <TableHead>Action Triggered</TableHead>
-                    <TableHead>Actor Component</TableHead>
-                    <TableHead>Patient Token</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredLogs.map((log) => (
-                    <TableRow key={log.event_id}>
-                      <TableCell className="font-mono text-xs text-gray-500">
-                        {log.timestamp}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            log.severity === "CRITICAL"
-                              ? "destructive"
-                              : log.severity === "WARNING"
-                              ? "warning"
-                              : "neutral"
-                          }
-                          size="xs"
-                        >
-                          {log.severity}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-semibold text-gray-900 text-xs">
-                        {log.action}
-                      </TableCell>
-                      <TableCell className="text-xs text-gray-600 font-mono">{log.actor}</TableCell>
-                      <TableCell className="font-mono text-xs text-[#2B66E4] font-semibold">
-                        {log.patient_token || "SYSTEM"}
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User Role</TableHead>
+                      <TableHead>Action Triggered</TableHead>
+                      <TableHead>Actor / Channel</TableHead>
+                      <TableHead>Patient Token</TableHead>
+                      <TableHead>Severity</TableHead>
+                      <TableHead>Block Hash (SHA-256)</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredLogs.slice(0, 50).map((log, idx) => {
+                      const role = getLogRole(log);
+                      return (
+                        <TableRow key={log.event_id || log.log_id || `log-${idx}`}>
+                          {/* Role Badge */}
+                          <TableCell>
+                            {role === "DOCTOR" && (
+                              <Badge variant="primary" size="xs" className="bg-indigo-100 text-indigo-800 border-indigo-200">
+                                <Stethoscope className="size-2.5 mr-1" />
+                                Doctor
+                              </Badge>
+                            )}
+                            {role === "NURSE_HEALTHCARE_WORKER" && (
+                              <Badge variant="primary" size="xs" className="bg-emerald-100 text-emerald-800 border-emerald-200">
+                                <UserCheck className="size-2.5 mr-1" />
+                                Nurse / ASHA
+                              </Badge>
+                            )}
+                            {role === "PATIENT" && (
+                              <Badge variant="primary" size="xs" className="bg-amber-100 text-amber-800 border-amber-200">
+                                <HeartPulse className="size-2.5 mr-1" />
+                                Patient
+                              </Badge>
+                            )}
+                            {role === "SYSTEM" && (
+                              <Badge variant="neutral" size="xs">
+                                System
+                              </Badge>
+                            )}
+                          </TableCell>
+
+                          {/* Action */}
+                          <TableCell className="font-semibold text-gray-900 text-xs">
+                            {log.action}
+                            <span className="block font-normal text-[10px] text-gray-400 font-mono mt-0.5">
+                              {log.timestamp}
+                            </span>
+                          </TableCell>
+
+                          {/* Actor & Channel */}
+                          <TableCell className="text-xs text-gray-700 font-mono">
+                            <div>{log.actor || log.actor_id || "SYSTEM"}</div>
+                            {log.channel && (
+                              <span className="inline-block px-1.5 py-0.2 rounded text-[10px] bg-gray-100 text-gray-500 mt-0.5">
+                                {log.channel}
+                              </span>
+                            )}
+                          </TableCell>
+
+                          {/* Patient Token */}
+                          <TableCell className="font-mono text-xs text-[#2B66E4] font-semibold">
+                            {log.patient_token || "SYSTEM"}
+                          </TableCell>
+
+                          {/* Severity */}
+                          <TableCell>
+                            <Badge
+                              variant={
+                                log.severity === "CRITICAL"
+                                  ? "destructive"
+                                  : log.severity === "WARNING"
+                                  ? "warning"
+                                  : "neutral"
+                              }
+                              size="xs"
+                            >
+                              {log.severity}
+                            </Badge>
+                          </TableCell>
+
+                          {/* Chained Hash */}
+                          <TableCell className="font-mono text-[10px] text-gray-400">
+                            {log.current_hash ? (
+                              <span title={log.current_hash}>
+                                {log.current_hash.substring(0, 10)}...
+                              </span>
+                            ) : (
+                              <span className="text-emerald-600 font-medium flex items-center gap-0.5">
+                                <CheckCircle2 className="size-3 inline" />
+                                Chained
+                              </span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>

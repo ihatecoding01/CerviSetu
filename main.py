@@ -1,4 +1,4 @@
-"""Main entry point for CerviSetu Clinical AI and Dashboard Server."""
+﻿"""Main entry point for CerviSetu Clinical AI and Dashboard Server."""
 import argparse
 import sys
 import uvicorn
@@ -10,9 +10,9 @@ if hasattr(sys.stdout, "reconfigure"):
     except Exception:
         pass
 
-from src.graph.workflow import clinical_graph
-from src.tools.tracker_tools import TrackerTriageEngine
-from src.core.security import global_vault, global_audit
+from backend.graph.workflow import clinical_graph
+from backend.tools.tracker_tools import TrackerTriageEngine
+from backend.core.security import global_vault, global_audit
 
 
 def run_cli_demo():
@@ -101,7 +101,7 @@ def run_cli_demo():
 def start_server(host: str = "127.0.0.1", port: int = 8000):
     """Start the FastAPI application with Uvicorn."""
     print(f"Starting CerviSetu Dashboard on http://{host}:{port}...")
-    uvicorn.run("src.dashboard.app:app", host=host, port=port, reload=False)
+    uvicorn.run("backend.dashboard.app:app", host=host, port=port, reload=False)
 
 
 def main():

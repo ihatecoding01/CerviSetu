@@ -140,10 +140,10 @@ health_hackathon/
 │   └── 2026-08-20.md           # Initial problem & requirement specifications
 ├── frontend/                   # CerviSetu Web Application (React 19 + CareUI + Tailwind v4)
 │   ├── package.json
-│   ├── vite.config.ts
+│   ├── vite.config.ts          # Vite configuration with /api proxy & direct static bundle output
 │   ├── index.html
-│   └── src/
-├── src/
+│   └── src/                    # React components, router, and API client
+├── backend/                    # Core CerviSetu Clinical Engine & API Service
 │   ├── config.py               # System thresholds & encryption keys
 │   ├── core/
 │   │   ├── security.py         # AES-256 TokenVault, PIIShield, Chained AuditLedger
@@ -162,15 +162,22 @@ health_hackathon/
 │   │   ├── nodes.py            # LangGraph node definitions & routing gates
 │   │   └── workflow.py         # LangGraph StateGraph builder
 │   └── dashboard/
-│       ├── app.py              # FastAPI REST endpoints & WebSocket bridges
-│       └── static/             # Modern Dark-mode Clinical UI (HTML/CSS/JS)
+│       ├── app.py              # FastAPI Application Factory & SPA Static Fallback
+│       ├── routers/            # Domain-driven modular API routers
+│       │   ├── facilities.py   # Spoke & Hub directory pairing
+│       │   ├── patient.py      # 29-step Healing clock, fraction 15, hub confirm, audio
+│       │   ├── clinical.py     # Diagnostic cases, triage & escalation simulation
+│       │   └── logs.py         # User activity logs, doctor sign-off & audit ledger
+│       └── static/             # Production build of CareUI React Frontend
 └── tests/
     ├── test_security.py        # Vault & PII redaction tests
     ├── test_image_tools.py     # Blur, FFT & contrast tests
     ├── test_tracker_tools.py   # Follow-up escalation & unmasking tests
     ├── test_ocr_tools.py       # Clinical entity extraction tests
     ├── test_workflow.py        # End-to-end LangGraph state tests
-    └── test_api.py             # FastAPI integration tests
+    ├── test_user_logging.py    # Role-based user activity log tests
+    ├── test_patient_flow.py    # Healing clock, voucher, and audio soundboard tests
+    └── test_api.py             # FastAPI integration & SPA fallback tests
 ```
 
 ---

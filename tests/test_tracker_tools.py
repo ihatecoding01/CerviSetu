@@ -1,12 +1,12 @@
-"""Tests for patient tracking, progressive multi-channel reminders, and authority escalation."""
-from src.tools.tracker_tools import (
+﻿"""Tests for patient tracking, progressive multi-channel reminders, and authority escalation."""
+from backend.tools.tracker_tools import (
     CancerRiskScorerTool,
     TrackerTriageEngine,
     MultiChannelReminderTool,
     CommunityWorkerDispatchTool,
     EmergencyAuthorityEscalationTool
 )
-from src.core.security import TokenVault
+from backend.core.security import TokenVault
 
 
 def test_cancer_risk_scorer():
