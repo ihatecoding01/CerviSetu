@@ -154,16 +154,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* ARCHITECTURAL HEADER WITH EMBLEM & PRIMARY/SECONDARY BORDERS              */}
       {/* ========================================================================= */}
       <header className="sticky top-0 z-40 w-full bg-[#FFFFFF]/95 backdrop-blur-md border-b-2 border-[#BA2D0B]/25">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-4 flex items-center justify-between gap-6">
           {/* Brand Logo with CerviSetu Caring Hands SVG Emblem */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 shrink-0">
             <div className="size-10 rounded-xl bg-[#DBFE87] border-2 border-[#BA2D0B] flex items-center justify-center text-[#000000] shadow-xs p-1.5 transition-transform hover:scale-105">
               <CerviSetuLogo size={24} className="text-[#000000]" />
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <span className="text-lg font-semibold tracking-tight text-[#000000]">CerviSetu</span>
-                <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#90C3CB]/40 text-[#000000] font-semibold border border-[#F19941] font-mono-data">
+                <span className="hidden 2xl:inline text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#90C3CB]/40 text-[#000000] font-semibold border border-[#F19941] font-mono-data">
                   Sovereign Health
                 </span>
               </div>
@@ -174,62 +174,62 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           {/* Desktop Navigation Links — Spacious & Distinct */}
-          <nav aria-label="Desktop Navigation" className="hidden lg:flex items-center gap-6">
+          <nav aria-label="Desktop Navigation" className="hidden xl:flex flex-1 items-center justify-center gap-5 2xl:gap-8">
             <a
               href="#protocol"
-              className="text-sm font-medium text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
+              className="text-sm font-medium whitespace-nowrap text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
             >
               56 Day Protocol
             </a>
             <a
               href="#speech-studio"
-              className="text-sm font-medium text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
+              className="text-sm font-medium whitespace-nowrap text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
             >
               Speech IVR
             </a>
             <a
               href="#vision-ocr"
-              className="text-sm font-medium text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
+              className="text-sm font-medium whitespace-nowrap text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
             >
               Vision OCR
             </a>
             <a
               href="#agent-flow"
-              className="text-sm font-medium text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
+              className="text-sm font-medium whitespace-nowrap text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
             >
               Agent Flow
             </a>
             <a
               href="#impact-calculator"
-              className="text-sm font-medium text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
+              className="text-sm font-medium whitespace-nowrap text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
             >
               Impact ROI
             </a>
             <a
               href="#api-studio"
-              className="text-sm font-medium text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
+              className="text-sm font-medium whitespace-nowrap text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
             >
               API Studio
             </a>
             <a
               href="#faq"
-              className="text-sm font-medium text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
+              className="text-sm font-medium whitespace-nowrap text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
             >
               FAQ
             </a>
           </nav>
 
           {/* Header Action Buttons — Primary & Secondary Borders */}
-          <div className="hidden sm:flex items-center gap-4">
+          <div className="hidden sm:flex items-center gap-3 shrink-0 xl:pl-5 2xl:pl-6 xl:border-l lg:border-[#E5E7EB]">
             <button
               onClick={onLaunchWorkstation}
-              className="px-4 py-2 text-xs font-semibold text-[#000000] bg-white hover:bg-[#F4F5F7] border-2 border-[#F19941] rounded-lg transition-all duration-200 cursor-pointer shadow-xs active:scale-98"
+              className="h-10 px-4 inline-flex items-center whitespace-nowrap text-sm font-semibold text-[#000000] bg-white hover:bg-[#F4F5F7] border border-[#D1D5DB] rounded-lg transition-colors duration-200 cursor-pointer active:scale-98"
             >
               Staff Workstation
             </button>
             <a
               href="#pilot-intake"
-              className="px-4 py-2 text-xs font-semibold text-[#FFFFFF] bg-[#BA2D0B] hover:bg-[#9E2407] border-2 border-[#BA2D0B] rounded-lg transition-all duration-200 shadow-sm cursor-pointer active:scale-98"
+              className="h-10 px-4 inline-flex items-center whitespace-nowrap text-sm font-semibold text-[#FFFFFF] bg-[#BA2D0B] hover:bg-[#9E2407] border border-[#BA2D0B] rounded-lg transition-colors duration-200 cursor-pointer active:scale-98"
             >
               Deploy Spoke Pilot
             </a>
@@ -238,7 +238,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 text-[#000000] hover:bg-[#F4F5F7] rounded-lg border-2 border-[#F19941]"
+            className="xl:hidden p-2 text-[#000000] hover:bg-[#F4F5F7] rounded-lg border-2 border-[#F19941]"
             aria-label="Toggle mobile menu"
           >
             <div className="w-5 flex flex-col gap-1.5 items-end">
@@ -252,7 +252,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-30 bg-[#FFFFFF]/98 backdrop-blur-xl flex flex-col justify-center px-8 py-16 lg:hidden border-b-2 border-[#BA2D0B]">
+        <div className="fixed inset-0 z-30 bg-[#FFFFFF]/98 backdrop-blur-xl flex flex-col justify-center px-8 py-16 xl:hidden border-b-2 border-[#BA2D0B]">
           <div className="flex flex-col gap-6 max-w-sm mx-auto w-full">
             <div className="flex items-center gap-3 pb-4 border-b border-[#F19941]/30">
               <div className="size-9 rounded-lg bg-[#DBFE87] border-2 border-[#BA2D0B] flex items-center justify-center p-1.5">
