@@ -21,12 +21,14 @@ export const VoiceStudio: React.FC = () => {
   const [activeDialect, setActiveDialect] = useState<string>("HINDI");
   const [scriptData, setScriptData] = useState<VoiceScriptResult | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [isSynthesizing, setIsSynthesizing] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<"script" | "transliteration" | "ssml">("script");
   const [dtmfSelected, setDtmfSelected] = useState<string | null>(null);
+  const [ttsProvider, setTtsProvider] = useState<string>("sarvam_ai");
   const [audioBars, setAudioBars] = useState<number[]>([
     30, 60, 45, 90, 75, 40, 85, 95, 60, 70, 30, 80, 50, 90, 65, 45, 85, 40, 75, 55, 35, 65, 80,
   ]);
-  const animationRef = useRef<number | null>(null);
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
 
   // Fetch localized script whenever dialect changes
   useEffect(() => {
@@ -39,47 +41,98 @@ export const VoiceStudio: React.FC = () => {
     };
   }, [activeDialect]);
 
-  // Handle Speech Synthesis
-  useEffect(() => {
-    if (!isPlaying) {
+  // Handle Play / Stop with Sarvam bulbul:v4-flash
+  const togglePlayback = async () => {
+    if (isPlaying) {
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current = null;
+      }
       if (typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();
       }
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      setIsPlaying(false);
+      setIsSynthesizing(false);
       return;
     }
 
+    if (!scriptData) return;
+
+    setIsSynthesizing(true);
+    try {
+      // Call backend Sarvam bulbul:v4-flash TTS
+      const res = await api.synthesizeSpeech({
+        text: scriptData.script,
+        language: activeDialect,
+        model: "bulbul:v4-flash",
+      });
+
+      if (res.status === "SUCCESS" && res.audio_base64) {
+        setTtsProvider("sarvam_ai");
+        const audio = new Audio(`data:audio/wav;base64,${res.audio_base64}`);
+        audioPlayerRef.current = audio;
+
+        audio.onplay = () => {
+          setIsSynthesizing(false);
+          setIsPlaying(true);
+        };
+        audio.onended = () => {
+          setIsPlaying(false);
+          audioPlayerRef.current = null;
+        };
+        audio.onerror = () => {
+          fallbackBrowserSpeech();
+        };
+
+        await audio.play();
+        return;
+      }
+    } catch {
+      // Fallback to browser speech if offline
+    }
+
+    fallbackBrowserSpeech();
+  };
+
+  const fallbackBrowserSpeech = () => {
     if (typeof window !== "undefined" && "speechSynthesis" in window && scriptData) {
+      setTtsProvider("browser_web_speech");
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(scriptData.script);
       utterance.lang = scriptData.voice_locale;
       utterance.rate = 0.95;
 
+      utterance.onstart = () => {
+        setIsSynthesizing(false);
+        setIsPlaying(true);
+      };
       utterance.onend = () => {
         setIsPlaying(false);
       };
       utterance.onerror = () => {
         setIsPlaying(false);
+        setIsSynthesizing(false);
       };
 
       window.speechSynthesis.speak(utterance);
+    } else {
+      setIsSynthesizing(false);
+      setIsPlaying(false);
     }
+  };
 
-    // Waveform bounce
+  // Waveform bounce animation during playback
+  useEffect(() => {
+    if (!isPlaying) return;
+
     const interval = setInterval(() => {
       setAudioBars((prev) =>
         prev.map(() => Math.floor(Math.random() * 75) + 25)
       );
     }, 120);
 
-    return () => {
-      clearInterval(interval);
-    };
-  }, [isPlaying, scriptData]);
-
-  const togglePlayback = () => {
-    setIsPlaying((prev) => !prev);
-  };
+    return () => clearInterval(interval);
+  }, [isPlaying]);
 
   return (
     <div className="w-full bg-[#FFFFFF] border-2 border-[#BA2D0B] rounded-2xl p-6 sm:p-8 shadow-sm">
@@ -98,14 +151,14 @@ export const VoiceStudio: React.FC = () => {
           </h3>
         </div>
 
-        {/* Confidence & WPM Badges */}
-        <div className="flex items-center gap-2 font-mono-data text-xs">
+        {/* Confidence & Sarvam bulbul:v4-flash Badges */}
+        <div className="flex flex-wrap items-center gap-2 font-mono-data text-xs">
           <div className="px-3 py-1.5 rounded-lg bg-[#DBFE87] border-2 border-[#BA2D0B] text-[#000000] font-bold shadow-xs flex items-center gap-1.5">
             <SolarCheck size={14} />
-            <span>98.4% ASR Precision</span>
+            <span>Sarvam AI bulbul 4 flash</span>
           </div>
           <div className="px-3 py-1.5 rounded-lg bg-[#90C3CB] border-2 border-[#F19941] text-[#000000] font-bold shadow-xs">
-            <span>128 WPM Natural Pace</span>
+            <span>Ritu Medical Voice</span>
           </div>
         </div>
       </div>
@@ -194,14 +247,21 @@ export const VoiceStudio: React.FC = () => {
             )}
           </div>
 
-          {/* Interactive Player with Waveform */}
+          {/* Interactive Player with Waveform & Sarvam bulbul 4 flash */}
           <div className="p-4 rounded-xl bg-[#FFFFFF] border-2 border-[#BA2D0B] flex items-center gap-4 shadow-xs">
             <button
               onClick={togglePlayback}
+              disabled={isSynthesizing}
               className="size-12 rounded-xl bg-[#DBFE87] hover:bg-[#cbf76c] border-2 border-[#BA2D0B] flex items-center justify-center text-[#000000] shrink-0 transition-all cursor-pointer shadow-xs active:scale-95"
               aria-label={isPlaying ? "Pause Speech" : "Play Speech"}
             >
-              {isPlaying ? <SolarPause size={20} /> : <SolarPlay size={20} />}
+              {isSynthesizing ? (
+                <span className="font-mono-data text-[10px] font-bold animate-pulse">...</span>
+              ) : isPlaying ? (
+                <SolarPause size={20} />
+              ) : (
+                <SolarPlay size={20} />
+              )}
             </button>
 
             <div className="flex-1">
@@ -213,7 +273,11 @@ export const VoiceStudio: React.FC = () => {
                   <span>{scriptData?.language_name || "Indic Dialect"}</span>
                 </span>
                 <span className="text-[#BA2D0B] font-bold">
-                  {isPlaying ? "Live Synthesizing" : "Click Play to Listen"}
+                  {isSynthesizing
+                    ? "Streaming bulbul 4 flash audio..."
+                    : isPlaying
+                    ? `Live Playing (${ttsProvider === "sarvam_ai" ? "Sarvam bulbul 4 flash" : "Web Speech"})`
+                    : "Click Play to Listen via Sarvam bulbul 4 flash"}
                 </span>
               </div>
 

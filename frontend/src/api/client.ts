@@ -161,6 +161,12 @@ export interface VoiceScriptResult {
   ssml: string;
   asr_confidence: number;
   indic_wpm: number;
+  tts_engine?: {
+    model: string;
+    speaker: string;
+    target_language_code: string;
+    has_api_key: boolean;
+  };
   ivr_parameters: {
     retry_limit: number;
     timeout_seconds: number;
@@ -168,6 +174,15 @@ export interface VoiceScriptResult {
     dtmf_key_transport_help: string;
     dtmf_key_nurse_callback: string;
   };
+}
+
+export interface SynthesizeSpeechResult {
+  status: string;
+  audio_base64: string | null;
+  model: string;
+  speaker: string;
+  target_language_code: string;
+  provider: string;
 }
 
 export interface GraphTraceNode {
@@ -395,6 +410,29 @@ export const api = {
 
   async getSoundboardTracks(): Promise<{ status: string; tracks: SoundboardTrack[] }> {
     return request<{ status: string; tracks: SoundboardTrack[] }>("/api/patient/soundboard/audio");
+  },
+
+  async synthesizeSpeech(params: {
+    text: string;
+    language: string;
+    speaker?: string;
+    model?: string;
+  }): Promise<SynthesizeSpeechResult> {
+    try {
+      return await request<SynthesizeSpeechResult>("/api/showcase/synthesize-speech", {
+        method: "POST",
+        body: JSON.stringify(params),
+      });
+    } catch {
+      return {
+        status: "FALLBACK",
+        audio_base64: null,
+        model: params.model || "bulbul:v4-flash",
+        speaker: params.speaker || "ritu_hi_medical",
+        target_language_code: "hi-IN",
+        provider: "browser_web_speech",
+      };
+    }
   },
 
   async parsePrescriptionSlip(params: {
