@@ -1,7 +1,7 @@
 """Clinical Intake, LangGraph Execution, Cases, and Tracking Simulation router."""
 import shutil
 import secrets
-from typing import Optional
+from typing import List, Optional
 from fastapi import APIRouter, File, Form, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -254,6 +254,28 @@ async def get_linac_downtime_status(facility: str = "Mirzapur Spoke Clinic"):
     return status
 
 
+@router.post("/clinical/linac-downtime")
+async def toggle_linac_downtime_ui(req: DowntimeToggleRequest):
+    """Route used by the CareUI ward board; same behaviour as /clinical/downtime-toggle."""
+    return await toggle_linac_downtime(req)
+
+
+@router.get("/clinical/linac-downtime/status")
+async def get_linac_downtime_status_ui(facility_name: str = "Mirzapur Spoke Clinic"):
+    """Route used by the CareUI ward board, shaped to the frontend LinacDowntimeStatus type."""
+    status = global_db.get_linac_downtime_status(facility_name)
+    is_active = status.get("status") == "MAINTENANCE_PAUSED"
+    return {
+        "facility_name": status.get("facility_name", facility_name),
+        "machine_id": status.get("machine_id") or "LINAC-SPOKE-01",
+        "is_downtime_active": is_active,
+        "status": "MAINTENANCE_PAUSED" if is_active else "OPERATIONAL",
+        "started_at": status.get("started_at"),
+        "reason": status.get("reason"),
+        "clock_paused_message": "Delinquency clocks paused clinic-wide during LINAC maintenance." if is_active else None,
+    }
+
+
 @router.post("/clinical/hub-deficiency")
 async def log_hub_deficiency(req: HubDeficiencyRequest):
     """Return referral packet with deficiency and 48h action SLA on Spoke board."""
@@ -309,3 +331,68 @@ async def discharge_signoff(req: DischargeSignoffRequest):
         }
     }
 
+
+
+class HubTransferDeficiencyRequest(BaseModel):
+    requested_deficiencies: List[str] = []
+    spoke_action_sla_hours: Optional[int] = 48
+    notes: Optional[str] = None
+    doctor_id: Optional[str] = "DR-ONCO-HUB-01"
+
+
+@router.post("/clinical/hub-transfer/{patient_token}/deficiency-return")
+async def return_hub_transfer_deficiency(patient_token: str, req: HubTransferDeficiencyRequest):
+    """Route used by the CareUI encounter screen; records the same audit event as /clinical/hub-deficiency."""
+    sla_hours = req.spoke_action_sla_hours or 48
+    global_audit.record_user_event(
+        user_role=UserRole.DOCTOR,
+        action="HUB_DEFICIENCY_RETURN",
+        actor_id=req.doctor_id or "DR-ONCO-HUB-01",
+        patient_token=patient_token,
+        details={
+            "deficiency_reason": "; ".join(req.requested_deficiencies) or "Unspecified",
+            "action_required": req.notes or "Resolve listed deficiencies at Spoke",
+            "sla_hours": sla_hours
+        },
+        severity="WARNING",
+        channel="WEB_CAREUI"
+    )
+
+    return {
+        "status": "SUCCESS",
+        "patient_token": patient_token,
+        "message": f"Referral returned to Spoke with {len(req.requested_deficiencies)} deficiency item(s); {sla_hours}h action SLA started.",
+        "action_sla_hours": sla_hours
+    }
+
+
+class EncounterDischargeRequest(BaseModel):
+    doctor_id: Optional[str] = "DR-ONCO-HUB-01"
+    total_ebrt_fractions: Optional[int] = 25
+    total_brachy_fractions: Optional[int] = 4
+    clinical_summary: Optional[str] = None
+
+
+@router.post("/encounter/{patient_token}/discharge-signoff")
+async def encounter_discharge_signoff(patient_token: str, req: EncounterDischargeRequest):
+    """Route used by the CareUI encounter screen; records the same audit event as /clinical/discharge-signoff."""
+    global_audit.record_user_event(
+        user_role=UserRole.DOCTOR,
+        action="DOCTOR_FINAL_DISCHARGE_SIGN",
+        actor_id=req.doctor_id or "DR-ONCO-HUB-01",
+        patient_token=patient_token,
+        details={
+            "total_ebrt_fractions": req.total_ebrt_fractions,
+            "total_brachy_fractions": req.total_brachy_fractions,
+            "clinical_summary": req.clinical_summary
+        },
+        severity="INFO",
+        channel="WEB_CAREUI"
+    )
+
+    return {
+        "status": "SUCCESS",
+        "patient_token": patient_token,
+        "message": "Discharge sign-off sealed in the SHA-256 audit ledger.",
+        "dpdp_compliance": "Audio cache purge requested per DPDP Act 2023 storage limitation"
+    }

@@ -193,6 +193,7 @@ async def acknowledge_hydration(token: str, req: PatientHydrationAckRequest):
     }
 
 
+@router.post("/{token}/purge-audio-cache")
 @router.delete("/{token}/audio-cache")
 async def purge_patient_audio_cache(token: str):
     """DPDP-mandated voice audio cache purge upon discharge or patient request."""
