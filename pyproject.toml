@@ -1,7 +1,11 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "health-hackathon"
 version = "0.1.0"
-description = "Add your description here"
+description = "CerviSetu — Privacy-First Multi-Agent Clinical AI & Rural Oncology Network"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
@@ -20,6 +24,9 @@ dependencies = [
     "python-multipart>=0.0.32",
     "uvicorn>=0.52.4",
 ]
+
+[tool.setuptools.packages.find]
+include = ["backend*"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
