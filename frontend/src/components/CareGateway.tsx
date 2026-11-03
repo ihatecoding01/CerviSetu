@@ -153,9 +153,14 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
                       ))}
                     </div>
 
-                    <div className="flex items-center justify-between pt-2.5 border-t border-slate-200/80 text-xs text-slate-600">
+                    <div className="mt-3 pt-2.5 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-600">
                       <span className="font-bold text-black">✓ Free Treatment (PMJAY)</span>
-                      {fac.has_dharamshala && <span className="text-black font-bold">🏠 Dharamshala Pass</span>}
+                      <button
+                        onClick={onLoginStaff}
+                        className="px-3 py-1 rounded-lg bg-[#BA2D0B] hover:bg-[#a02609] text-white font-semibold text-xs transition-colors cursor-pointer"
+                      >
+                        Book Appointment &rarr;
+                      </button>
                     </div>
                   </div>
                 ))}

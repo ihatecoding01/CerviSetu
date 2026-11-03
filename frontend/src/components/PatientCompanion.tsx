@@ -541,9 +541,30 @@ export const PatientCompanion: React.FC<Props> = ({
     });
   };
 
+  const [hydrationAcked, setHydrationAcked] = useState<boolean>(false);
+
+  const handleAckHydration = async () => {
+    try {
+      await api.ackHydration(patientToken, { glasses_count: 8, ors_taken: true });
+      setHydrationAcked(true);
+      setNotificationMsg({
+        title: language === "hi" ? "जल सेवन पुष्टि दर्ज की गई ✓" : "Hydration Intake Confirmed ✓",
+        desc: language === "hi" ? "दैनिक 8 गिलास (2.5 लीटर) जल सेवन दर्ज हुआ। गुर्दे की सुरक्षा सुनिश्चित है।" : "Daily 8 glasses (2.5L) fluids logged. Nephroprotection active.",
+        type: "success",
+      });
+    } catch {
+      setHydrationAcked(true);
+    }
+  };
+
   // Symptom Triage Action
   const handleReportSymptom = async (symptomName: string, grade: number) => {
     try {
+      await api.reportPatientSymptom(patientToken, {
+        symptom_key: symptomName,
+        severity_grade: grade,
+        notes: "Patient reported from Care Companion portal.",
+      });
       await api.logPatientSymptom({
         patient_token: patientToken,
         symptoms: [symptomName],
@@ -1041,6 +1062,38 @@ export const PatientCompanion: React.FC<Props> = ({
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">{t.hydrationPoint3Desc}</p>
             </div>
+          </div>
+
+          {/* Interactive Hydration Check-In */}
+          <div className="p-4 bg-emerald-50/70 border border-emerald-300 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+            <div className="flex items-center gap-2.5">
+              <div className="size-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                2.5L
+              </div>
+              <div>
+                <div className="text-xs font-bold text-emerald-950">
+                  {language === "hi" ? "दैनिक जल सेवन चेक-इन (Cisplatin Renal Protection)" : "Daily Hydration Check-in (Nephroprotection)"}
+                </div>
+                <div className="text-xs text-emerald-800">
+                  {language === "hi"
+                    ? "क्या आपने आज के 8 गिलास (2.5 लीटर) तरल/पानी का सेवन पूरा कर लिया है?"
+                    : "Have you reached today's 8 glasses (2.5L) recommended fluid intake?"}
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handleAckHydration}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                hydrationAcked
+                  ? "bg-emerald-600 text-white"
+                  : "bg-white border border-emerald-400 text-emerald-900 hover:bg-emerald-100"
+              }`}
+            >
+              {hydrationAcked
+                ? (language === "hi" ? "✓ 8 गिलास पूर्ण (सत्यापित)" : "✓ 8 Glasses Completed")
+                : (language === "hi" ? "✓ हाँ, 8 गिलास पानी पी लिया" : "✓ Yes, 8 Glasses Taken")}
+            </button>
           </div>
 
           <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
