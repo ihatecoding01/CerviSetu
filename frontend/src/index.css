@@ -4,43 +4,45 @@
   color-scheme: light;
   --font-size-scale: 1;
 
-  /* Master Inspo Palette (font and colours.png) */
-  --color-primary: #2B66E4;        /* Cobalt Royal Blue */
-  --color-clinical-cyan: #4A91A7;  /* Slate Cyan */
-  --color-warm-gold: #D8CA21;      /* Warm Ochre Gold */
-  --color-obsidian: #111418;       /* Deep Obsidian Charcoal */
+  /* User Specified Palette (health_hack) */
+  --color-primary: #BA2D0B;        /* Primary: Burnt Terracotta Crimson */
+  --color-secondary: #F19941;      /* Secondary: Warm Amber Orange */
+  --color-accent-aqua: #90C3CB;    /* Accent 1: Soft Calming Aqua */
+  --color-accent-lime: #DBFE87;    /* Accent 2: Vibrant Electric Lime */
+  --color-black: #000000;          /* Black */
+  --color-white: #FFFFFF;          /* White */
 
   /* Surface & Canvas System */
-  --background: #F8F9FA;
+  --background: #FAFAFA;
   --card: #FFFFFF;
-  --card-foreground: #111418;
+  --card-foreground: #000000;
   --popover: #FFFFFF;
-  --popover-foreground: #111418;
+  --popover-foreground: #000000;
 
-  --foreground: #111418;
-  --muted: #F1F5F9;
-  --muted-foreground: #64748B;
-  --subtle-foreground: #475569;
+  --foreground: #000000;
+  --muted: #F3F4F6;
+  --muted-foreground: #6B7280;
+  --subtle-foreground: #374151;
 
   /* Component Tokens */
-  --primary: #2B66E4;
+  --primary: #BA2D0B;
   --primary-foreground: #FFFFFF;
-  --secondary: #F1F5F9;
-  --secondary-foreground: #111418;
-  --accent: #F8FAFC;
-  --accent-foreground: #111418;
-  --destructive: #E02424;
+  --secondary: #F19941;
+  --secondary-foreground: #000000;
+  --accent: #F9FAFB;
+  --accent-foreground: #000000;
+  --destructive: #BA2D0B;
   --destructive-foreground: #FFFFFF;
 
   --border: #E5E7EB;
   --input: #E5E7EB;
-  --ring: rgba(43, 102, 228, 0.25);
-  --radius: 0.75rem;
+  --ring: rgba(186, 45, 11, 0.25);
+  --radius: 1rem;
 
   /* Sidebar Tokens */
   --sidebar: #FFFFFF;
-  --sidebar-foreground: #111418;
-  --sidebar-primary: #111418;
+  --sidebar-foreground: #000000;
+  --sidebar-primary: #000000;
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-border: #E5E7EB;
 }
@@ -50,10 +52,195 @@ body {
   padding: 0;
   background-color: var(--background);
   color: var(--foreground);
-  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Landing Page Design Skill Design Tokens */
+.font-mono-data {
+  font-family: 'Geist Mono', monospace;
+}
+
+/* B1 Named Typography Styles */
+.heading-1 {
+  font-size: 3.75rem; /* 60px */
+  line-height: 1; /* 60px */
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+.heading-2 {
+  font-size: 3rem; /* 48px */
+  line-height: 1; /* 48px */
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+.heading-3 {
+  font-size: 2.25rem; /* 36px */
+  line-height: 2.5rem; /* 40px */
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+.heading-4 {
+  font-size: 1.875rem; /* 30px */
+  line-height: 2.25rem; /* 36px */
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+.heading-5 {
+  font-size: 1.5rem; /* 24px */
+  line-height: 2rem; /* 32px */
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+.heading-6 {
+  font-size: 1.25rem; /* 20px */
+  line-height: 1.75rem; /* 28px */
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+.title-1 {
+  font-size: 1.25rem; /* 20px */
+  line-height: 1.75rem; /* 28px */
+  font-weight: 500;
+}
+
+.title-2 {
+  font-size: 1.125rem; /* 18px */
+  line-height: 1.75rem; /* 28px */
+  font-weight: 500;
+}
+
+.title-3 {
+  font-size: 1rem; /* 16px */
+  line-height: 1.5rem; /* 24px */
+  font-weight: 500;
+}
+
+.title-4 {
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.25rem; /* 20px */
+  font-weight: 500;
+}
+
+.title-5 {
+  font-size: 0.75rem; /* 12px */
+  line-height: 1rem; /* 16px */
+  font-weight: 500;
+}
+
+.body-1 {
+  font-size: 1rem; /* 16px */
+  line-height: 1.5rem; /* 24px */
+  font-weight: 600;
+  text-wrap: pretty;
+}
+
+.body-2 {
+  font-size: 1rem; /* 16px */
+  line-height: 1.5rem; /* 24px */
+  font-weight: 500;
+  text-wrap: pretty;
+}
+
+.body-3 {
+  font-size: 1rem; /* 16px */
+  line-height: 1.5rem; /* 24px */
+  font-weight: 400;
+  text-wrap: pretty;
+}
+
+.body-4 {
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.25rem; /* 20px */
+  font-weight: 600;
+  text-wrap: pretty;
+}
+
+.body-5 {
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.25rem; /* 20px */
+  font-weight: 500;
+  text-wrap: pretty;
+}
+
+.body-6 {
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.25rem; /* 20px */
+  font-weight: 400;
+  text-wrap: pretty;
+}
+
+.button-lg {
+  font-size: 1.125rem; /* 18px */
+  line-height: 1.75rem; /* 28px */
+  font-weight: 600;
+}
+
+.button-md {
+  font-size: 1rem; /* 16px */
+  line-height: 1.5rem; /* 24px */
+  font-weight: 600;
+}
+
+.button-sm {
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.25rem; /* 20px */
+  font-weight: 600;
+}
+
+.button-xsm {
+  font-size: 0.75rem; /* 12px */
+  line-height: 1rem; /* 16px */
+  font-weight: 600;
+}
+
+.caption-1 {
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.25rem; /* 20px */
+  font-weight: 500;
+}
+
+.caption-2 {
+  font-size: 0.875rem; /* 14px */
+  line-height: 1.25rem; /* 20px */
+  font-weight: 400;
+}
+
+.caption-3 {
+  font-size: 0.75rem; /* 12px */
+  line-height: 1rem; /* 16px */
+  font-weight: 600;
+}
+
+.caption-4 {
+  font-size: 0.75rem; /* 12px */
+  line-height: 1rem; /* 16px */
+  font-weight: 500;
+}
+
+.caption-5 {
+  font-size: 0.75rem; /* 12px */
+  line-height: 1rem; /* 16px */
+  font-weight: 400;
+}
+
+/* Base Motion Curve from B7 */
+.motion-base {
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  transition-duration: 500ms;
+}
+
+.motion-hover {
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  transition-duration: 300ms;
 }
 
 /* Diagonal Hatch Patterns from Inspo (components3.png & homepage.png) */

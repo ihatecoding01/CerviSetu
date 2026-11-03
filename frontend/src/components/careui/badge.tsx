@@ -18,33 +18,33 @@ const badgeVariants = cva(
     variants: {
       variant: {
         primary:
-          "border-blue-200 bg-blue-50 text-[#2B66E4]",
+          "border-[#BA2D0B]/30 bg-[#BA2D0B]/10 text-[#BA2D0B]",
         success:
-          "border-emerald-200 bg-emerald-50 text-emerald-700",
+          "border-[#DBFE87] bg-[#DBFE87]/30 text-black",
         warning:
-          "border-amber-200 bg-amber-50 text-amber-800",
+          "border-[#F19941]/40 bg-[#F19941]/15 text-[#BA2D0B]",
         info:
-          "border-sky-200 bg-sky-50 text-[#4A91A7]",
+          "border-[#90C3CB]/40 bg-[#90C3CB]/20 text-slate-900",
         destructive:
-          "border-rose-200 bg-rose-50 text-rose-700",
+          "border-[#BA2D0B]/30 bg-[#BA2D0B]/10 text-[#BA2D0B]",
         neutral:
           "border-gray-200 bg-gray-100 text-gray-700",
         red:
-          "border-rose-200 bg-rose-50 text-rose-700",
+          "border-[#BA2D0B]/30 bg-[#BA2D0B]/10 text-[#BA2D0B]",
         orange:
-          "border-orange-200 bg-orange-50 text-orange-700",
+          "border-[#F19941]/40 bg-[#F19941]/20 text-black",
         amber:
-          "border-amber-200 bg-amber-50 text-amber-800",
+          "border-[#F19941]/40 bg-[#F19941]/20 text-black",
         yellow:
-          "border-yellow-200 bg-yellow-50 text-yellow-800",
+          "border-[#DBFE87] bg-[#DBFE87]/30 text-black",
         green:
-          "border-emerald-200 bg-emerald-50 text-emerald-700",
+          "border-[#DBFE87] bg-[#DBFE87]/30 text-black",
         blue:
-          "border-blue-200 bg-blue-50 text-[#2B66E4]",
+          "border-[#90C3CB]/40 bg-[#90C3CB]/20 text-slate-900",
         indigo:
-          "border-indigo-200 bg-indigo-50 text-indigo-700",
+          "border-[#90C3CB]/40 bg-[#90C3CB]/20 text-slate-900",
         purple:
-          "border-purple-200 bg-purple-50 text-purple-700",
+          "border-slate-200 bg-slate-100 text-black",
       },
       solid: {
         true: "",
