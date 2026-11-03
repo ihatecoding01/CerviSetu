@@ -41,8 +41,18 @@ const SAMPLE_CERVICAL = {
   days_overdue: 4,
 };
 
+// Biopsy-confirmed CCRT case in real doctor shorthand, to show the Sarvam AI extraction
+const SAMPLE_CERVICAL_CCRT = {
+  patient_name: "Kamla Devi",
+  phone: "+91 98390 11245",
+  village: "Chunar Block A",
+  district: "Mirzapur, Uttar Pradesh",
+  raw_text: "48 yr F, c/o post-coital bleeding x 3 months, foul smelling discharge, wt loss. VIA +ve at PHC. P/S: growth on cervix. Biopsy HPE: moderately differentiated squamous cell carcinoma. MRI pelvis: FIGO IIIB, L hydronephrosis. Plan CCRT: EBRT 50Gy/25# + weekly cisplatin 40mg/m2, then HDR brachy 7Gy x 4. Review after 2 weeks.",
+  days_overdue: 0,
+};
+
 export function ClinicalIntake({ onCaseSubmitted }: Props) {
-  const [form, setForm] = useState(SAMPLE_ORAL);
+  const [form, setForm] = useState(SAMPLE_CERVICAL_CCRT);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -171,6 +181,14 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setForm(SAMPLE_CERVICAL_CCRT)}
+            className="text-xs font-medium"
+          >
+            Cervical CCRT Preset
+          </Button>
           <Button
             variant="secondary"
             size="sm"
