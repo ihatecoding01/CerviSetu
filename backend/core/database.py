@@ -1,5 +1,6 @@
-﻿"""Encrypted SQLite database persistence layer for clinical cases and patient tracking."""
+"""Encrypted SQLite database persistence layer for clinical cases and patient tracking."""
 import json
+import secrets
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
@@ -156,6 +157,18 @@ class ClinicalDatabase:
                     dharamshala_room_code TEXT,
                     is_simulated_mock INTEGER DEFAULT 1,
                     issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # District Pilot Deployment Leads table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS pilot_leads (
+                    lead_id TEXT PRIMARY KEY,
+                    email TEXT NOT NULL,
+                    district TEXT NOT NULL,
+                    facility_type TEXT NOT NULL,
+                    status TEXT DEFAULT 'PENDING',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
             conn.commit()
@@ -614,6 +627,50 @@ class ClinicalDatabase:
                 "badge": "Brachytherapy Hub"
             }
         ]
+
+    def register_pilot_lead(
+        self,
+        email: str,
+        district: str,
+        facility_type: str = "DISTRICT_HOSPITAL"
+    ) -> Dict[str, Any]:
+        """Record pilot district registration inquiry."""
+        lead_id = f"LEAD-{secrets.token_hex(4).upper()}"
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO pilot_leads (lead_id, email, district, facility_type, status)
+                VALUES (?, ?, ?, ?, 'PENDING')
+                """,
+                (lead_id, email, district, facility_type)
+            )
+            conn.commit()
+
+        return {
+            "status": "SUCCESS",
+            "lead_id": lead_id,
+            "email": email,
+            "district": district,
+            "facility_type": facility_type,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+
+    def list_pilot_leads(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """Retrieve recent pilot district leads."""
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT lead_id, email, district, facility_type, status, created_at
+                FROM pilot_leads
+                ORDER BY created_at DESC
+                LIMIT ?
+                """,
+                (limit,)
+            )
+            rows = cursor.fetchall()
+            return [dict(r) for r in rows]
 
 
 global_db = ClinicalDatabase()
