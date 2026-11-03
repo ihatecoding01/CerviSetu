@@ -163,8 +163,8 @@ export const VisionOcrStudio: React.FC = () => {
               <div className="pb-3 border-b-2 border-[#BA2D0B]/20 mb-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2.5">
-                    <div className="size-8 rounded-lg bg-[#90C3CB] border-2 border-[#BA2D0B] flex items-center justify-center text-[#000000] shrink-0 shadow-xs">
-                      <CerviSetuLogo size={20} className="text-[#000000]" />
+                    <div className="size-8 rounded-lg bg-white border border-[#0F766E]/30 flex items-center justify-center text-[#000000] shrink-0 shadow-xs">
+                      <CerviSetuLogo size={20} />
                     </div>
                     <div>
                       <h4 className="text-xs font-bold text-[#BA2D0B] uppercase tracking-wide">

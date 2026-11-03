@@ -1,26 +1,18 @@
 import React from "react";
 
-interface LogoProps extends React.SVGProps<SVGSVGElement> {
+interface LogoProps extends Omit<React.ImgHTMLAttributes<HTMLImageElement>, "width" | "height"> {
   size?: number | string;
 }
 
-/**
- * CerviSetu Sovereign Emblem — Protective Caring Hands / Bridge
- * Vectorized from official brand artwork.
- */
+/** CerviSetu emblem: teal cervical cancer awareness ribbon with care cross and new growth. */
 export const CerviSetuLogo: React.FC<LogoProps> = ({ size = 24, className, ...props }) => (
-  <svg
+  <img
+    src="/cervisetu-logo.png"
     width={size}
     height={size}
-    viewBox="0 0 100 100"
-    fill="currentColor"
-    xmlns="http://www.w3.org/2000/svg"
-    className={className}
+    alt="CerviSetu"
+    draggable={false}
+    className={`object-contain select-none ${className ?? ""}`}
     {...props}
-  >
-    <path d="M 82.98 27.96 L 82.30 27.96 L 81.96 28.13 L 81.11 28.97 L 80.44 29.82 L 79.76 31.18 L 79.42 32.54 L 79.42 35.59 L 79.76 37.79 L 80.44 40.67 L 80.61 42.03 L 80.61 45.08 L 80.44 45.42 L 82.81 43.05 L 84.00 41.52 L 84.67 40.17 L 85.18 38.47 L 85.18 35.08 L 85.01 34.23 L 83.49 28.47 Z" />
-    <path d="M 17.02 27.96 L 16.51 28.47 L 14.99 34.23 L 14.82 35.08 L 14.82 38.30 L 14.99 39.15 L 15.33 40.17 L 16.00 41.52 L 17.02 42.88 L 19.56 45.42 L 19.39 45.08 L 19.39 42.03 L 19.56 40.67 L 20.24 37.79 L 20.58 35.59 L 20.58 32.54 L 20.24 31.18 L 19.73 30.16 L 18.89 28.97 L 18.04 28.13 L 17.70 27.96 Z" />
-    <path d="M 93.66 23.89 L 92.64 23.89 L 90.95 24.91 L 89.76 26.09 L 88.74 27.96 L 88.07 30.50 L 87.39 38.13 L 86.03 42.03 L 84.84 43.73 L 80.61 47.97 L 78.23 49.83 L 74.33 52.20 L 70.43 53.73 L 68.06 53.73 L 66.53 52.54 L 66.19 51.87 L 66.19 50.17 L 66.70 48.81 L 70.77 42.20 L 70.77 41.01 L 69.92 40.17 L 68.06 40.17 L 64.84 41.69 L 60.09 45.59 L 57.21 48.64 L 54.66 53.39 L 52.97 60.34 L 52.46 65.60 L 52.80 76.28 L 55.51 73.06 L 60.77 69.33 L 66.53 66.62 L 76.03 63.06 L 80.27 60.68 L 83.66 58.14 L 87.73 53.90 L 89.76 51.02 L 91.80 47.12 L 93.15 42.54 L 94.00 34.23 L 94.00 24.23 Z" />
-    <path d="M 6.34 23.89 L 6.00 24.23 L 6.00 34.23 L 6.85 42.54 L 8.37 47.46 L 11.76 53.22 L 16.34 58.14 L 20.24 61.02 L 24.31 63.23 L 33.47 66.62 L 38.89 69.16 L 41.95 71.03 L 44.49 73.06 L 47.20 76.28 L 47.54 65.60 L 47.03 60.17 L 45.34 53.39 L 42.96 48.81 L 39.74 45.42 L 35.67 42.03 L 32.11 40.17 L 30.08 40.17 L 29.23 41.01 L 29.23 42.20 L 33.30 48.81 L 33.81 50.17 L 33.81 51.87 L 33.47 52.54 L 32.11 53.73 L 29.57 53.73 L 26.69 52.71 L 22.28 50.17 L 18.21 46.95 L 15.83 44.57 L 13.97 42.03 L 12.61 38.13 L 11.93 30.50 L 10.92 27.11 L 8.37 24.40 L 7.02 23.72 Z" />
-  </svg>
+  />
 );

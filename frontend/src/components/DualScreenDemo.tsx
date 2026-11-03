@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { CerviSetuLogo } from "./icons/CerviSetuLogo";
 import {
   Tablet,
   Globe,
@@ -472,8 +473,8 @@ export const DualScreenDemo: React.FC<Props> = ({
             {/* Mobile App Header Bar */}
             <div className="bg-white border-b border-slate-100 px-4 py-2.5 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
-                <div className="size-7 rounded-lg bg-[#BA2D0B] text-white flex items-center justify-center font-bold text-xs">
-                  CS
+                <div className="size-7 rounded-lg bg-white border border-[#0F766E]/30 flex items-center justify-center">
+                  <CerviSetuLogo size={22} />
                 </div>
                 <div>
                   <span className="font-bold text-xs text-black block leading-none">CerviSetu Co-Pilot</span>

@@ -157,8 +157,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <div className="max-w-7xl mx-auto px-6 sm:px-8 py-4 flex items-center justify-between gap-6">
           {/* Brand Logo with CerviSetu Caring Hands SVG Emblem */}
           <div className="flex items-center gap-3 shrink-0">
-            <div className="size-10 rounded-xl bg-[#DBFE87] border-2 border-[#BA2D0B] flex items-center justify-center text-[#000000] shadow-xs p-1.5 transition-transform hover:scale-105">
-              <CerviSetuLogo size={24} className="text-[#000000]" />
+            <div className="size-10 rounded-xl bg-white border border-[#0F766E]/30 flex items-center justify-center text-[#000000] shadow-xs p-1 transition-transform hover:scale-105">
+              <CerviSetuLogo size={30} />
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
@@ -255,8 +255,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <div className="fixed inset-0 z-30 bg-[#FFFFFF]/98 backdrop-blur-xl flex flex-col justify-center px-8 py-16 xl:hidden border-b-2 border-[#BA2D0B]">
           <div className="flex flex-col gap-6 max-w-sm mx-auto w-full">
             <div className="flex items-center gap-3 pb-4 border-b border-[#F19941]/30">
-              <div className="size-9 rounded-lg bg-[#DBFE87] border-2 border-[#BA2D0B] flex items-center justify-center p-1.5">
-                <CerviSetuLogo size={20} className="text-[#000000]" />
+              <div className="size-9 rounded-lg bg-white border border-[#0F766E]/30 flex items-center justify-center p-1.5">
+                <CerviSetuLogo size={20} />
               </div>
               <span className="text-xs uppercase tracking-widest text-[#4B5563] font-mono-data">System Navigation</span>
             </div>
@@ -332,7 +332,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div className="max-w-7xl mx-auto px-6 sm:px-8 relative z-10">
             {/* Top Credential Pill with Primary Border */}
             <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-[#DBFE87]/50 border-2 border-[#BA2D0B] mb-8 shadow-xs">
-              <div className="size-4 text-[#BA2D0B]">
+              <div className="size-4">
                 <CerviSetuLogo size={16} />
               </div>
               <span className="text-xs font-bold text-[#000000]">
@@ -379,8 +379,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               {/* Studio Header Toolbar with Secondary Border Divider */}
               <div className="px-6 py-4 bg-[#F8F9FA] border-b-2 border-[#F19941]/40 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="size-6 rounded-md bg-[#DBFE87] border border-[#BA2D0B] flex items-center justify-center p-1">
-                    <CerviSetuLogo size={16} className="text-[#000000]" />
+                  <div className="size-6 rounded-md bg-white border border-[#0F766E]/30 flex items-center justify-center p-1">
+                    <CerviSetuLogo size={16} />
                   </div>
                   <span className="text-xs font-mono-data uppercase tracking-wider text-[#000000] font-bold">
                     Live Interactive Telemetry Studio
@@ -564,8 +564,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           className="py-24 border-b-2 border-[#BA2D0B]/20 bg-[#F8F9FA] relative"
         >
           <div className="max-w-4xl mx-auto px-6 sm:px-8 text-center flex flex-col items-center">
-            <div className="size-8 rounded-lg bg-[#DBFE87] border-2 border-[#BA2D0B] flex items-center justify-center p-1.5 mb-4 shadow-xs">
-              <CerviSetuLogo size={20} className="text-[#000000]" />
+            <div className="size-8 rounded-lg bg-white border border-[#0F766E]/30 flex items-center justify-center p-1.5 mb-4 shadow-xs">
+              <CerviSetuLogo size={20} />
             </div>
             <span className="text-xs uppercase tracking-widest font-mono-data text-[#BA2D0B] font-bold mb-6 block">
               The Curative Covenant
@@ -883,8 +883,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <section id="pilot-intake" className="py-24 bg-[#FFFFFF]">
           <div className="max-w-4xl mx-auto px-6 sm:px-8">
             <div className="bg-[#FFFFFF] border-2 border-[#BA2D0B] rounded-3xl p-8 sm:p-12 text-center flex flex-col items-center shadow-xl">
-              <div className="size-12 rounded-xl bg-[#DBFE87] border-2 border-[#BA2D0B] flex items-center justify-center p-2 mb-6 shadow-xs">
-                <CerviSetuLogo size={28} className="text-[#000000]" />
+              <div className="size-12 rounded-xl bg-white border border-[#0F766E]/30 flex items-center justify-center p-2 mb-6 shadow-xs">
+                <CerviSetuLogo size={28} />
               </div>
 
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#DBFE87] border-2 border-[#BA2D0B] text-[#000000] text-xs font-mono-data uppercase tracking-wider mb-6 font-bold shadow-xs">
@@ -1000,8 +1000,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <div className="max-w-7xl mx-auto px-6 sm:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b-2 border-[#F19941]/30">
             <div className="flex items-center gap-3">
-              <div className="size-9 rounded-xl bg-[#DBFE87] border-2 border-[#BA2D0B] flex items-center justify-center p-1.5 shadow-xs">
-                <CerviSetuLogo size={22} className="text-[#000000]" />
+              <div className="size-9 rounded-xl bg-white border border-[#0F766E]/30 flex items-center justify-center p-1.5 shadow-xs">
+                <CerviSetuLogo size={22} />
               </div>
               <span className="text-base font-semibold text-[#000000]">CerviSetu</span>
             </div>
