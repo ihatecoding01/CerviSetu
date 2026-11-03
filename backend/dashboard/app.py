@@ -1,4 +1,4 @@
-﻿"""FastAPI Application Factory and Modular Router Assembler for CerviSetu."""
+"""FastAPI Application Factory and Modular Router Assembler for CerviSetu."""
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,6 +10,7 @@ from backend.dashboard.routers import (
     patient_router,
     clinical_router,
     logs_router,
+    showcase_router,
 )
 from backend.dashboard.routers.clinical import IntakeRequest, SimulationRequest
 from backend.dashboard.routers.logs import (
@@ -49,6 +50,7 @@ app.include_router(facilities_router)
 app.include_router(patient_router)
 app.include_router(clinical_router)
 app.include_router(logs_router)
+app.include_router(showcase_router)
 
 # Static & Frontend Assets Directory
 STATIC_DIR = Path(__file__).resolve().parent / "static"
