@@ -36,12 +36,12 @@ IMAGE_QUALITY_THRESHOLDS = {
     "max_overexposed_pct": float(os.getenv("MAX_OVEREXPOSED_PCT", "60.0")),  # Max % pixels near 255
 }
 
-# Rural Follow-Up & Escalation Timeline (in days missed)
+# Rural Follow-Up & Escalation Timeline (in days missed, audited compressed radiobiological windows)
 ESCALATION_POLICY = {
-    "tier_1_sms_days": 1,        # 1-2 days missed -> SMS / WhatsApp in local language
-    "tier_2_ivr_days": 3,        # 3-5 days missed -> Automated voice IVR call
-    "tier_3_asha_days": 6,       # 6-7 days missed -> ASHA / Village Health Worker dispatch
-    "tier_4_authority_days": 8,  # >7 days missed + High Cancer Severity -> District Authority Alert & Address Unmask
+    "tier_1_sms_days": 1,        # Day +1 missed -> Multilingual WhatsApp / SMS Nudge
+    "tier_2_ivr_days": 2,        # Day +2 missed -> Automated interactive voice IVR call + Nurse outreach
+    "tier_3_asha_days": 3,       # Day +3 missed -> Immediate ASHA Village Home Visit Ticket (stigma-safe)
+    "tier_4_authority_days": 5,  # Day +5 missed -> District CMO Statutory Emergency MMU/108 Escort
 }
 
 # Severity Score Weights (0.0 to 1.0)
@@ -50,7 +50,14 @@ SEVERITY_THRESHOLDS = {
     "moderate_risk_cutoff": 0.40,
 }
 
-# Supported LLM Providers & Settings
+# Supported LLM & Indic AI Providers
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")
+
+SARVAM_API_KEY = os.getenv("SARVAM_API_KEY", "")
+SARVAM_BASE_URL = os.getenv("SARVAM_BASE_URL", "https://api.sarvam.ai")
+SARVAM_TTS_MODEL = os.getenv("SARVAM_TTS_MODEL", "bulbul:v4-flash")
+
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")

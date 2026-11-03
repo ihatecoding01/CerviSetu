@@ -1,4 +1,4 @@
-﻿"""DPDP Audit Ledger, Cryptographic Hash Chain, and Multi-Role Logging router."""
+"""DPDP Audit Ledger, Cryptographic Hash Chain, and Multi-Role Logging router."""
 import secrets
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException
@@ -379,4 +379,64 @@ async def log_asha_home_visit(req: AshaHomeVisitRequest):
         timestamp=block.get("timestamp")
     )
     return {"status": "SUCCESS", "log_id": log_id, "block": block}
+
+
+# ==========================================
+# Live SHA-256 Verification & ASHA Tickets
+# ==========================================
+
+class AshaTicketOutcomeRequest(BaseModel):
+    ticket_id: str
+    outcome: str  # RESOLVED_PATIENT_TRAVELING_TOMORROW, ESCORT_NEEDED_IMMEDIATE, UNREACHABLE
+    root_cause: Optional[str] = None
+    arrival_watch_hours: Optional[int] = 24
+
+
+@router.get("/logs/verify-chain")
+async def verify_audit_chain():
+    """Verify cryptographic SHA-256 hash chaining across all blocks in the immutable ledger."""
+    is_valid, total_blocks, err = global_audit.verify_chain_integrity()
+    return {
+        "status": "SUCCESS" if is_valid else "CORRUPTED",
+        "is_valid": is_valid,
+        "total_blocks_verified": total_blocks,
+        "tamper_detected": not is_valid,
+        "error": err
+    }
+
+
+@router.post("/logs/asha/ticket-outcome")
+async def update_asha_ticket_outcome(req: AshaTicketOutcomeRequest):
+    """Update ASHA field ticket outcome, set root cause and activate 24h arrival watch timer."""
+    updated = global_db.update_asha_ticket_outcome(
+        ticket_id=req.ticket_id,
+        outcome=req.outcome,
+        root_cause=req.root_cause,
+        arrival_watch_hours=req.arrival_watch_hours or 24
+    )
+
+    action = "ASHA_TICKET_FAST_TRACK_ESCORT" if "ESCORT" in req.outcome else "ASHA_TICKET_RESOLVED_TRAVELING_TOMORROW"
+    global_audit.record_user_event(
+        user_role=UserRole.NURSE_HEALTHCARE_WORKER,
+        action=action,
+        actor_id="ASHA-FIELD-LEAD",
+        patient_token=updated.get("patient_token", "UNKNOWN"),
+        details={
+            "ticket_id": req.ticket_id,
+            "outcome": req.outcome,
+            "root_cause": req.root_cause,
+            "arrival_watch_timer_hours": req.arrival_watch_hours or 24
+        },
+        severity="WARNING" if "ESCORT" in req.outcome else "INFO",
+        channel="ASHA_PWA"
+    )
+
+    return {"status": "SUCCESS", "ticket": updated}
+
+
+@router.get("/logs/asha/tickets")
+async def get_active_asha_tickets(asha_worker_id: Optional[str] = None):
+    """List active ASHA field tickets."""
+    tickets = global_db.get_active_asha_tickets(asha_worker_id=asha_worker_id)
+    return {"tickets": tickets, "total": len(tickets)}
 

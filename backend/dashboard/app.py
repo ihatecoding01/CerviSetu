@@ -10,6 +10,7 @@ from backend.dashboard.routers import (
     patient_router,
     clinical_router,
     logs_router,
+    prevention_router,
     showcase_router,
 )
 from backend.dashboard.routers.clinical import IntakeRequest, SimulationRequest
@@ -50,6 +51,7 @@ app.include_router(facilities_router)
 app.include_router(patient_router)
 app.include_router(clinical_router)
 app.include_router(logs_router)
+app.include_router(prevention_router)
 app.include_router(showcase_router)
 
 # Static & Frontend Assets Directory

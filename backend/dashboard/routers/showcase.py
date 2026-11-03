@@ -2,9 +2,11 @@
 import time
 import secrets
 from typing import Any, Dict, List, Optional
+import httpx
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from backend.config import SARVAM_API_KEY, SARVAM_BASE_URL, SARVAM_TTS_MODEL
 from backend.core.database import global_db
 from backend.core.security import global_audit, global_vault, TokenVault, PIIShield
 from backend.tools.ocr_tools import DocumentParserTool, ClinicalEntityExtractorTool
@@ -40,6 +42,13 @@ class VoiceScriptRequest(BaseModel):
         default="Varanasi",
         description="Frontline healthcare district"
     )
+
+
+class SynthesizeSpeechRequest(BaseModel):
+    text: str = Field(..., description="Vernacular Indic text to synthesize")
+    language: str = Field(default="HINDI", description="Dialect: HINDI, BHOJPURI, BENGALI, MARATHI, TAMIL, TELUGU")
+    speaker: Optional[str] = Field(default=None, description="Bulbul v4-flash voice persona")
+    model: Optional[str] = Field(default="bulbul:v4-flash", description="Sarvam TTS model identifier")
 
 
 class GraphTraceRequest(BaseModel):
@@ -250,6 +259,16 @@ def parse_prescription_showcase(req: PrescriptionParseRequest):
     }
 
 
+SARVAM_SPEAKERS = {
+    "HINDI": {"lang": "hi-IN", "speaker": "ritu_hi_medical"},
+    "BHOJPURI": {"lang": "hi-IN", "speaker": "ritu_hi_medical"},
+    "BENGALI": {"lang": "bn-IN", "speaker": "roopa_bn_conversational"},
+    "MARATHI": {"lang": "mr-IN", "speaker": "ishita_mr_conversational"},
+    "TAMIL": {"lang": "ta-IN", "speaker": "gokul_ta_narration"},
+    "TELUGU": {"lang": "te-IN", "speaker": "kavitha_te_conversation"},
+}
+
+
 @router.post("/voice-script")
 def get_voice_script(req: VoiceScriptRequest):
     """
@@ -258,6 +277,7 @@ def get_voice_script(req: VoiceScriptRequest):
     """
     lang_key = req.language.upper()
     script_entry = INDIC_VOICE_SCRIPTS.get(lang_key, INDIC_VOICE_SCRIPTS["HINDI"])
+    sarvam_meta = SARVAM_SPEAKERS.get(lang_key, SARVAM_SPEAKERS["HINDI"])
 
     return {
         "status": "SUCCESS",
@@ -269,6 +289,12 @@ def get_voice_script(req: VoiceScriptRequest):
         "ssml": script_entry["ssml"],
         "asr_confidence": script_entry["asr_confidence"],
         "indic_wpm": script_entry["indic_wpm"],
+        "tts_engine": {
+            "model": SARVAM_TTS_MODEL,
+            "speaker": sarvam_meta["speaker"],
+            "target_language_code": sarvam_meta["lang"],
+            "has_api_key": bool(SARVAM_API_KEY)
+        },
         "ivr_parameters": {
             "retry_limit": 3,
             "timeout_seconds": 6,
@@ -276,6 +302,61 @@ def get_voice_script(req: VoiceScriptRequest):
             "dtmf_key_transport_help": "2",
             "dtmf_key_nurse_callback": "3"
         }
+    }
+
+
+@router.post("/synthesize-speech")
+def synthesize_speech_showcase(req: SynthesizeSpeechRequest):
+    """
+    Synthesizes native Indic clinical speech via Sarvam AI bulbul:v4-flash.
+    Falls back gracefully if offline or quota limit reached.
+    """
+    lang_key = req.language.upper()
+    cfg = SARVAM_SPEAKERS.get(lang_key, SARVAM_SPEAKERS["HINDI"])
+    target_lang = cfg["lang"]
+    speaker = req.speaker or cfg["speaker"]
+    model = req.model or SARVAM_TTS_MODEL
+
+    if SARVAM_API_KEY:
+        try:
+            headers = {
+                "api-subscription-key": SARVAM_API_KEY,
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "inputs": [req.text],
+                "target_language_code": target_lang,
+                "speaker": speaker,
+                "model": model,
+                "enable_preprocessing": True
+            }
+            resp = httpx.post(
+                f"{SARVAM_BASE_URL}/text-to-speech",
+                headers=headers,
+                json=payload,
+                timeout=15.0
+            )
+            if resp.status_code == 200:
+                audios = resp.json().get("audios", [])
+                if audios:
+                    return {
+                        "status": "SUCCESS",
+                        "audio_base64": audios[0],
+                        "model": model,
+                        "speaker": speaker,
+                        "target_language_code": target_lang,
+                        "provider": "sarvam_ai"
+                    }
+        except Exception:
+            pass
+
+    return {
+        "status": "FALLBACK",
+        "model": model,
+        "speaker": speaker,
+        "target_language_code": target_lang,
+        "provider": "browser_web_speech",
+        "audio_base64": None
     }
 
 

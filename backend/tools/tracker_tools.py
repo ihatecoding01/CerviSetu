@@ -1,9 +1,10 @@
-﻿"""Rural Patient Tracking, Progressive Multi-Channel Notifications, and Authority Escalation Tools."""
+"""Rural Patient Tracking, Progressive Multi-Channel Notifications, and Authority Escalation Tools."""
 import secrets
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from backend.config import ESCALATION_POLICY, SEVERITY_THRESHOLDS
+from backend.core.database import global_db
 from backend.core.security import TokenVault, global_vault, global_audit
 from backend.core.state import NotificationDispatch
 
@@ -291,17 +292,28 @@ class TrackerTriageEngine:
         if days_overdue <= 0:
             return None, [], None
 
-        # Tier 1: Day 1-2
+        # Clinical Safety Check: If LINAC radiation vault is under scheduled maintenance downtime,
+        # pause patient delinquency escalation tiers to prevent false non-adherence citations.
+        if global_db.is_linac_downtime_active():
+            global_audit.record_event(
+                action="ESCALATION_PAUSED_LINAC_DOWNTIME",
+                actor="TRACKER_AGENT",
+                patient_token=patient_token,
+                details={"reason": "Spoke LINAC downtime active; delinquency alerts frozen"}
+            )
+            return "PAUSED_LINAC_MAINTENANCE", [], None
+
+        # Tier 1: Day +1 (Multilingual WhatsApp / SMS Nudge)
         if days_overdue >= policy["tier_1_sms_days"]:
             active_tier = "TIER_1_SMS"
             dispatched.append(MultiChannelReminderTool.dispatch_tier_1_sms(patient_token))
 
-        # Tier 2: Day 3-5
+        # Tier 2: Day +2 (Interactive IVR Voice Call + Nurse List)
         if days_overdue >= policy["tier_2_ivr_days"]:
             active_tier = "TIER_2_IVR"
             dispatched.append(MultiChannelReminderTool.dispatch_tier_2_ivr(patient_token))
 
-        # Tier 3: Day 6-7
+        # Tier 3: Day +3 (Immediate ASHA Village Home Visit Ticket)
         if days_overdue >= policy["tier_3_asha_days"]:
             active_tier = "TIER_3_ASHA"
             dispatched.append(CommunityWorkerDispatchTool.dispatch_asha_visit(
@@ -311,7 +323,7 @@ class TrackerTriageEngine:
                 vault=vault
             ))
 
-        # Tier 4: >7 days + Severe Cancer Condition
+        # Tier 4: Day +5 (District CMO Statutory Emergency MMU/108 Escort)
         if days_overdue >= policy["tier_4_authority_days"]:
             if severity_score >= SEVERITY_THRESHOLDS["high_risk_cutoff"] or "stage iii" in stage.lower() or "stage iv" in stage.lower():
                 active_tier = "TIER_4_AUTHORITY_ESCALATION"

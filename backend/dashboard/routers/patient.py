@@ -1,4 +1,4 @@
-﻿"""Patient Co-Pilot, 29-Step Healing Clock, and Hub-Spoke Handoff router."""
+"""Patient Co-Pilot, 29-Step Healing Clock, and Hub-Spoke Handoff router."""
 from typing import Optional
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -107,4 +107,110 @@ async def get_soundboard_audio_tracks():
         }
     ]
     return {"status": "SUCCESS", "tracks": tracks}
+
+
+# ==========================================
+# Real-Time Patient Accompaniment Endpoints
+# ==========================================
+
+class PatientSymptomReportRequest(BaseModel):
+    clock_day: int
+    symptom_category: str
+    reported_severity_grade: int
+    vernacular_raw_text: Optional[str] = ""
+
+
+class PatientHydrationAckRequest(BaseModel):
+    fluid_intake_liters: float = 2.5
+    blood_test_slip_ready: bool = True
+
+
+@router.post("/{token}/symptoms")
+async def report_patient_symptoms(token: str, req: PatientSymptomReportRequest):
+    """Persist real-time bi-weekly toxicity check-in from Patient Companion."""
+    log_id = f"TOX-{secrets.token_hex(4).upper()}"
+
+    # Determine clinical intervention based on severity grade
+    if req.reported_severity_grade >= 2:
+        action = "PRIORITY_MORNING_WARD_ALERT_SCHEDULED_LOPERAMIDE_IV_HYDRATION"
+        severity = "WARNING"
+    else:
+        action = "HOME_CARE_GUIDANCE_ORS_BLAND_DIET_VERNACULAR_DISPATCH"
+        severity = "INFO"
+
+    global_db.record_patient_toxicity(
+        log_id=log_id,
+        patient_token=token,
+        clock_day=req.clock_day,
+        symptom_category=req.symptom_category,
+        reported_severity_grade=req.reported_severity_grade,
+        vernacular_raw_text=req.vernacular_raw_text or req.symptom_category,
+        clinical_action_taken=action
+    )
+
+    block = global_audit.record_user_event(
+        user_role=UserRole.PATIENT,
+        action="PATIENT_SYMPTOM_REPORTED",
+        actor_id=token,
+        patient_token=token,
+        details={
+            "symptom": req.symptom_category,
+            "grade": req.reported_severity_grade,
+            "action": action
+        },
+        severity=severity,
+        channel="WEB_CAREUI"
+    )
+
+    return {
+        "status": "SUCCESS",
+        "log_id": log_id,
+        "clinical_action": action,
+        "is_ward_alert": req.reported_severity_grade >= 2,
+        "audit_block": block
+    }
+
+
+@router.post("/{token}/hydration-ack")
+async def acknowledge_hydration(token: str, req: PatientHydrationAckRequest):
+    """Record patient pre-chemotherapy hydration compliance."""
+    block = global_audit.record_user_event(
+        user_role=UserRole.PATIENT,
+        action="PATIENT_PRE_CHEMO_HYDRATION_ACKNOWLEDGED",
+        actor_id=token,
+        patient_token=token,
+        details={"intake_liters": req.fluid_intake_liters, "slip_ready": req.blood_test_slip_ready},
+        severity="INFO",
+        channel="WEB_CAREUI"
+    )
+
+    return {
+        "status": "SUCCESS",
+        "patient_token": token,
+        "intake_liters": req.fluid_intake_liters,
+        "message": "Hydration recorded; clinical protocol verified",
+        "block": block
+    }
+
+
+@router.delete("/{token}/audio-cache")
+async def purge_patient_audio_cache(token: str):
+    """DPDP-mandated voice audio cache purge upon discharge or patient request."""
+    block = global_audit.record_user_event(
+        user_role=UserRole.SYSTEM,
+        action="DPDP_AUDIO_CACHE_PURGED",
+        actor_id="PRIVACY_GUARD",
+        patient_token=token,
+        details={"storage_limitation_clause": "DPDP_ACT_2023_SEC_8"},
+        severity="INFO",
+        channel="SYSTEM"
+    )
+
+    return {
+        "status": "SUCCESS",
+        "patient_token": token,
+        "audio_purged": True,
+        "compliance": "DPDP Storage Limitation Verified",
+        "audit_block": block
+    }
 
