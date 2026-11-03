@@ -6,6 +6,7 @@ from .logs import router as logs_router
 from .prevention import router as prevention_router
 from .showcase import router as showcase_router
 from .abdm import router as abdm_router
+from .portal import router as portal_router
 
 __all__ = [
     "facilities_router",
@@ -15,5 +16,6 @@ __all__ = [
     "prevention_router",
     "showcase_router",
     "abdm_router",
+    "portal_router",
 ]
 

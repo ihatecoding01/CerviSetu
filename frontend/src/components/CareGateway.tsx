@@ -1,8 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Search, User, Users, CheckCircle2, MapPin, ShieldCheck, ArrowRight, Sparkles, QrCode, Phone } from "lucide-react";
 import { api, type Facility } from "../api/client";
 import { AbhaRegistration } from "./AbhaRegistration";
 import { MobileOtpLogin } from "./MobileOtpLogin";
+import { usePatientLang } from "../i18n/patient";
+import { LanguageSwitch } from "./LanguageSwitch";
+
+export const PATIENT_LOGIN_FLAG = "cervisetu_open_patient_login";
 
 interface Props {
   onLoginStaff: () => void;
@@ -16,7 +20,17 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-  const [showPatientLoginModal, setShowPatientLoginModal] = useState(false);
+  // The portal sends patients back here (flag in sessionStorage) when their session is missing or expired
+  const [loginNotice] = useState(() => {
+    try {
+      const v = sessionStorage.getItem(PATIENT_LOGIN_FLAG);
+      sessionStorage.removeItem(PATIENT_LOGIN_FLAG);
+      return v;
+    } catch {
+      return null;
+    }
+  });
+  const [showPatientLoginModal, setShowPatientLoginModal] = useState(!!loginNotice);
   const [authMethod, setAuthMethod] = useState<"OTP" | "QR" | "ABHA">("ABHA");
 
   const handleSearch = async (e?: React.FormEvent) => {
@@ -247,93 +261,112 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
         )}
       </div>
 
-      {/* Frictionless Rural Patient Auth Modal */}
+      {/* Patient login modal: ABHA sandbox, mobile OTP (both issue a patient session) */}
       {showPatientLoginModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl border border-slate-200 relative animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h3 className="text-base font-bold text-slate-900">मरीज लॉगिन (Patient Login)</h3>
-                <p className="text-xs text-slate-500">Rural Zero-Password Friction Gateway</p>
-              </div>
-              <button
-                onClick={() => setShowPatientLoginModal(false)}
-                className="size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold"
-              >
-                ✕
-              </button>
-            </div>
+        <PatientLoginModal
+          method={authMethod}
+          setMethod={setAuthMethod}
+          notice={loginNotice}
+          onClose={() => setShowPatientLoginModal(false)}
+          onVerified={(token) => {
+            setShowPatientLoginModal(false);
+            onLoginPatient(token);
+          }}
+        />
+      )}
+    </div>
+  );
+};
 
-            {/* Auth Tab Selector */}
-            <div className="grid grid-cols-3 gap-2 bg-slate-100 p-1 rounded-xl mb-5 text-xs font-semibold">
-              <button
-                onClick={() => setAuthMethod("ABHA")}
-                className={`py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                  authMethod === "ABHA" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                <ShieldCheck className="size-3.5" /> ABHA (ABDM)
-              </button>
-              <button
-                onClick={() => setAuthMethod("OTP")}
-                className={`py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                  authMethod === "OTP" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                <Phone className="size-3.5" /> Mobile OTP
-              </button>
-              <button
-                onClick={() => setAuthMethod("QR")}
-                className={`py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                  authMethod === "QR" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                <QrCode className="size-3.5" /> 1-Tap Slip QR
-              </button>
-            </div>
+interface ModalProps {
+  method: "OTP" | "QR" | "ABHA";
+  setMethod: (m: "OTP" | "QR" | "ABHA") => void;
+  notice: string | null;
+  onClose: () => void;
+  onVerified: (token: string) => void;
+}
 
-            {authMethod === "ABHA" ? (
-              <AbhaRegistration
-                onUseMobileLogin={() => setAuthMethod("OTP")}
-                onVerified={(token) => {
-                  setShowPatientLoginModal(false);
-                  onLoginPatient(token);
-                }}
-              />
-            ) : authMethod === "OTP" ? (
-              <MobileOtpLogin
-                onVerified={(token) => {
-                  setShowPatientLoginModal(false);
-                  onLoginPatient(token);
-                }}
-                onRegister={() => setAuthMethod("ABHA")}
-              />
-            ) : (
-              <div className="space-y-4 text-center">
-                <div className="size-48 mx-auto bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center p-4">
-                  <QrCode className="size-20 text-[#BA2D0B] mb-2" />
-                  <span className="text-xs font-semibold text-slate-600">
-                    Point camera at OPD Card QR code
-                  </span>
-                  <span className="text-xs text-slate-400 mt-1 font-mono">
-                    https://care.cervisetu.in/p?token=PT-RURAL-7891
-                  </span>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setShowPatientLoginModal(false);
-                    onLoginPatient("PT-RURAL-7891");
-                  }}
-                  className="w-full py-2.5 bg-black hover:bg-black/85 text-white font-semibold text-xs rounded-full shadow-xs transition-colors cursor-pointer"
-                >
-                  Simulate QR Scan (Token PT-RURAL-7891)
-                </button>
-              </div>
-            )}
+const PatientLoginModal: React.FC<ModalProps> = ({ method, setMethod, notice, onClose, onVerified }) => {
+  const { t } = usePatientLang();
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const tabs: { id: "ABHA" | "OTP" | "QR"; icon: React.ReactNode; label: string }[] = [
+    { id: "ABHA", icon: <ShieldCheck className="size-4" aria-hidden="true" />, label: t("login.tab.abha") },
+    { id: "OTP", icon: <Phone className="size-4" aria-hidden="true" />, label: t("login.tab.mobile") },
+    { id: "QR", icon: <QrCode className="size-4" aria-hidden="true" />, label: t("login.tab.qr") },
+  ];
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center sm:p-4 z-50" onClick={onClose}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="patient-login-title"
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full max-h-[92vh] overflow-y-auto p-5 sm:p-6 shadow-2xl border border-slate-200 relative"
+      >
+        <div className="flex justify-between items-start gap-3 mb-4">
+          <div>
+            <h3 id="patient-login-title" className="text-lg font-bold text-slate-900">{t("login.title")}</h3>
+            <p className="text-sm text-slate-600">{t("login.subtitle")}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <LanguageSwitch />
+            <button
+              onClick={onClose}
+              aria-label={t("login.close")}
+              className="size-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center font-bold focus-visible:outline-2 focus-visible:outline-black"
+            >
+              ✕
+            </button>
           </div>
         </div>
-      )}
+
+        {notice && (
+          <p role="status" className="mb-4 text-sm text-[#BA2D0B] bg-[#BA2D0B]/5 border border-[#BA2D0B]/20 rounded-xl px-3 py-2">
+            {t("login.sessionExpired")}
+          </p>
+        )}
+
+        <div className="grid grid-cols-3 gap-1.5 bg-slate-100 p-1 rounded-xl mb-5 text-xs sm:text-sm font-semibold" role="tablist">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              role="tab"
+              aria-selected={method === tab.id}
+              onClick={() => setMethod(tab.id)}
+              className={`min-h-11 px-1 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                method === tab.id ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              {tab.icon} {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div role="tabpanel">
+          {method === "ABHA" ? (
+            <AbhaRegistration onUseMobileLogin={() => setMethod("OTP")} onVerified={onVerified} />
+          ) : method === "OTP" ? (
+            <MobileOtpLogin onVerified={onVerified} onRegister={() => setMethod("ABHA")} />
+          ) : (
+            <div className="space-y-4 text-center">
+              <div className="mx-auto bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center p-6">
+                <QrCode className="size-14 text-slate-400 mb-3" aria-hidden="true" />
+                <p className="text-sm text-slate-700">{t("login.qr.unavailable")}</p>
+              </div>
+              <button
+                onClick={() => setMethod("OTP")}
+                className="w-full min-h-12 bg-black hover:bg-black/85 text-white font-semibold text-sm rounded-full transition-colors cursor-pointer"
+              >
+                {t("login.qr.useMobile")}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

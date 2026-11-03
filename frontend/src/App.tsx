@@ -6,7 +6,9 @@ import { ClinicalIntake } from "./components/ClinicalIntake";
 import { EscalationHeatmap } from "./components/EscalationHeatmap";
 import { AshaCoordination } from "./components/AshaCoordination";
 import { AuditLedger } from "./components/AuditLedger";
-import { CareGateway } from "./components/CareGateway";
+import { CareGateway, PATIENT_LOGIN_FLAG } from "./components/CareGateway";
+import { PatientPortal } from "./components/PatientPortal";
+import { PatientSessionRedirect } from "./components/PatientSessionRedirect";
 import { PatientCompanion } from "./components/PatientCompanion";
 import { DualScreenDemo } from "./components/DualScreenDemo";
 import { ClinicianEncounter } from "./components/ClinicianEncounter";
@@ -120,7 +122,7 @@ export default function App() {
     return (
       <LandingPage
         onLaunchWorkstation={() => navigate({ view: "staff", tab: "overview-tab" })}
-        onOpenPatientCompanion={() => navigate("/patient/PT-RURAL-7891")}
+        onOpenPatientCompanion={() => navigate("/patient")}
         onOpenDualView={() => navigate("/demo")}
         onOpenGateway={() => navigate("/gateway")}
       />
@@ -133,7 +135,7 @@ export default function App() {
       <CareGateway
         onLoginStaff={() => navigate({ view: "staff", tab: "overview-tab" })}
         onLoginPatient={(token) => {
-          navigate({ view: "patient", token: token || "PT-RURAL-7891" });
+          if (token) navigate(`/patient/${token}`);
         }}
         onOpenDualView={() => navigate("/demo")}
         onOpenLanding={() => navigate("/landing")}
@@ -141,70 +143,26 @@ export default function App() {
     );
   }
 
-  // 2. Direct Patient Care Web Portal View (URL: /patient or /patient/:token)
+  // 2. Patient portal (URL: /patient or /patient/:token). Session-scoped; never falls back to a demo patient.
   if (currentRoute.view === "patient") {
-    const activeToken = currentRoute.patientToken || "PT-RURAL-7891";
+    const requireLogin = () => {
+      try {
+        sessionStorage.setItem(PATIENT_LOGIN_FLAG, "1");
+      } catch {
+        // storage unavailable: the gateway still opens, just without the modal
+      }
+      navigate("/gateway");
+    };
+    if (!currentRoute.patientToken) {
+      return <PatientSessionRedirect onFound={(tok) => navigate(`/patient/${tok}`)} onMissing={requireLogin} />;
+    }
     return (
-      <div className="min-h-screen bg-[#FAFAFA] flex flex-col font-sans antialiased text-black">
-        {/* Top Web Portal Header */}
-        <header className="bg-white border-b border-slate-200/90 px-6 sm:px-8 py-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sticky top-0 z-30 shadow-2xs">
-          <div className="flex items-center gap-3">
-            {/* Logo in Burnt Terracotta Crimson */}
-            <div className="size-8 rounded-xl bg-[#BA2D0B] text-white flex items-center justify-center font-bold text-sm shadow-xs">
-              CS
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-base text-black tracking-tight">cervisetu</span>
-                <span className="text-xs bg-[#DBFE87] text-black border border-[#c4e872] px-2.5 py-0.5 rounded-full font-bold">
-                  Patient Web Portal
-                </span>
-              </div>
-              <span className="text-xs text-slate-500 block leading-tight">
-                सर्वाइसेतु रोगी एवं परिजन वेब पोर्टल · Rural Oncology Pathway
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center flex-wrap gap-2.5">
-            <button
-              onClick={() => navigate("/")}
-              className="text-xs text-slate-600 hover:text-black bg-slate-100 hover:bg-slate-200 px-3.5 py-1.5 rounded-full border border-slate-200 transition-colors cursor-pointer font-medium"
-            >
-              ← Gateway
-            </button>
-            <button
-              onClick={() => {
-                setSelectedPatientToken(activeToken);
-                navigate({ view: "staff", tab: "encounter-tab" });
-              }}
-              className="text-xs text-[#BA2D0B] hover:text-white bg-[#BA2D0B]/10 hover:bg-[#BA2D0B] px-3.5 py-1.5 rounded-full border border-[#BA2D0B]/30 font-semibold transition-colors cursor-pointer"
-            >
-              Clinician Encounter ➔
-            </button>
-            <button
-              onClick={() => navigate({ view: "staff", tab: "overview-tab" })}
-              className="text-xs text-black hover:text-black bg-slate-100 hover:bg-slate-200 px-3.5 py-1.5 rounded-full border border-slate-200 font-semibold transition-colors cursor-pointer"
-            >
-              Staff Workstation ➔
-            </button>
-            <button
-              onClick={() => navigate("/demo")}
-              className="text-xs text-white bg-black hover:bg-black/85 px-4 py-1.5 rounded-full font-semibold transition-colors cursor-pointer"
-            >
-              Dual View Demo ➔
-            </button>
-          </div>
-        </header>
-
-        {/* Responsive Patient Web Page Container */}
-        <main className="flex-1 w-full max-w-5xl mx-auto px-6 sm:px-8 py-8">
-          <PatientCompanion
-            patientToken={activeToken}
-            onExitToGateway={() => navigate("/")}
-          />
-        </main>
-      </div>
+      <PatientPortal
+        key={currentRoute.patientToken}
+        token={currentRoute.patientToken}
+        onRequireLogin={requireLogin}
+        onOpenOwnRecord={(tok) => navigate(`/patient/${tok}`)}
+      />
     );
   }
 

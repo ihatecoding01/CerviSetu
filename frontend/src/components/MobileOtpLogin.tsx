@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ShieldCheck, ArrowLeft, Phone } from "lucide-react";
-import { AbdmError, post } from "../api/abdm";
+import { AbdmError, errorText, post } from "../api/abdm";
+import { usePatientLang } from "../i18n/patient";
 import { OtpBoxes } from "./OtpBoxes";
 
 interface Props {
@@ -8,8 +9,9 @@ interface Props {
   onRegister: () => void;
 }
 
-// Demo patient login: mobile -> sandbox OTP -> patient token. Not production authentication.
+// Demo patient login: mobile -> sandbox OTP -> patient session. Not production authentication.
 export const MobileOtpLogin: React.FC<Props> = ({ onVerified, onRegister }) => {
+  const { t } = usePatientLang();
   const [mobile, setMobile] = useState("");
   const [txnId, setTxnId] = useState<string | null>(null);
   const [sandboxOtp, setSandboxOtp] = useState("");
@@ -17,17 +19,17 @@ export const MobileOtpLogin: React.FC<Props> = ({ onVerified, onRegister }) => {
   const [otp, setOtp] = useState("");
   const [otpFocus, setOtpFocus] = useState(0);
   const [countdown, setCountdown] = useState(0);
-  const [error, setError] = useState("");
-  const [errorCode, setErrorCode] = useState<string | undefined>();
+  const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
 
   const digits = mobile.replace(/\D/g, "").slice(-10);
   const mobileOk = /^[6-9]\d{9}$/.test(digits);
+  const errorCode = (error as AbdmError | null)?.code;
 
   useEffect(() => {
     if (countdown <= 0) return;
-    const t = setTimeout(() => setCountdown(countdown - 1), 1000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+    return () => clearTimeout(timer);
   }, [countdown]);
 
   useEffect(() => {
@@ -35,14 +37,8 @@ export const MobileOtpLogin: React.FC<Props> = ({ onVerified, onRegister }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [otp]);
 
-  const fail = (e: unknown) => {
-    setError((e as Error).message);
-    setErrorCode((e as AbdmError).code);
-  };
-
   const send = async () => {
-    setError("");
-    setErrorCode(undefined);
+    setError(null);
     setBusy(true);
     try {
       const r = await post<{ txn_id: string; sandbox_otp: string; otp_sent_to: string; resend_after_seconds: number }>(
@@ -51,12 +47,12 @@ export const MobileOtpLogin: React.FC<Props> = ({ onVerified, onRegister }) => {
       );
       setTxnId(r.txn_id);
       setSandboxOtp(r.sandbox_otp);
-      setSentTo(r.otp_sent_to);
+      setSentTo(`******${digits.slice(-4)}`);
       setCountdown(r.resend_after_seconds);
       setOtp("");
       setOtpFocus((n) => n + 1);
     } catch (e) {
-      fail(e);
+      setError(e);
     } finally {
       setBusy(false);
     }
@@ -64,7 +60,7 @@ export const MobileOtpLogin: React.FC<Props> = ({ onVerified, onRegister }) => {
 
   const resend = async () => {
     if (!txnId) return;
-    setError("");
+    setError(null);
     try {
       const r = await post<{ sandbox_otp: string; resend_after_seconds: number }>("/otp/resend", { txn_id: txnId });
       setSandboxOtp(r.sandbox_otp);
@@ -72,19 +68,19 @@ export const MobileOtpLogin: React.FC<Props> = ({ onVerified, onRegister }) => {
       setOtp("");
       setOtpFocus((n) => n + 1);
     } catch (e) {
-      fail(e);
+      setError(e);
     }
   };
 
   const verify = async () => {
     if (!txnId) return;
-    setError("");
+    setError(null);
     setBusy(true);
     try {
       const r = await post<{ patient_token: string }>("/otp/verify", { txn_id: txnId, otp });
       onVerified(r.patient_token);
     } catch (e) {
-      fail(e);
+      setError(e);
       setOtp("");
       setOtpFocus((n) => n + 1);
     } finally {
@@ -93,33 +89,33 @@ export const MobileOtpLogin: React.FC<Props> = ({ onVerified, onRegister }) => {
   };
 
   const primary =
-    "w-full py-3 bg-black hover:bg-black/85 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold text-xs rounded-full shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5";
-  const demoTag = <span className="text-xs text-black bg-[#DBFE87] px-2 py-0.5 rounded font-mono font-bold">Demo OTP</span>;
-  const errorLine = error && (
-    <div role="alert" className="text-xs text-[#BA2D0B] bg-[#BA2D0B]/5 border border-[#BA2D0B]/20 rounded-xl px-3 py-2">
-      {error}
+    "w-full min-h-12 py-3 bg-black hover:bg-black/85 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-full shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black";
+  const demoTag = <span className="text-xs text-black bg-[#DBFE87] px-2 py-0.5 rounded font-mono font-bold">{t("otp.demoAuth")}</span>;
+  const errorLine = error ? (
+    <div role="alert" className="text-sm text-[#BA2D0B] bg-[#BA2D0B]/5 border border-[#BA2D0B]/20 rounded-xl px-3 py-2">
+      {errorText(t, error)}
       {errorCode === "MOBILE_NOT_REGISTERED" && (
         <button type="button" onClick={onRegister} className="block mt-1 font-semibold underline text-black cursor-pointer">
-          Register with ABHA →
+          {t("err.registerAbha")}
         </button>
       )}
     </div>
-  );
+  ) : null;
   const notice = (
     <div className="bg-[#DBFE87]/20 border border-[#DBFE87] rounded-xl p-3 text-xs text-black flex items-start gap-2">
-      <ShieldCheck className="size-4 text-black shrink-0 mt-0.5" />
+      <ShieldCheck className="size-4 text-black shrink-0 mt-0.5" aria-hidden="true" />
       <div>
-        <span className="font-bold">Demo authentication:</span>
+        <span className="font-bold">{txnId ? t("otp.sandboxTitle") : `${t("otp.demoAuth")}:`}</span>
         <p className="text-xs text-slate-700 mt-0.5">
           {txnId ? (
             <>
-              No SMS is sent; the sandbox code is shown here. Test code: <strong className="font-mono">{sandboxOtp}</strong>{" "}
+              {t("otp.sandboxBody")} <strong className="font-mono">{sandboxOtp}</strong>{" "}
               <button type="button" onClick={() => setOtp(sandboxOtp)} className="underline font-semibold cursor-pointer">
-                Fill it
+                {t("otp.fill")}
               </button>
             </>
           ) : (
-            <>Sandbox OTP for the hackathon demo, not secure production login. Demo patient: 98765 43210.</>
+            t("otp.demoAuthBody")
           )}
         </p>
       </div>
@@ -127,71 +123,82 @@ export const MobileOtpLogin: React.FC<Props> = ({ onVerified, onRegister }) => {
   );
 
   if (txnId) {
+    const left = 6 - otp.length;
     return (
       <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <p className="text-sm font-bold text-slate-900">Enter the OTP</p>
+        <div className="flex justify-between items-center gap-2">
+          <h4 className="text-base font-bold text-slate-900">{t("otp.title")}</h4>
           {demoTag}
         </div>
         <div>
-          <div className="flex justify-between items-center mb-1">
-            <label className="text-xs font-semibold text-slate-700">6-Digit OTP:</label>
-            <span className="text-xs font-mono text-slate-500">{sentTo}</span>
+          <div className="flex justify-between items-center mb-1 gap-2">
+            <span className="text-xs font-semibold text-slate-700">{t("otp.label")}</span>
+            <span className="text-xs font-mono text-slate-500">{t("otp.sentTo", { to: sentTo })}</span>
           </div>
-          <OtpBoxes value={otp} onChange={setOtp} focusKey={`${txnId}-${otpFocus}`} />
+          <OtpBoxes
+            value={otp}
+            onChange={setOtp}
+            focusKey={`${txnId}-${otpFocus}`}
+            groupLabel={t("otp.label")}
+            digitLabel={(n) => t("otp.digit", { n })}
+            invalid={errorCode === "OTP_INVALID"}
+          />
           <div className="flex justify-between items-center text-xs mt-2">
-            <button onClick={() => setTxnId(null)} className="text-slate-500 hover:text-black flex items-center gap-1 cursor-pointer">
-              <ArrowLeft className="size-3" /> Change number
+            <button onClick={() => setTxnId(null)} className="min-h-10 text-slate-600 hover:text-black flex items-center gap-1 cursor-pointer">
+              <ArrowLeft className="size-3" aria-hidden="true" /> {t("mobile.change")}
             </button>
             {countdown > 0 ? (
-              <span className="text-slate-500 font-mono">Resend OTP in {countdown}s</span>
+              <span className="text-slate-500 font-mono">{t("otp.resendIn", { s: countdown })}</span>
             ) : (
-              <button onClick={resend} className="font-semibold text-black underline cursor-pointer">Resend OTP</button>
+              <button onClick={resend} className="min-h-10 font-semibold text-black underline cursor-pointer">{t("otp.resend")}</button>
             )}
           </div>
         </div>
         {notice}
         {errorLine}
         <button disabled={otp.length !== 6 || busy} onClick={verify} className={primary}>
-          {busy ? "Verifying…" : "पोर्टल में प्रवेश करें (Enter Portal)"}
+          {busy ? t("otp.verifying") : t("mobile.enter")}
         </button>
+        {left > 0 && (
+          <p className="text-xs text-slate-500 text-center -mt-2">{left === 1 ? t("otp.moreDigit") : t("otp.moreDigits", { n: left })}</p>
+        )}
       </div>
     );
   }
 
+  const hint = mobile && !mobileOk ? (digits.length < 10 ? t("mobile.digits", { n: digits.length }) : t("mobile.badStart")) : "";
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <p className="text-sm font-bold text-slate-900">Log in with your mobile</p>
+      <div className="flex justify-between items-center gap-2">
+        <h4 className="text-base font-bold text-slate-900">{t("mobile.heading")}</h4>
         {demoTag}
       </div>
       <div>
-        <label className="text-xs font-semibold text-slate-700 block mb-1">पंजीकृत मोबाइल (Registered Mobile):</label>
+        <label htmlFor="patient-mobile" className="text-xs font-semibold text-slate-700 block mb-1">{t("mobile.label")}</label>
         <input
+          id="patient-mobile"
           value={mobile}
           onChange={(e) => setMobile(e.target.value.replace(/[^\d+ ]/g, ""))}
           onKeyDown={(e) => e.key === "Enter" && mobileOk && !busy && send()}
           autoFocus
           inputMode="tel"
           autoComplete="tel"
-          placeholder="10-digit mobile"
-          className={`w-full px-3.5 py-2 bg-slate-50 border rounded-xl text-xs font-mono text-slate-800 focus:outline-none focus:border-black ${
-            mobile && !mobileOk && digits.length === 10 ? "border-[#BA2D0B]" : "border-slate-300"
-          }`}
+          placeholder={t("mobile.placeholder")}
+          aria-invalid={!!hint && digits.length === 10}
+          aria-describedby={hint ? "patient-mobile-hint" : undefined}
+          className="w-full min-h-12 px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm font-mono text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
         />
-        {mobile && !mobileOk && (
-          <p className="text-xs mt-1 text-slate-500">{digits.length < 10 ? `${digits.length}/10 digits` : "Mobile must start with 6–9"}</p>
-        )}
+        {hint && <p id="patient-mobile-hint" className="text-xs mt-1 text-slate-600">{hint}</p>}
       </div>
       {notice}
       {errorLine}
       <button disabled={!mobileOk || busy} onClick={send} className={primary}>
-        <Phone className="size-3.5" /> {busy ? "Sending…" : "OTP भेजें (Send OTP)"}
+        <Phone className="size-4" aria-hidden="true" /> {busy ? t("mobile.sending") : t("mobile.send")}
       </button>
-      <p className="text-xs text-slate-500 text-center">
-        New patient?{" "}
-        <button type="button" onClick={onRegister} className="font-semibold text-black underline cursor-pointer">
-          Register with ABHA
+      <p className="text-sm text-slate-600 text-center">
+        {t("mobile.newPatient")}{" "}
+        <button type="button" onClick={onRegister} className="min-h-10 font-semibold text-black underline cursor-pointer">
+          {t("mobile.register")}
         </button>
       </p>
     </div>

@@ -50,8 +50,9 @@ export function parsePath(pathname: string): AppRoute {
   // 2. Patient Companion Paths (/patient or /patient/:token)
   if (cleanPath.startsWith("/patient")) {
     const parts = cleanPath.split("/").filter(Boolean);
-    const token = parts[1] ? parts[1].toUpperCase() : "PT-RURAL-7891";
-    return { view: "patient", patientToken: token, path: `/patient/${token}` };
+    // No default patient: a bare /patient resolves to the logged-in patient's own record (or the login)
+    const token = parts[1] ? parts[1].toUpperCase() : undefined;
+    return { view: "patient", patientToken: token, path: token ? `/patient/${token}` : "/patient" };
   }
 
   // 3. Staff CareUI Workstation Paths (/staff or /staff/:tab)
@@ -105,8 +106,7 @@ export function useRouter() {
       } else if (target.view === "dual") {
         targetPath = "/demo";
       } else if (target.view === "patient") {
-        const tok = target.token || "PT-RURAL-7891";
-        targetPath = `/patient/${tok}`;
+        targetPath = target.token ? `/patient/${target.token}` : "/patient";
       } else if (target.view === "staff") {
         const slug = target.tab ? TAB_TO_SLUG[target.tab] : "overview";
         targetPath = `/staff/${slug}`;

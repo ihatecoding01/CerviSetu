@@ -1,9 +1,11 @@
 """ABDM / ABHA registration endpoints (consent + OTP, sandbox-simulated until NHA credentials exist)."""
 from typing import Dict, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
+from backend.core import patient_session
 from backend.tools import abdm_registration as abdm
 
 router = APIRouter(prefix="/api/abdm", tags=["ABDM / ABHA Registration"])
@@ -56,8 +58,12 @@ async def resend_otp(req: ResendRequest):
 
 
 @router.post("/otp/verify")
-async def verify_otp(req: VerifyRequest):
-    return _call(abdm.verify_otp, req.txn_id, req.otp)
+async def verify_otp(req: VerifyRequest, request: Request):
+    """On success also sets the HttpOnly patient-session cookie bound to the verified patient token."""
+    result = _call(abdm.verify_otp, req.txn_id, req.otp)
+    resp = JSONResponse(result)
+    patient_session.set_session_cookie(resp, request, result["patient_token"])
+    return resp
 
 
 @router.post("/login/mobile/request")

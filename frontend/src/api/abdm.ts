@@ -1,15 +1,6 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+import type { PatientKey, TFn } from "../i18n/patient";
 
-// Plain-language messages for server error codes
-export const FRIENDLY: Record<string, string> = {
-  OTP_INVALID: "That code didn't match.",
-  OTP_EXPIRED: "This code has expired. Tap Resend OTP to get a new one.",
-  TOO_MANY_ATTEMPTS: "Too many wrong tries. Go back and start again.",
-  TRANSACTION_CLOSED: "This attempt has ended. Go back and start again.",
-  ALREADY_REGISTERED: "This person already has a Synthetic ABHA. Use Mobile OTP login, or Link existing ABHA with their ABHA number.",
-  MOBILE_NOT_REGISTERED: "This mobile isn't registered yet. Register with ABHA first.",
-  ABHA_NOT_FOUND: "No ABHA found for this number. Try Generate instead, or add the CerviSetu token.",
-};
+const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
 export class AbdmError extends Error {
   code?: string;
@@ -20,26 +11,25 @@ export class AbdmError extends Error {
 }
 
 export async function post<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${BASE_URL}/api/abdm${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}/api/abdm${path}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      credentials: "include",
+    });
+  } catch {
+    throw new AbdmError("network", "NETWORK");
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const code = data?.detail?.code as string | undefined;
-    const msg = data?.detail?.message || data?.detail || "Something went wrong. Please try again.";
-    throw new AbdmError(code && FRIENDLY[code] ? `${FRIENDLY[code]}${code === "OTP_INVALID" ? " " + msg.replace(/^Incorrect OTP\. /, "") : ""}` : msg, code);
+    throw new AbdmError(data?.detail?.message || String(data?.detail || "Request failed"), code);
   }
   return data as T;
 }
 
-
-export async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}/api/abdm${path}`);
-  if (!res.ok) throw new AbdmError("Request failed");
-  return res.json();
-}
 
 // Opens a print-only view of the demo ABHA card (avoids printing the modal overlay)
 export function printAbhaCard(rows: [string, string | null | undefined][], label: string) {
@@ -57,4 +47,20 @@ h2{margin:0 0 4px;font-size:16px}p{color:#BA2D0B;font-size:12px;font-weight:600;
   w.document.close();
   w.focus();
   w.print();
+}
+
+// Localised message for a failed call: known server codes map to dictionary entries
+export function errorText(t: TFn, e: unknown): string {
+  const err = e as AbdmError;
+  if (err?.code === "NETWORK") return t("err.network");
+  if (err?.code === "OTP_INVALID") {
+    const n = /(\d+) attempt/.exec(err.message)?.[1] ?? "0";
+    return t("err.OTP_INVALID", { n });
+  }
+  if (err?.code) {
+    const key = `err.${err.code}` as PatientKey;
+    const text = t(key);
+    if (text !== key) return text;
+  }
+  return t("err.generic");
 }

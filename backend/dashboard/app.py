@@ -16,6 +16,7 @@ from backend.dashboard.routers import (
     prevention_router,
     showcase_router,
     abdm_router,
+    portal_router,
 )
 from backend.dashboard.routers.clinical import IntakeRequest, SimulationRequest
 from backend.tools.escalation_scheduler import escalation_loop
@@ -71,6 +72,7 @@ app.include_router(logs_router)
 app.include_router(prevention_router)
 app.include_router(showcase_router)
 app.include_router(abdm_router)
+app.include_router(portal_router)
 
 # Static & Frontend Assets Directory
 STATIC_DIR = Path(__file__).resolve().parent / "static"

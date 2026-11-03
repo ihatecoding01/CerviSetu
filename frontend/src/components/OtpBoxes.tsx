@@ -3,12 +3,15 @@ import React, { useEffect, useRef } from "react";
 interface Props {
   value: string;
   onChange: (otp: string) => void;
-  // Changing this refocuses the first box (new OTP sent, or a wrong code cleared)
+  // Changing this refocuses the first empty box (new OTP sent, or a wrong code cleared)
   focusKey?: unknown;
+  groupLabel: string;
+  digitLabel: (n: number) => string;
+  invalid?: boolean;
 }
 
 // Six single-digit boxes: auto-advance, backspace to previous, paste of a full code
-export const OtpBoxes: React.FC<Props> = ({ value, onChange, focusKey }) => {
+export const OtpBoxes: React.FC<Props> = ({ value, onChange, focusKey, groupLabel, digitLabel, invalid }) => {
   const refs = useRef<(HTMLInputElement | null)[]>([]);
   const digits = value.padEnd(6, " ").split("").slice(0, 6);
 
@@ -29,7 +32,7 @@ export const OtpBoxes: React.FC<Props> = ({ value, onChange, focusKey }) => {
   };
 
   return (
-    <div className="grid grid-cols-6 gap-2" role="group" aria-label="6-digit OTP">
+    <div className="grid grid-cols-6 gap-2" role="group" aria-label={groupLabel}>
       {digits.map((c, i) => (
         <input
           key={i}
@@ -39,13 +42,14 @@ export const OtpBoxes: React.FC<Props> = ({ value, onChange, focusKey }) => {
           value={c.trim()}
           inputMode="numeric"
           autoComplete={i === 0 ? "one-time-code" : "off"}
-          aria-label={`OTP digit ${i + 1}`}
+          aria-label={digitLabel(i + 1)}
+          aria-invalid={invalid || undefined}
           maxLength={6}
           onChange={(e) => setDigit(i, e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Backspace" && !c.trim() && i > 0) refs.current[i - 1]?.focus();
           }}
-          className="h-11 text-center bg-slate-50 border border-slate-300 rounded-xl text-sm font-mono text-slate-800 focus:outline-none focus:border-black"
+          className="h-12 text-center bg-slate-50 border border-slate-300 rounded-xl text-base font-mono text-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus:border-black"
         />
       ))}
     </div>
