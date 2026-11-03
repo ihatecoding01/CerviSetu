@@ -3,7 +3,7 @@
   "private": true,
   "description": "CerviSetu — Cloudflare Pages root runner",
   "scripts": {
-    "build": "cd frontend && npm install && npm run build"
+    "build": "cd frontend && npm install && npm run build",
+    "tunnel": "cloudflared tunnel --url http://localhost:8000"
   }
 }
-
