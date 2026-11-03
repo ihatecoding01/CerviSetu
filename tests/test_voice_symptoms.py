@@ -14,7 +14,7 @@ class FakeSarvam:
     def transcribe(self, audio, filename, language_code="unknown"):
         return {"transcript": self._transcript, "language_code": "hi-IN"} if self._transcript else None
 
-    def structured(self, system, user, schema, name, strict=True):
+    def structured(self, system, user, schema, name, **kwargs):
         return self._triage
 
 

@@ -385,6 +385,37 @@ class ClinicalDatabase:
                     UNIQUE (plan_id, episode_start_date, tier)
                 )
             """)
+
+            # 9. External AI result cache and usage log (see backend/core/ai_usage.py).
+            # Cache keys are hashes; values are validated, de-identified results only.
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS ai_cache (
+                    cache_key TEXT PRIMARY KEY,
+                    feature TEXT NOT NULL,
+                    value_json TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    expires_at TEXT NOT NULL
+                )
+            """)
+            # No request/response content is ever stored here: metadata and provider usage counters only
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS ai_usage_log (
+                    usage_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    feature TEXT NOT NULL,
+                    api TEXT NOT NULL,
+                    model TEXT,
+                    requested_at TEXT NOT NULL,
+                    success INTEGER NOT NULL,
+                    cache_hit INTEGER NOT NULL DEFAULT 0,
+                    duration_ms INTEGER,
+                    input_tokens INTEGER,
+                    output_tokens INTEGER,
+                    audio_seconds REAL,
+                    characters INTEGER,
+                    pages INTEGER,
+                    error_category TEXT
+                )
+            """)
             conn.commit()
 
     def save_patient(self, patient_token: str, age: Optional[int], gender: Optional[str], region_code: str = "RURAL"):
@@ -1354,6 +1385,25 @@ class ClinicalDatabase:
                 "SELECT * FROM treatment_escalations WHERE plan_id = ? ORDER BY created_at", (plan_id,)
             ).fetchall()
             return [dict(r) for r in rows]
+
+    def get_latest_case_record(self, patient_token: str) -> Optional[Dict[str, Any]]:
+        """Latest case with its stored intake and diagnostic JSON decoded."""
+        with self._get_conn() as conn:
+            row = conn.execute(
+                "SELECT * FROM clinical_cases WHERE patient_token = ? ORDER BY created_at DESC LIMIT 1", (patient_token,)
+            ).fetchone()
+        if not row:
+            return None
+        d = dict(row)
+        d["intake_data"] = json.loads(d["intake_json"]) if d.get("intake_json") else {}
+        d["diagnostic_data"] = json.loads(d["diagnostic_json"]) if d.get("diagnostic_json") else {}
+        return d
+
+    def update_case_diagnostic(self, case_id: str, diagnostic_data: Dict[str, Any]):
+        with self._get_conn() as conn:
+            conn.execute("UPDATE clinical_cases SET diagnostic_json = ? WHERE case_id = ?",
+                         (json.dumps(diagnostic_data, ensure_ascii=False), case_id))
+            conn.commit()
 
     def get_latest_case(self, patient_token: str) -> Optional[Dict[str, Any]]:
         with self._get_conn() as conn:

@@ -1,12 +1,12 @@
 """Interactive Showcase Endpoints for Sarvam-inspired CerviSetu Playground & Developer Studio."""
+import os
 import time
 import secrets
 from typing import Any, Dict, List, Optional
-import httpx
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from backend.config import SARVAM_API_KEY, SARVAM_BASE_URL, SARVAM_TTS_MODEL
+from backend.config import SARVAM_API_KEY, SARVAM_TTS_MODEL
 from backend.core.database import global_db
 from backend.core.security import global_audit, global_vault, TokenVault, PIIShield
 from backend.tools.ocr_tools import DocumentParserTool, ClinicalEntityExtractorTool
@@ -48,7 +48,7 @@ class SynthesizeSpeechRequest(BaseModel):
     text: str = Field(..., description="Vernacular Indic text to synthesize")
     language: str = Field(default="HINDI", description="Dialect: HINDI, BHOJPURI, BENGALI, MARATHI, TAMIL, TELUGU")
     speaker: Optional[str] = Field(default=None, description="Bulbul v4-flash voice persona")
-    model: Optional[str] = Field(default="bulbul:v4-flash", description="Sarvam TTS model identifier")
+    model: Optional[str] = Field(default=None, description="Must equal the configured SARVAM_TTS_MODEL if given")
 
 
 class GraphTraceRequest(BaseModel):
@@ -419,13 +419,17 @@ def parse_prescription_showcase(req: PrescriptionParseRequest):
 
 
 SARVAM_SPEAKERS = {
-    "HINDI": {"lang": "hi-IN", "speaker": "ritu_hi_medical"},
-    "BHOJPURI": {"lang": "hi-IN", "speaker": "ritu_hi_medical"},
-    "BENGALI": {"lang": "bn-IN", "speaker": "roopa_bn_conversational"},
-    "MARATHI": {"lang": "mr-IN", "speaker": "ishita_mr_conversational"},
-    "TAMIL": {"lang": "ta-IN", "speaker": "gokul_ta_narration"},
-    "TELUGU": {"lang": "te-IN", "speaker": "kavitha_te_conversation"},
+    # Language codes for Sarvam TTS. Speaker is omitted by default so bulbul:v4-flash uses its documented
+    # default persona; only IDs listed in SARVAM_TTS_SPEAKERS (env, comma-separated) may be requested.
+    "HINDI": {"lang": "hi-IN"},
+    "BHOJPURI": {"lang": "hi-IN"},
+    "BENGALI": {"lang": "bn-IN"},
+    "MARATHI": {"lang": "mr-IN"},
+    "TAMIL": {"lang": "ta-IN"},
+    "TELUGU": {"lang": "te-IN"},
 }
+ALLOWED_TTS_SPEAKERS = {s.strip() for s in os.getenv("SARVAM_TTS_SPEAKERS", "").split(",") if s.strip()}
+MAX_TTS_CHARACTERS = 1500
 
 
 @router.post("/voice-script")
@@ -450,7 +454,7 @@ def get_voice_script(req: VoiceScriptRequest):
         "indic_wpm": script_entry["indic_wpm"],
         "tts_engine": {
             "model": SARVAM_TTS_MODEL,
-            "speaker": sarvam_meta["speaker"],
+            "speaker": None,
             "target_language_code": sarvam_meta["lang"],
             "has_api_key": bool(SARVAM_API_KEY)
         },
@@ -466,56 +470,38 @@ def get_voice_script(req: VoiceScriptRequest):
 
 @router.post("/synthesize-speech")
 def synthesize_speech_showcase(req: SynthesizeSpeechRequest):
+    """Voice Studio TTS via the configured Sarvam model (one request per click, no retries).
+
+    status SUCCESS means Sarvam returned audio. Anything else returns status FALLBACK with
+    sarvam_audio=false and a reason, so the browser's own speech is never presented as Sarvam output.
     """
-    Synthesizes native Indic clinical speech via Sarvam AI bulbul:v4-flash.
-    Falls back gracefully if offline or quota limit reached.
-    """
+    from backend.core.llm_client import global_llm
+
     lang_key = req.language.upper()
-    cfg = SARVAM_SPEAKERS.get(lang_key, SARVAM_SPEAKERS["HINDI"])
-    target_lang = cfg["lang"]
-    speaker = req.speaker or cfg["speaker"]
-    model = req.model or SARVAM_TTS_MODEL
+    if lang_key not in SARVAM_SPEAKERS:
+        raise HTTPException(status_code=422, detail=f"Unsupported language: {req.language}")
+    if req.model and req.model != SARVAM_TTS_MODEL:
+        raise HTTPException(status_code=422, detail=f"Only the configured TTS model {SARVAM_TTS_MODEL} is allowed")
+    if req.speaker and req.speaker not in ALLOWED_TTS_SPEAKERS:
+        raise HTTPException(status_code=422, detail="Unsupported speaker")
+    if not req.text.strip() or len(req.text) > MAX_TTS_CHARACTERS:
+        raise HTTPException(status_code=422, detail=f"Text must be 1-{MAX_TTS_CHARACTERS} characters")
 
-    if SARVAM_API_KEY:
-        try:
-            headers = {
-                "api-subscription-key": SARVAM_API_KEY,
-                "Content-Type": "application/json"
-            }
-            payload = {
-                "inputs": [req.text],
-                "target_language_code": target_lang,
-                "speaker": speaker,
-                "model": model,
-                "enable_preprocessing": True
-            }
-            resp = httpx.post(
-                f"{SARVAM_BASE_URL}/text-to-speech",
-                headers=headers,
-                json=payload,
-                timeout=15.0
-            )
-            if resp.status_code == 200:
-                audios = resp.json().get("audios", [])
-                if audios:
-                    return {
-                        "status": "SUCCESS",
-                        "audio_base64": audios[0],
-                        "model": model,
-                        "speaker": speaker,
-                        "target_language_code": target_lang,
-                        "provider": "sarvam_ai"
-                    }
-        except Exception:
-            pass
-
+    target_lang = SARVAM_SPEAKERS[lang_key]["lang"]
+    out = global_llm.synthesize(req.text, target_lang, SARVAM_TTS_MODEL, req.speaker)
+    if out.get("audio_base64"):
+        return {"status": "SUCCESS", "audio_base64": out["audio_base64"], "model": SARVAM_TTS_MODEL,
+                "speaker": req.speaker, "target_language_code": target_lang, "provider": "sarvam_ai",
+                "sarvam_audio": True}
     return {
         "status": "FALLBACK",
-        "model": model,
-        "speaker": speaker,
+        "reason": out.get("error", "UNAVAILABLE"),
+        "model": SARVAM_TTS_MODEL,
+        "speaker": req.speaker,
         "target_language_code": target_lang,
         "provider": "browser_web_speech",
-        "audio_base64": None
+        "sarvam_audio": False,
+        "audio_base64": None,
     }
 
 

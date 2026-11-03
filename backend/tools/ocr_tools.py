@@ -214,38 +214,74 @@ class LLMClinicalExtractor:
 
     FIGO_PATTERN = re.compile(r'^(IV|III|II|I)([ABC][1-3]?)?$')
 
+    # Bump when SYSTEM_PROMPT, SCHEMA or the validation rules change, so stale cache entries are not reused
+    PROMPT_VERSION = "extract-v2"
+    MAX_TOKENS = 700
+
+    @classmethod
+    def validate(cls, ai: Dict[str, Any]) -> Dict[str, Any]:
+        """Keep only LLM fields that pass the clinical sanity checks; everything else is dropped."""
+        clean: Dict[str, Any] = {}
+        stage = (ai.get("figo_stage") or "").upper().replace("STAGE", "").replace(" ", "")
+        if cls.FIGO_PATTERN.match(stage):
+            clean["suspected_stage"] = f"Stage {stage}"
+        if ai.get("cancer_type") in ("CERVICAL", "BREAST", "ORAL", "LUNG", "COLORECTAL"):
+            clean["cancer_type"] = ai["cancer_type"]
+        if ai.get("biopsy_status") in ("POSITIVE", "PENDING", "SUSPICIOUS", "NEGATIVE"):
+            clean["biopsy_status"] = ai["biopsy_status"]
+        symptoms = [s.strip().lower() for s in ai.get("symptoms") or [] if isinstance(s, str) and s.strip()]
+        if symptoms:
+            clean["symptoms"] = symptoms
+        if isinstance(ai.get("age"), int) and 0 < ai["age"] < 120:
+            clean["age"] = ai["age"]
+        if ai.get("gender") in ("FEMALE", "MALE"):
+            clean["gender"] = ai["gender"]
+        if isinstance(ai.get("follow_up_days"), int) and 0 < ai["follow_up_days"] <= 365:
+            clean["follow_up_days"] = ai["follow_up_days"]
+        for key in ("histology", "treatment_plan"):
+            if isinstance(ai.get(key), str) and ai[key].strip():
+                clean[key] = ai[key].strip()
+        findings = [f for f in ai.get("screening_findings") or [] if isinstance(f, str) and f.strip()]
+        if findings:
+            clean["screening_findings"] = findings
+        return clean
+
     @classmethod
     def enhance(cls, masked_text: str, rule_entities: Dict[str, Any], llm: Any = None) -> Dict[str, Any]:
-        """Return rule entities upgraded with validated LLM fields; unchanged if the LLM is unavailable."""
+        """Return rule entities upgraded with validated LLM fields; unchanged if the LLM is unavailable.
+
+        Validated results are cached by a hash of the masked text, model, prompt and schema version, so
+        resubmitting identical de-identified content does not call the provider again.
+        """
+        from backend.core import ai_usage
         from backend.core.llm_client import global_llm
         client = llm or global_llm
 
         merged = dict(rule_entities)
         merged["extraction_source"] = "RULES"
+        merged.setdefault("histology", None)
+        merged.setdefault("screening_findings", [])
+        merged.setdefault("treatment_plan", None)
 
-        ai = client.structured(cls.SYSTEM_PROMPT, masked_text, cls.SCHEMA, "clinical_entities")
-        if not ai:
-            return merged
+        model = getattr(client, "model", "unknown")
+        key = ai_usage.cache_key("clinical_extraction", model=model, prompt_version=cls.PROMPT_VERSION,
+                                 schema=cls.SCHEMA, max_tokens=cls.MAX_TOKENS, text=masked_text)
+        clean = ai_usage.cache_get(key)
+        if clean is not None:
+            ai_usage.record_usage("clinical_extraction", "chat/completions", model, True, cache_hit=True)
+            merged["extraction_cache_hit"] = True
+        else:
+            ai = client.structured(cls.SYSTEM_PROMPT, masked_text, cls.SCHEMA, "clinical_extraction",
+                                   max_tokens=cls.MAX_TOKENS)
+            if not ai:
+                return merged
+            clean = cls.validate(ai)
+            if not clean:
+                return merged
+            ai_usage.cache_put(key, "clinical_extraction", clean)
+            merged["extraction_cache_hit"] = False
 
-        stage = (ai.get("figo_stage") or "").upper().replace("STAGE", "").replace(" ", "")
-        if cls.FIGO_PATTERN.match(stage):
-            merged["suspected_stage"] = f"Stage {stage}"
-        if ai.get("cancer_type") and ai["cancer_type"] != "OTHER":
-            merged["cancer_type"] = ai["cancer_type"]
-        if ai.get("biopsy_status") in ("POSITIVE", "PENDING", "SUSPICIOUS", "NEGATIVE"):
-            merged["biopsy_status"] = ai["biopsy_status"]
-        if ai.get("symptoms"):
-            merged["symptoms"] = [s.strip().lower() for s in ai["symptoms"] if s.strip()]
-        if isinstance(ai.get("age"), int) and 0 < ai["age"] < 120:
-            merged["age"] = ai["age"]
-        if ai.get("gender") in ("FEMALE", "MALE"):
-            merged["gender"] = ai["gender"]
-        if isinstance(ai.get("follow_up_days"), int) and 0 < ai["follow_up_days"] <= 365:
-            merged["follow_up_days"] = ai["follow_up_days"]
-
-        merged["histology"] = ai.get("histology")
-        merged["screening_findings"] = ai.get("screening_findings") or []
-        merged["treatment_plan"] = ai.get("treatment_plan")
+        merged.update(clean)
         merged["severity_score"] = ClinicalEntityExtractorTool.compute_severity(
             merged["suspected_stage"], merged["biopsy_status"], merged["symptoms"]
         )

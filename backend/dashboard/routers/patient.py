@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 from backend.config import clinic_today
 from backend.core.database import global_db
-from backend.core.security import global_audit, UserRole
+from backend.core.security import PIIShield, global_audit, UserRole
 from backend.tools import clock_service
 
 router = APIRouter(prefix="/api/patient", tags=["Patient Vernacular Co-Pilot (70% Weight)"])
@@ -171,6 +171,54 @@ async def record_no_show(token: str, req: NoShowRequest):
     )
     escalation = clock_service.evaluate_plan(plan)
     return {"status": "SUCCESS", "escalation": escalation, "clock": clock_service.build_clock(plan)}
+
+
+class AISummaryRequest(BaseModel):
+    requested_by: str = Field(..., min_length=1, description="Clinician ID requesting the draft")
+
+
+@router.post("/{token}/ai-summary")
+async def generate_case_ai_summary(token: str, req: AISummaryRequest):
+    """Explicitly generate the AI clinician summary + patient message drafts for the latest case.
+
+    Uses only the validated, de-identified intake fields. Drafts require clinician review and are never
+    sent to the patient automatically.
+    """
+    from backend.agents.diagnostic_agent import generate_ai_summary
+
+    case = global_db.get_latest_case_record(token)
+    if not case:
+        raise HTTPException(status_code=404, detail="No clinical case for this patient token")
+    result = generate_ai_summary(case["intake_data"], case["diagnostic_data"])
+    status = result["status"]
+
+    diag = dict(case["diagnostic_data"])
+    if status in ("GENERATED", "CACHED"):
+        diag.update(
+            ai_clinician_summary=result["clinician_summary"],
+            patient_message_hindi=result["patient_message_hindi"],
+            patient_message_english=result["patient_message_english"],
+            ai_generated=True,
+        )
+    diag.update(ai_summary_status=status, requires_clinician_approval=True, patient_message_sent=False)
+    global_db.update_case_diagnostic(case["case_id"], diag)
+
+    global_audit.record_user_event(
+        user_role=UserRole.DOCTOR, action="AI_SUMMARY_REQUESTED", actor_id=req.requested_by,
+        patient_token=token, details={"case_id": case["case_id"], "status": status},
+        severity="INFO", channel="WEB_CAREUI"
+    )
+    return {
+        "status": status,
+        "patient_token": token,
+        "case_id": case["case_id"],
+        "ai_clinician_summary": diag.get("ai_clinician_summary", ""),
+        "patient_message_hindi": diag.get("patient_message_hindi", ""),
+        "patient_message_english": diag.get("patient_message_english", ""),
+        "ai_generated": status in ("GENERATED", "CACHED"),
+        "requires_clinician_approval": True,
+        "patient_message_sent": False,
+    }
 
 
 @router.post("/demo/advance-fraction-15")
@@ -382,6 +430,24 @@ VOICE_TRIAGE_SCHEMA = {
 }
 
 
+# Obvious red-flag words handled without an LLM call. Only categories where the safe action is the
+# same regardless of nuance (grade 3 -> nurse alert) are ruled; everything else goes to LLM triage.
+VOICE_RED_FLAG_RULES = {
+    "BLEEDING": ("खून", "ख़ून", "रक्तस्राव", "khoon", "khun", "bleeding", "blood"),
+    "FEVER": ("बुखार", "bukhar", "bukhaar", "fever"),
+}
+VOICE_TRIAGE_MAX_TOKENS = 200
+MAX_VOICE_AUDIO_BYTES = 10 * 1024 * 1024
+
+
+def _rule_triage(masked_transcript: str) -> Optional[dict]:
+    text = masked_transcript.lower()
+    hits = [cat for cat, words in VOICE_RED_FLAG_RULES.items() if any(w in text for w in words)]
+    if len(hits) != 1:
+        return None
+    return {"symptom_category": hits[0], "grade": 3, "english_summary": f"Red-flag keyword detected: {hits[0].lower()}"}
+
+
 @router.post("/{token}/voice-symptoms")
 async def report_voice_symptoms(
     token: str,
@@ -389,27 +455,50 @@ async def report_voice_symptoms(
     clock_day: int = Form(1),
     language_code: str = Form("unknown"),
 ):
-    """Patient speaks symptoms in her language: Sarvam STT -> LLM triage -> standard toxicity check-in."""
+    """Patient speaks symptoms in her language: Sarvam STT -> masked transcript -> keyword rules or LLM triage
+    -> standard toxicity check-in. Decision support only; a nurse reviews every report."""
     from backend.core.llm_client import global_llm
 
-    stt = global_llm.transcribe(await audio.read(), audio.filename or "voice.webm", language_code)
+    data = await audio.read()
+    if not data:
+        raise HTTPException(status_code=422, detail="Empty audio upload")
+    if len(data) > MAX_VOICE_AUDIO_BYTES:
+        raise HTTPException(status_code=413, detail="Audio clip too large; keep it under 30 seconds.")
+    if audio.content_type and not audio.content_type.startswith(("audio/", "video/webm", "application/octet-stream")):
+        raise HTTPException(status_code=422, detail="Upload must be an audio clip")
+
+    stt = global_llm.transcribe(data, "voice-clip", language_code)
     if not stt or not stt["transcript"].strip():
         raise HTTPException(status_code=503, detail="Voice transcription unavailable; please use the symptom buttons.")
 
-    triage = global_llm.structured(VOICE_TRIAGE_PROMPT, stt["transcript"], VOICE_TRIAGE_SCHEMA, "voice_symptom_triage", strict=False) or {
-        "symptom_category": "OTHER", "grade": 2, "english_summary": "Unclassified voice report - nurse review needed",
-    }
+    # Mask PII spoken in the clip before it reaches the LLM or the database; raw audio is never stored
+    masked_transcript, _ = PIIShield.mask_text(stt["transcript"])
+
+    triage = _rule_triage(masked_transcript)
+    source = "RULES"
+    if triage is None:
+        source = "SARVAM_LLM"
+        triage = global_llm.structured(VOICE_TRIAGE_PROMPT, masked_transcript, VOICE_TRIAGE_SCHEMA,
+                                       "voice_triage", max_tokens=VOICE_TRIAGE_MAX_TOKENS)
+    if not triage or triage.get("symptom_category") not in VOICE_TRIAGE_SCHEMA["properties"]["symptom_category"]["enum"]:
+        source = "FALLBACK_NURSE_REVIEW"
+        triage = {"symptom_category": "OTHER", "grade": 2, "english_summary": "Unclassified voice report - nurse review needed"}
     # Unknown or out-of-range grades go to nurse review (grade 2) rather than being trusted
     triage["grade"] = triage["grade"] if triage.get("grade") in (0, 1, 2, 3) else 2
+    triage["english_summary"] = str(triage.get("english_summary") or "")[:300]
+    triage["triage_source"] = source
+
     checkin = await report_patient_symptoms(token, PatientSymptomReportRequest(
         symptom_category=triage["symptom_category"],
         reported_severity_grade=triage["grade"],
         clock_day=clock_day,
-        vernacular_raw_text=stt["transcript"],
+        vernacular_raw_text=masked_transcript,
     ))
     return {
-        "transcript": stt["transcript"],
+        "transcript": masked_transcript,
+        "transcript_is_masked": True,
         "detected_language": stt["language_code"],
         "triage": triage,
+        "decision_support_only": True,
         "checkin": checkin,
     }

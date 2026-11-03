@@ -1,14 +1,13 @@
 """Clinical Intake, LangGraph Execution, Cases, and Tracking Simulation router."""
-import shutil
+import re
 import secrets
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from backend.config import UPLOADS_DIR
 from backend.core.database import global_db
-from backend.core.security import global_vault, global_audit, UserRole
+from backend.core.security import PIIShield, global_vault, global_audit, UserRole
 from backend.graph.workflow import clinical_graph
 from backend.tools.tracker_tools import TrackerTriageEngine
 
@@ -32,9 +31,26 @@ class SimulationRequest(BaseModel):
     biopsy_status: Optional[str] = "POSITIVE"
 
 
+def _normalise(text: str) -> str:
+    return re.sub(r"\s+", " ", text).strip().lower()
+
+
+def _combine_intake_text(typed: str, ocr_text: str) -> Tuple[str, str]:
+    """Typed clinician text first (it wins for rule extraction, which takes the first match), then OCR text
+    under a labelled divider. OCR text already contained in the typed text is not duplicated."""
+    typed, ocr_text = typed.strip(), ocr_text.strip()
+    if not ocr_text:
+        return typed, "TYPED_ONLY"
+    if typed and _normalise(ocr_text) in _normalise(typed):
+        return typed, "TYPED_ONLY_OCR_DUPLICATE"
+    if not typed:
+        return ocr_text, "OCR_ONLY"
+    return f"{typed}\n\n--- Text read from uploaded document (OCR) ---\n{ocr_text}", "TYPED_AND_OCR"
+
+
 @router.post("/run-case")
 async def run_case(
-    raw_text: str = Form(...),
+    raw_text: str = Form(""),
     patient_name: str = Form("Ramesh Kumar"),
     phone: str = Form("+91 98765 43210"),
     village: str = Form("Kalyanpur"),
@@ -42,23 +58,44 @@ async def run_case(
     days_overdue: int = Form(0),
     image_file: Optional[UploadFile] = File(None)
 ):
-    """Run full LangGraph workflow across OCR intake, image triage, diagnosis, and tracking."""
-    image_path = None
+    """Run the LangGraph workflow on typed notes and/or an uploaded clinical document.
+
+    Uploaded documents go through file validation, a local image-quality gate and OCR (when enabled);
+    OCR text is masked by the intake pipeline before any LLM sees it and reuses the same extraction call.
+    The document itself is processed in memory and not written to disk.
+    """
+    from backend.tools.document_ocr import DocumentRejected, process_document
+
+    document = None
+    ocr_text = ""
     if image_file and image_file.filename:
-        safe_filename = f"{secrets.token_hex(4)}_{image_file.filename}"
-        dest_path = UPLOADS_DIR / safe_filename
-        with open(dest_path, "wb") as buffer:
-            shutil.copyfileobj(image_file.file, buffer)
-        image_path = str(dest_path)
+        try:
+            doc = process_document(await image_file.read())
+        except DocumentRejected as e:
+            raise HTTPException(status_code=422, detail={"code": e.code, "message": e.message})
+        ocr_text = doc.pop("text", "")
+        document = {k: v for k, v in doc.items() if v is not None}
+        if ocr_text:
+            document["ocr_text_masked"] = PIIShield.mask_text(ocr_text)[0][:4000]
+        if doc["status"] != "COMPLETED" and not raw_text.strip():
+            raise HTTPException(status_code=422, detail={
+                "code": doc["status"],
+                "message": "The document could not be read. Type the clinical notes instead.",
+                "document_processing": document,
+            })
+
+    text, sources = _combine_intake_text(raw_text, ocr_text)
+    if not text:
+        raise HTTPException(status_code=422, detail={"code": "NO_INPUT", "message": "Provide clinical notes or a document."})
 
     # Initial Agent State
     session_id = f"sess-{secrets.token_hex(4)}"
     initial_state = {
         "patient_token": "NEW",
         "session_id": session_id,
-        "raw_text": f"Patient: {patient_name}\nPhone: {phone}\nVillage: {village}, District: {district}\n\n{raw_text}",
+        "raw_text": f"Patient: {patient_name}\nPhone: {phone}\nVillage: {village}, District: {district}\n\n{text}",
         "document_path": None,
-        "image_path": image_path,
+        "image_path": None,
         "clinical_intake": None,
         "intake_status": "PENDING",
         "image_quality": None,
@@ -77,6 +114,9 @@ async def run_case(
 
     config = {"configurable": {"thread_id": session_id}}
     final_state = clinical_graph.invoke(initial_state, config=config)
+    final_state["intake_sources"] = {"combination": sources, "typed_text": bool(raw_text.strip()),
+                                     "document_ocr": bool(ocr_text and sources != "TYPED_ONLY_OCR_DUPLICATE")}
+    final_state["document_processing"] = document
     return JSONResponse(content=final_state)
 
 

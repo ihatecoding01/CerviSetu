@@ -56,6 +56,9 @@ class DiagnosticSynthesis(BaseModel):
     patient_message_english: str = ""
     ai_generated: bool = False
     requires_clinician_approval: bool = True
+    # Summary drafts are generated only on explicit request (POST /api/patient/{token}/ai-summary)
+    ai_summary_status: str = "not_generated"
+    patient_message_sent: bool = False
 
 
 class NotificationDispatch(BaseModel):

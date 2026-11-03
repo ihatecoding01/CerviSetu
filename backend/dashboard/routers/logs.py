@@ -463,3 +463,18 @@ async def get_active_asha_tickets(asha_worker_id: Optional[str] = None):
     tickets = global_db.get_active_asha_tickets(asha_worker_id=asha_worker_id)
     return {"tickets": tickets, "total": len(tickets)}
 
+
+
+@router.get("/dev/ai-usage")
+async def get_ai_usage_summary():
+    """Development-only Sarvam usage summary (per feature: requests, failures, cache hits, reported usage).
+
+    This project has no authentication, so the endpoint is not protected; it is disabled when
+    CERVISETU_ENV=production instead. It returns counters only, never prompts, transcripts or OCR text.
+    """
+    from backend.config import APP_ENV
+    from backend.core.ai_usage import usage_summary
+
+    if APP_ENV == "production":
+        raise HTTPException(status_code=404, detail="Not available in production")
+    return usage_summary()

@@ -86,6 +86,17 @@ SARVAM_LLM_MODEL = os.getenv("SARVAM_LLM_MODEL", "sarvam-105b")
 # Set CERVISETU_DISABLE_LLM=1 to force the deterministic rule-based pipeline (used by the test suite)
 LLM_DISABLED = os.getenv("CERVISETU_DISABLE_LLM", "").lower() in ("1", "true", "yes")
 
+# Clinical document OCR (uploaded slips/reports). Off unless explicitly enabled AND a provider is set.
+# NOTE: with "sarvam_vision" the unmasked document image leaves this server; use synthetic documents.
+OCR_ENABLED = os.getenv("CERVISETU_OCR_ENABLED", "").lower() in ("1", "true", "yes")
+OCR_PROVIDER = os.getenv("CERVISETU_OCR_PROVIDER", "").strip().lower()   # "sarvam_vision" or empty
+OCR_MAX_PAGES = int(os.getenv("CERVISETU_OCR_MAX_PAGES", "2"))
+OCR_MAX_BYTES = int(os.getenv("CERVISETU_OCR_MAX_BYTES", str(8 * 1024 * 1024)))
+OCR_LANGUAGE = os.getenv("CERVISETU_OCR_LANGUAGE", "")                  # BCP-47 e.g. en-IN; empty = provider default (Indic)
+OCR_TIMEOUT_SECONDS = float(os.getenv("CERVISETU_OCR_TIMEOUT_SECONDS", "60"))
+# Document photos: reject only clearly unreadable images (sharpness below this fraction of the blur threshold)
+OCR_BLUR_REJECT_RATIO = float(os.getenv("CERVISETU_OCR_BLUR_REJECT_RATIO", "0.5"))
+
 # Supabase Production PostgreSQL Database Settings
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", os.getenv("SUPABASE_KEY", ""))

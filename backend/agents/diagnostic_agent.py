@@ -118,13 +118,8 @@ class DiagnosticAgent:
             urgency=urgency
         )
 
-        # Sarvam LLM clinician summary + patient message (draft only; clinician must approve before sending)
-        ai = self._ai_summary(intake, synthesis)
-        if ai:
-            synthesis.ai_clinician_summary = ai["clinician_summary"]
-            synthesis.patient_message_hindi = ai["patient_message_hindi"]
-            synthesis.patient_message_english = ai["patient_message_english"]
-            synthesis.ai_generated = True
+        # The AI clinician summary / patient message is not generated here; a clinician requests it
+        # explicitly via generate_ai_summary() so intake never spends a second LLM call on unused drafts.
 
         # Persist case to database
         case_id = f"CASE-{secrets.token_hex(4).upper()}"
@@ -165,25 +160,45 @@ class DiagnosticAgent:
             "audit_trail": [f"Diagnostic synthesis compiled. Primary: {synthesis.primary_impression}"]
         }
 
-    def _ai_summary(self, intake: Dict[str, Any], synthesis: DiagnosticSynthesis) -> Optional[Dict[str, str]]:
-        """Ask the LLM for summaries using only de-identified structured fields; None on any failure."""
-        from backend.core.llm_client import global_llm
-        client = self.llm or global_llm
 
-        facts = {
-            "cancer_type": intake.get("suspected_cancer_type"),
-            "stage": intake.get("estimated_stage"),
-            "biopsy_status": intake.get("biopsy_status"),
-            "histology": intake.get("histology"),
-            "screening_findings": intake.get("screening_findings"),
-            "treatment_plan": intake.get("treatment_plan"),
-            "symptoms": intake.get("presenting_complaints"),
-            "age": intake.get("age"),
-            "urgency": synthesis.urgency,
-            "red_flags": synthesis.red_flag_symptoms,
-        }
-        ai = client.structured(AI_SUMMARY_SYSTEM_PROMPT, json.dumps(facts, ensure_ascii=False), AI_SUMMARY_SCHEMA, "clinical_summary")
-        if not ai or not all(isinstance(ai.get(k), str) and ai[k].strip() for k in AI_SUMMARY_SCHEMA["required"]):
-            return None
-        return ai
 
+SUMMARY_PROMPT_VERSION = "summary-v2"
+SUMMARY_MAX_TOKENS = 700
+SUMMARY_FACT_FIELDS = ("suspected_cancer_type", "estimated_stage", "biopsy_status", "histology",
+                       "screening_findings", "treatment_plan", "presenting_complaints", "age")
+
+
+def generate_ai_summary(intake: Dict[str, Any], synthesis: Dict[str, Any], llm: Any = None) -> Dict[str, Any]:
+    """On-demand clinician summary + patient message drafts from validated, de-identified structured fields.
+
+    Returns {"status": GENERATED | CACHED | AI_DISABLED | AI_UNAVAILABLE | INVALID_OUTPUT, ...}. Drafts always
+    require clinician approval and are never sent to the patient by this function.
+    """
+    from backend.core import ai_usage
+    from backend.core.llm_client import global_llm
+    client = llm or global_llm
+
+    if not getattr(client, "enabled", True):
+        return {"status": "AI_DISABLED"}
+
+    facts = {k: intake.get(k) for k in SUMMARY_FACT_FIELDS}
+    facts["urgency"] = synthesis.get("urgency")
+    facts["red_flags"] = synthesis.get("red_flag_symptoms")
+    model = getattr(client, "model", "unknown")
+    key = ai_usage.cache_key("clinical_summary", model=model, prompt_version=SUMMARY_PROMPT_VERSION,
+                             schema=AI_SUMMARY_SCHEMA, max_tokens=SUMMARY_MAX_TOKENS, facts=facts)
+    cached = ai_usage.cache_get(key)
+    if cached is not None:
+        ai_usage.record_usage("clinical_summary", "chat/completions", model, True, cache_hit=True)
+        return {"status": "CACHED", **cached}
+
+    ai = client.structured(AI_SUMMARY_SYSTEM_PROMPT, json.dumps(facts, ensure_ascii=False), AI_SUMMARY_SCHEMA,
+                           "clinical_summary", max_tokens=SUMMARY_MAX_TOKENS)
+    if not ai:
+        return {"status": "AI_UNAVAILABLE"}
+    fields = AI_SUMMARY_SCHEMA["required"]
+    if not all(isinstance(ai.get(k), str) and ai[k].strip() for k in fields):
+        return {"status": "INVALID_OUTPUT"}
+    draft = {k: ai[k].strip() for k in fields}
+    ai_usage.cache_put(key, "clinical_summary", draft)
+    return {"status": "GENERATED", **draft}
