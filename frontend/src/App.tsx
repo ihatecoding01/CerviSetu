@@ -3,7 +3,6 @@ import { api, type PatientCase, type AuditLog, type EscalationSimResult } from "
 import { DashboardLayout, type Tab } from "./components/DashboardLayout";
 import { OverviewPanel } from "./components/OverviewPanel";
 import { ClinicalIntake } from "./components/ClinicalIntake";
-import { ImageQualityTriage } from "./components/ImageQualityTriage";
 import { EscalationHeatmap } from "./components/EscalationHeatmap";
 import { AshaCoordination } from "./components/AshaCoordination";
 import { AuditLedger } from "./components/AuditLedger";
@@ -265,8 +264,6 @@ export default function App() {
       {currentTab === "intake-tab" && (
         <ClinicalIntake onCaseSubmitted={handleCaseSubmitted} />
       )}
-
-      {currentTab === "image-tab" && <ImageQualityTriage />}
 
       {currentTab === "tracker-tab" && (
         <EscalationHeatmap

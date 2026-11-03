@@ -1,9 +1,8 @@
 import { useState, type ReactNode } from "react";
 import {
   LayoutDashboard,
-  FileSpreadsheet,
-  ScanLine,
-  Flame,
+  ClipboardList,
+  Activity,
   Users,
   ShieldCheck,
   Search,
@@ -13,10 +12,8 @@ import {
   Tablet,
   Building2,
   Stethoscope,
-  Globe,
-  Bot,
-  Sparkles,
-  Code2,
+  HeartHandshake,
+  Bell,
   PanelLeft,
   Home,
   HeartPulse,
@@ -24,7 +21,6 @@ import {
 
 export type Tab =
   | "intake-tab"
-  | "image-tab"
   | "tracker-tab"
   | "privacy-tab"
   | "asha-tab"
@@ -50,11 +46,10 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { id: "overview-tab", label: "Dashboard", icon: Home, category: "home" },
   { id: "encounter-tab", label: "Clinical Encounter", icon: Stethoscope, category: "clinical" },
-  { id: "patient-tab", label: "Patient Portal", icon: Globe, category: "clinical" },
+  { id: "patient-tab", label: "Patient Portal", icon: HeartHandshake, category: "clinical" },
   { id: "dual-tab", label: "Dual-Screen Demo", icon: Tablet, category: "clinical" },
-  { id: "intake-tab", label: "Clinical Intake", icon: FileSpreadsheet, category: "diagnostics" },
-  { id: "image-tab", label: "Image Quality Triage", icon: ScanLine, category: "diagnostics" },
-  { id: "tracker-tab", label: "Rural Tracker", icon: Flame, category: "diagnostics" },
+  { id: "intake-tab", label: "Clinical Intake", icon: ClipboardList, category: "diagnostics" },
+  { id: "tracker-tab", label: "Rural Tracker", icon: Activity, category: "diagnostics" },
   { id: "asha-tab", label: "ASHA Network", icon: Users, category: "coordination" },
   { id: "privacy-tab", label: "Security & Audit", icon: ShieldCheck, category: "coordination" },
 ];
@@ -83,8 +78,8 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, chi
 
           <div className="w-7 h-px bg-slate-200/90 my-1" />
 
-          {/* Quick Icon Shortcuts */}
-          <div className="flex flex-col items-center gap-2 text-slate-500">
+          {/* Quick Clinical Task Shortcuts (Task-relevant oncology icons) */}
+          <div className="flex flex-col items-center gap-1.5 text-slate-500">
             <button
               onClick={() => onTabChange("overview-tab")}
               className={`p-2 rounded-xl transition-colors cursor-pointer ${
@@ -110,29 +105,59 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, chi
               className={`p-2 rounded-xl transition-colors cursor-pointer ${
                 activeTab === "intake-tab" ? "bg-slate-100 text-black" : "hover:bg-slate-50 hover:text-black"
               }`}
-              title="Intake & Code Pipeline"
+              title="Clinical Intake & OCR"
             >
-              <Code2 className="size-4.5" />
-            </button>
-
-            <button
-              onClick={() => onTabChange("image-tab")}
-              className={`p-2 rounded-xl transition-colors cursor-pointer ${
-                activeTab === "image-tab" ? "bg-slate-100 text-[#F19941]" : "hover:bg-slate-50 hover:text-black"
-              }`}
-              title="AI Image Engine"
-            >
-              <Bot className="size-4.5" />
+              <ClipboardList className="size-4.5" />
             </button>
 
             <button
               onClick={() => onTabChange("patient-tab")}
               className={`p-2 rounded-xl transition-colors cursor-pointer ${
-                activeTab === "patient-tab" ? "bg-slate-100 text-[#90C3CB]" : "hover:bg-slate-50 hover:text-black"
+                activeTab === "patient-tab" ? "bg-slate-100 text-[#BA2D0B]" : "hover:bg-slate-50 hover:text-black"
               }`}
-              title="Patient Portal"
+              title="Patient Care Portal"
             >
-              <Sparkles className="size-4.5" />
+              <HeartHandshake className="size-4.5" />
+            </button>
+
+            <button
+              onClick={() => onTabChange("dual-tab")}
+              className={`p-2 rounded-xl transition-colors cursor-pointer ${
+                activeTab === "dual-tab" ? "bg-slate-100 text-[#F19941]" : "hover:bg-slate-50 hover:text-black"
+              }`}
+              title="Dual-Screen Demo"
+            >
+              <Tablet className="size-4.5" />
+            </button>
+
+            <button
+              onClick={() => onTabChange("tracker-tab")}
+              className={`p-2 rounded-xl transition-colors cursor-pointer ${
+                activeTab === "tracker-tab" ? "bg-slate-100 text-[#BA2D0B]" : "hover:bg-slate-50 hover:text-black"
+              }`}
+              title="Rural Adherence Tracker"
+            >
+              <Activity className="size-4.5" />
+            </button>
+
+            <button
+              onClick={() => onTabChange("asha-tab")}
+              className={`p-2 rounded-xl transition-colors cursor-pointer ${
+                activeTab === "asha-tab" ? "bg-slate-100 text-black" : "hover:bg-slate-50 hover:text-black"
+              }`}
+              title="ASHA Coordination Network"
+            >
+              <Users className="size-4.5" />
+            </button>
+
+            <button
+              onClick={() => onTabChange("privacy-tab")}
+              className={`p-2 rounded-xl transition-colors cursor-pointer ${
+                activeTab === "privacy-tab" ? "bg-slate-100 text-black" : "hover:bg-slate-50 hover:text-black"
+              }`}
+              title="Security & Audit Ledger"
+            >
+              <ShieldCheck className="size-4.5" />
             </button>
           </div>
         </div>
@@ -294,11 +319,11 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, chi
               </div>
             </div>
 
-            {/* What's New Item matching Image 2 */}
+            {/* What's New Item */}
             <div className="pt-2 mb-2">
               <div className="flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
                 <div className="flex items-center gap-2.5">
-                  <Sparkles className="size-4 text-[#F19941]" />
+                  <Bell className="size-4 text-[#F19941]" />
                   <span>What's new</span>
                 </div>
                 <span className="text-xs font-bold bg-[#DBFE87] text-black px-2 py-0.5 rounded-full">
