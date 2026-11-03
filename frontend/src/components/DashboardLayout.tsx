@@ -17,6 +17,7 @@ import {
   PanelLeft,
   Home,
   HeartPulse,
+  ShieldPlus,
 } from "lucide-react";
 
 export type Tab =
@@ -27,7 +28,8 @@ export type Tab =
   | "overview-tab"
   | "patient-tab"
   | "dual-tab"
-  | "encounter-tab";
+  | "encounter-tab"
+  | "prevention-tab";
 
 interface Props {
   activeTab: Tab;
@@ -45,6 +47,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { id: "overview-tab", label: "Dashboard", icon: Home, category: "home" },
+  { id: "prevention-tab", label: "Prevention & Screening", icon: ShieldPlus, category: "clinical" },
   { id: "encounter-tab", label: "Clinical Encounter", icon: Stethoscope, category: "clinical" },
   { id: "patient-tab", label: "Patient Portal", icon: HeartHandshake, category: "clinical" },
   { id: "dual-tab", label: "Dual-Screen Demo", icon: Tablet, category: "clinical" },
@@ -88,6 +91,16 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, chi
               title="Overview Dashboard"
             >
               <LayoutDashboard className="size-4.5" />
+            </button>
+
+            <button
+              onClick={() => onTabChange("prevention-tab")}
+              className={`p-2 rounded-xl transition-colors cursor-pointer ${
+                activeTab === "prevention-tab" ? "bg-slate-100 text-[#BA2D0B]" : "hover:bg-slate-50 hover:text-black"
+              }`}
+              title="Prevention & Screening"
+            >
+              <ShieldPlus className="size-4.5" />
             </button>
 
             <button

@@ -10,6 +10,7 @@ import { CareGateway } from "./components/CareGateway";
 import { PatientCompanion } from "./components/PatientCompanion";
 import { DualScreenDemo } from "./components/DualScreenDemo";
 import { ClinicianEncounter } from "./components/ClinicianEncounter";
+import { PreventionScreening } from "./components/PreventionScreening";
 import { LandingPage } from "./components/LandingPage";
 import { useRouter } from "./lib/router";
 
@@ -237,6 +238,10 @@ export default function App() {
             navigate({ view: "staff", tab: "encounter-tab" });
           }}
         />
+      )}
+
+      {currentTab === "prevention-tab" && (
+        <PreventionScreening />
       )}
 
       {currentTab === "encounter-tab" && (
