@@ -1,13 +1,16 @@
 """Automatic missed-visit escalation cycle: advances overdue patients through the 4-tier safety net.
 
 Runs once a day in the background (and on demand via /api/escalation/run-cycle for demos).
+Patients on an approved CCRT plan are evaluated from the real treatment clock (missed sessions
+derived from dates). Diagnostic follow-ups without a plan keep the legacy day counter.
 Paused clinic-wide while the LINAC is down so machine downtime never triggers false escalations.
 """
 import asyncio
 import logging
 import os
 import secrets
-from typing import Any, Dict, List
+from datetime import date
+from typing import Any, Dict, List, Optional
 
 from backend.core.database import global_db
 from backend.core.security import global_audit, global_vault
@@ -32,13 +35,24 @@ def _open_trackers() -> List[Dict[str, Any]]:
     return [dict(r) for r in rows]
 
 
-def run_escalation_cycle(advance_days: int = 1) -> Dict[str, Any]:
-    """Add `advance_days` to every open follow-up and dispatch any newly reached escalation tier."""
+def run_escalation_cycle(advance_days: int = 1, as_of: Optional[date] = None) -> Dict[str, Any]:
+    """Evaluate every active treatment plan from its clock, then advance legacy follow-up counters."""
+    from backend.config import clinic_today
+    from backend.tools.clock_service import evaluate_plan
+
+    as_of = as_of or clinic_today()
     if global_db.is_linac_downtime_active():
-        return {"status": "PAUSED_LINAC_DOWNTIME", "advance_days": advance_days, "escalations": []}
+        return {"status": "PAUSED_LINAC_DOWNTIME", "advance_days": advance_days, "as_of_date": as_of.isoformat(),
+                "escalations": [], "treatment_plans": []}
+
+    plans = global_db.list_treatment_plans(status="ACTIVE")
+    clock_results = [evaluate_plan(p, as_of) for p in plans]
+    on_clock = {p["patient_token"] for p in plans}
 
     escalations = []
     for t in _open_trackers():
+        if t["patient_token"] in on_clock:
+            continue  # driven by the treatment clock above, not the day counter
         days = (t["days_overdue"] or 0) + advance_days
         tier, dispatched, _dossier = TrackerTriageEngine.evaluate_and_escalate(
             patient_token=t["patient_token"],
@@ -74,19 +88,24 @@ def run_escalation_cycle(advance_days: int = 1) -> Dict[str, Any]:
             days_overdue=days,
             last_reminder_tier=tier,
         )
-        escalations.append({"patient_token": t["patient_token"], "days_overdue": days, "tier": tier, "newly_escalated": new_tier})
+        escalations.append({"patient_token": t["patient_token"], "days_overdue": days, "tier": tier,
+                            "newly_escalated": new_tier, "source": "LEGACY_FOLLOWUP_COUNTER"})
 
     global_audit.record_event(
         action="AUTO_ESCALATION_CYCLE",
         actor="ESCALATION_SCHEDULER",
         patient_token="CLINIC_WIDE",
-        details={"advance_days": advance_days, "patients": len(escalations),
+        details={"advance_days": advance_days, "as_of_date": as_of.isoformat(),
+                 "treatment_plans": len(clock_results),
+                 "clock_newly_escalated": sum(bool(r["newly_escalated_tiers"]) for r in clock_results),
+                 "patients": len(escalations),
                  "newly_escalated": sum(e["newly_escalated"] for e in escalations)},
     )
-    return {"status": "COMPLETED", "advance_days": advance_days, "escalations": escalations}
+    return {"status": "COMPLETED", "advance_days": advance_days, "as_of_date": as_of.isoformat(),
+            "treatment_plans": clock_results, "escalations": escalations, "dispatch_mode": "SIMULATED"}
 
 
-def _open_asha_ticket(patient_token: str, days_missed: int) -> None:
+def _open_asha_ticket(patient_token: str, days_missed: int, current_step: int = 0) -> None:
     """Stigma-safe ASHA ticket: first name only, details come from the encrypted vault."""
     try:
         pii = global_vault.retrieve_pii(patient_token)
@@ -104,7 +123,7 @@ def _open_asha_ticket(patient_token: str, days_missed: int) -> None:
         landmark="",
         contact_phone=(pii.get("extracted_phones") or [""])[0],
         days_missed=days_missed,
-        current_step=0,
+        current_step=current_step,
         delay_root_cause="Auto-escalated: missed visits",
     )
 

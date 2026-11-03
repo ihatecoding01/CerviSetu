@@ -2,7 +2,7 @@
 import shutil
 import secrets
 from typing import List, Optional
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
@@ -400,13 +400,96 @@ async def encounter_discharge_signoff(patient_token: str, req: EncounterDischarg
 
 class EscalationCycleRequest(BaseModel):
     advance_days: int = Field(default=1, ge=1, le=14)
+    as_of_date: Optional[str] = None
 
 
 @router.post("/escalation/run-cycle")
 async def run_escalation_cycle_now(req: EscalationCycleRequest):
-    """Run the daily escalation cycle on demand; advance_days fast-forwards the clock for demos."""
+    """Run the daily escalation cycle on demand. Treatment plans are evaluated from the real clock as of
+    today (or an earlier as_of_date); advance_days only moves legacy diagnostic follow-up counters."""
+    from datetime import date
+    from backend.config import clinic_today
     from backend.tools.escalation_scheduler import run_escalation_cycle
-    return run_escalation_cycle(advance_days=req.advance_days)
+
+    as_of = clinic_today()
+    if req.as_of_date:
+        try:
+            as_of = date.fromisoformat(req.as_of_date)
+        except ValueError:
+            raise HTTPException(status_code=422, detail="as_of_date must be YYYY-MM-DD")
+        if as_of > clinic_today():
+            raise HTTPException(status_code=400, detail="as_of_date cannot be in the future")
+    return run_escalation_cycle(advance_days=req.advance_days, as_of=as_of)
+
+
+class FacilityDowntimeRequest(BaseModel):
+    facility_name: str = "Mirzapur Spoke Clinic"
+    start_date: str
+    end_date: Optional[str] = None
+    reason: str = Field(..., min_length=1)
+    recorded_by: str = Field(..., min_length=1)
+
+
+@router.post("/clinical/facility-downtime")
+async def record_facility_downtime(req: FacilityDowntimeRequest):
+    """Record past or planned machine downtime by date. Downtime days are never counted as patient misses."""
+    from datetime import date, timedelta
+    try:
+        first = date.fromisoformat(req.start_date)
+        last = date.fromisoformat(req.end_date or req.start_date)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Dates must be YYYY-MM-DD")
+    if last < first or (last - first).days > 30:
+        raise HTTPException(status_code=422, detail="Downtime must be 1-31 days with end_date >= start_date")
+    d, dates = first, []
+    while d <= last:
+        global_db.add_schedule_exception(d.isoformat(), "FACILITY_DOWNTIME", req.reason, req.recorded_by,
+                                         facility_name=req.facility_name)
+        dates.append(d.isoformat())
+        d += timedelta(days=1)
+    block = global_audit.record_user_event(
+        user_role=UserRole.NURSE_HEALTHCARE_WORKER, action="FACILITY_DOWNTIME_RECORDED", actor_id=req.recorded_by,
+        patient_token="CLINIC_WIDE", details={"facility": req.facility_name, "dates": dates, "reason": req.reason},
+        severity="WARNING", channel="WEB_CAREUI"
+    )
+    return {"status": "SUCCESS", "facility_name": req.facility_name, "dates": dates, "block": block}
+
+
+@router.get("/ward-board")
+async def get_ward_board():
+    """Every approved CCRT plan with its live clock, for the oncology ward board. No PII."""
+    from backend.config import clinic_today
+    from backend.tools.clock_service import build_clock
+
+    today = clinic_today()
+    rows = []
+    for plan in global_db.list_treatment_plans():
+        if plan["status"] not in ("ACTIVE", "COMPLETED"):
+            continue
+        c = build_clock(plan, today)
+        case = global_db.get_latest_case(plan["patient_token"]) or {}
+        rows.append({
+            "patient_token": plan["patient_token"],
+            "plan_id": plan["plan_id"],
+            "stage": case.get("suspected_stage"),
+            "age": case.get("age"),
+            "regimen_label": plan["regimen_label"],
+            "start_date": c["start_date"],
+            "treatment_day_today": c["treatment_day_today"],
+            "completed_sessions": c["completed_sessions"],
+            "total_sessions": c["total_sessions"],
+            "missed_sessions": c["missed_sessions"],
+            "consecutive_missed_sessions": c["consecutive_missed_sessions"],
+            "projected_finish_day": c["projected_finish_day"],
+            "projected_finish_date": c["projected_finish_date"],
+            "target_49d_status": c["target_49d_status"],
+            "limit_56d_status": c["limit_56d_status"],
+            "clock_state": c["clock_state"],
+            "clock_status": c["clock_status"],
+            "current_escalation_tier": c["current_escalation_tier"],
+            "next_session": (c["upcoming_sessions"] or [None])[0],
+        })
+    return {"status": "SUCCESS", "as_of_date": today.isoformat(), "plans": rows}
 
 
 @router.get("/fhir/patient/{token}")

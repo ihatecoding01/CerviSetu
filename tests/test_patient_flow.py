@@ -19,7 +19,7 @@ def test_search_facilities():
 
 
 def test_patient_healing_clock_and_advance():
-    """Verify 29-step visual healing clock fetch and Day-21 Fraction 15 advance."""
+    """Unknown patients get a not-started clock (no fabricated progress); the legacy demo advance still works."""
     import secrets
     token = f"PT-ADV-{secrets.token_hex(3)}"
 
@@ -28,7 +28,9 @@ def test_patient_healing_clock_and_advance():
     assert res.status_code == 200
     clock = res.json()["clock"]
     assert clock["patient_token"] == token
-    assert clock["total_steps_completed"] == 14
+    assert clock["total_steps_completed"] == 0
+    assert clock["projected_finish_days"] is None
+    assert clock["clock_status"] == "NO_PLAN"
 
     # 2. Advance to Fraction 15 (Day 21 milestone)
     res_adv = client.post("/api/patient/demo/advance-fraction-15", json={
@@ -40,6 +42,8 @@ def test_patient_healing_clock_and_advance():
     assert adv_data["clock"]["total_steps_completed"] == 15
     assert adv_data["hub_request_dispatched"] is True
     assert adv_data["pass_status"]["slot_confirmed_by_doctor"] == 0
+    after = client.get(f"/api/patient/{token}/healing-clock").json()["clock"]
+    assert after["clock_source"] == "LEGACY_DEMO" and after["total_steps_completed"] == 15
 
 
 def test_hub_slot_confirmation_and_pass_issuance():

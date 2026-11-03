@@ -298,6 +298,93 @@ class ClinicalDatabase:
                     granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+
+            # 8. Real CCRT treatment clock (see backend/tools/treatment_clock.py). Progress is always
+            # recomputed from these source records; nothing here stores a derived projection.
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS treatment_plans (
+                    plan_id TEXT PRIMARY KEY,
+                    patient_token TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'ACTIVE',
+                    start_date TEXT NOT NULL,
+                    ebrt_sessions INTEGER NOT NULL,
+                    brachy_sessions INTEGER NOT NULL,
+                    treatment_weekdays TEXT NOT NULL,
+                    brachy_gap_days INTEGER NOT NULL,
+                    brachy_interval_days INTEGER NOT NULL,
+                    rest_dates TEXT NOT NULL DEFAULT '[]',
+                    target_days INTEGER NOT NULL DEFAULT 49,
+                    limit_days INTEGER NOT NULL DEFAULT 56,
+                    facility_name TEXT NOT NULL DEFAULT 'Mirzapur Spoke Clinic',
+                    regimen_label TEXT,
+                    approved_by TEXT NOT NULL,
+                    approved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            cursor.execute("""
+                CREATE UNIQUE INDEX IF NOT EXISTS ux_treatment_plans_one_active
+                ON treatment_plans (patient_token) WHERE status = 'ACTIVE'
+            """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS treatment_sessions (
+                    session_id TEXT PRIMARY KEY,
+                    plan_id TEXT NOT NULL,
+                    patient_token TEXT NOT NULL,
+                    session_number INTEGER NOT NULL,
+                    session_date TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'COMPLETED',
+                    recorded_by TEXT,
+                    machine_id TEXT,
+                    dose_gy REAL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (plan_id) REFERENCES treatment_plans (plan_id)
+                )
+            """)
+            # Duplicate guards: one completed delivery per session number and per treatment date
+            cursor.execute("""
+                CREATE UNIQUE INDEX IF NOT EXISTS ux_treatment_sessions_number
+                ON treatment_sessions (plan_id, session_number) WHERE status = 'COMPLETED'
+            """)
+            cursor.execute("""
+                CREATE UNIQUE INDEX IF NOT EXISTS ux_treatment_sessions_date
+                ON treatment_sessions (plan_id, session_date) WHERE status = 'COMPLETED'
+            """)
+            # Patient-level rows set plan_id; facility-wide downtime rows set facility_name with plan_id ''
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS treatment_schedule_exceptions (
+                    exception_id TEXT PRIMARY KEY,
+                    plan_id TEXT NOT NULL DEFAULT '',
+                    facility_name TEXT NOT NULL DEFAULT '',
+                    exception_date TEXT NOT NULL,
+                    exception_type TEXT NOT NULL,
+                    reason TEXT,
+                    recorded_by TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE (plan_id, facility_name, exception_date, exception_type)
+                )
+            """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS treatment_missed_sessions (
+                    plan_id TEXT NOT NULL,
+                    missed_date TEXT NOT NULL,
+                    patient_token TEXT NOT NULL,
+                    detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (plan_id, missed_date)
+                )
+            """)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS treatment_escalations (
+                    escalation_id TEXT PRIMARY KEY,
+                    plan_id TEXT NOT NULL,
+                    patient_token TEXT NOT NULL,
+                    episode_start_date TEXT NOT NULL,
+                    tier TEXT NOT NULL,
+                    missed_streak INTEGER NOT NULL,
+                    dispatch_mode TEXT NOT NULL DEFAULT 'SIMULATED',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE (plan_id, episode_start_date, tier)
+                )
+            """)
             conn.commit()
 
     def save_patient(self, patient_token: str, age: Optional[int], gender: Optional[str], region_code: str = "RURAL"):
@@ -1142,6 +1229,140 @@ class ClinicalDatabase:
                 d["status"] = "MAINTENANCE_PAUSED"
                 return d
             return {"is_active": False, "status": "ONLINE", "facility_name": facility_name}
+
+    def get_linac_downtime_periods(self, facility_name: str) -> List[Dict[str, Any]]:
+        """All downtime periods for a facility (UTC timestamps; ended_at NULL while still active)."""
+        with self._get_conn() as conn:
+            rows = conn.execute(
+                "SELECT started_at, ended_at FROM linac_downtime_logs WHERE facility_name = ?", (facility_name,)
+            ).fetchall()
+            return [dict(r) for r in rows]
+
+    # ==========================================
+    # 6b. CCRT Treatment Clock Records
+    # ==========================================
+
+    def create_treatment_plan(self, plan: Dict[str, Any]) -> Dict[str, Any]:
+        """Insert a clinician-approved plan; raises sqlite3.IntegrityError if one is already active."""
+        cols = ", ".join(plan)
+        marks = ", ".join("?" for _ in plan)
+        with self._get_conn() as conn:
+            conn.execute(f"INSERT INTO treatment_plans ({cols}) VALUES ({marks})", tuple(plan.values()))
+            conn.commit()
+        return self.get_treatment_plan(plan["patient_token"])
+
+    def get_treatment_plan(self, patient_token: str) -> Optional[Dict[str, Any]]:
+        """The patient's active plan, else the most recent completed one."""
+        with self._get_conn() as conn:
+            row = conn.execute("""
+                SELECT * FROM treatment_plans WHERE patient_token = ? AND status IN ('ACTIVE', 'COMPLETED')
+                ORDER BY status = 'ACTIVE' DESC, approved_at DESC LIMIT 1
+            """, (patient_token,)).fetchone()
+            return dict(row) if row else None
+
+    def list_treatment_plans(self, status: Optional[str] = None) -> List[Dict[str, Any]]:
+        query, params = "SELECT * FROM treatment_plans", ()
+        if status:
+            query, params = query + " WHERE status = ?", (status,)
+        with self._get_conn() as conn:
+            return [dict(r) for r in conn.execute(query + " ORDER BY approved_at DESC", params).fetchall()]
+
+    def set_treatment_plan_status(self, plan_id: str, status: str):
+        with self._get_conn() as conn:
+            conn.execute("UPDATE treatment_plans SET status = ? WHERE plan_id = ?", (status, plan_id))
+            conn.commit()
+
+    def record_treatment_session(
+        self, plan_id: str, patient_token: str, session_number: int, session_date: str,
+        status: str, recorded_by: str, machine_id: Optional[str], dose_gy: Optional[float],
+    ) -> str:
+        """Insert one delivered/cancelled session; the unique indexes reject duplicate completions."""
+        session_id = f"SESS-{secrets.token_hex(4).upper()}"
+        with self._get_conn() as conn:
+            conn.execute("""
+                INSERT INTO treatment_sessions
+                (session_id, plan_id, patient_token, session_number, session_date, status, recorded_by, machine_id, dose_gy)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (session_id, plan_id, patient_token, session_number, session_date, status, recorded_by, machine_id, dose_gy))
+            conn.commit()
+        return session_id
+
+    def get_treatment_sessions(self, plan_id: str) -> List[Dict[str, Any]]:
+        with self._get_conn() as conn:
+            rows = conn.execute(
+                "SELECT * FROM treatment_sessions WHERE plan_id = ? ORDER BY session_date, created_at", (plan_id,)
+            ).fetchall()
+            return [dict(r) for r in rows]
+
+    def add_schedule_exception(
+        self, exception_date: str, exception_type: str, reason: str, recorded_by: str,
+        plan_id: str = "", facility_name: str = "",
+    ) -> bool:
+        """Idempotent; returns False if the same exception was already recorded."""
+        with self._get_conn() as conn:
+            cur = conn.execute("""
+                INSERT OR IGNORE INTO treatment_schedule_exceptions
+                (exception_id, plan_id, facility_name, exception_date, exception_type, reason, recorded_by)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (f"EXC-{secrets.token_hex(4).upper()}", plan_id, facility_name, exception_date, exception_type, reason, recorded_by))
+            conn.commit()
+            return cur.rowcount > 0
+
+    def get_schedule_exceptions(self, plan_id: str, facility_name: str) -> List[Dict[str, Any]]:
+        with self._get_conn() as conn:
+            rows = conn.execute("""
+                SELECT * FROM treatment_schedule_exceptions
+                WHERE plan_id = ? OR (plan_id = '' AND facility_name = ?)
+            """, (plan_id, facility_name)).fetchall()
+            return [dict(r) for r in rows]
+
+    def sync_missed_sessions(self, plan_id: str, patient_token: str, missed_dates: List[str]) -> List[str]:
+        """Persist the currently derived misses; returns newly detected dates. A miss later backfilled
+        with a delivered session disappears from the derived list and is removed here."""
+        with self._get_conn() as conn:
+            known = {r["missed_date"] for r in conn.execute(
+                "SELECT missed_date FROM treatment_missed_sessions WHERE plan_id = ?", (plan_id,)).fetchall()}
+            new = [d for d in missed_dates if d not in known]
+            conn.executemany(
+                "INSERT OR IGNORE INTO treatment_missed_sessions (plan_id, missed_date, patient_token) VALUES (?, ?, ?)",
+                [(plan_id, d, patient_token) for d in new],
+            )
+            stale = known - set(missed_dates)
+            conn.executemany(
+                "DELETE FROM treatment_missed_sessions WHERE plan_id = ? AND missed_date = ?",
+                [(plan_id, d) for d in stale],
+            )
+            conn.commit()
+        return new
+
+    def record_treatment_escalation(
+        self, plan_id: str, patient_token: str, episode_start_date: str, tier: str, missed_streak: int,
+    ) -> bool:
+        """Idempotent per (plan, missed-run episode, tier); returns True only the first time."""
+        with self._get_conn() as conn:
+            cur = conn.execute("""
+                INSERT OR IGNORE INTO treatment_escalations
+                (escalation_id, plan_id, patient_token, episode_start_date, tier, missed_streak)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (f"TESC-{secrets.token_hex(4).upper()}", plan_id, patient_token, episode_start_date, tier, missed_streak))
+            conn.commit()
+            return cur.rowcount > 0
+
+    def get_treatment_escalations(self, plan_id: str) -> List[Dict[str, Any]]:
+        with self._get_conn() as conn:
+            rows = conn.execute(
+                "SELECT * FROM treatment_escalations WHERE plan_id = ? ORDER BY created_at", (plan_id,)
+            ).fetchall()
+            return [dict(r) for r in rows]
+
+    def get_latest_case(self, patient_token: str) -> Optional[Dict[str, Any]]:
+        with self._get_conn() as conn:
+            row = conn.execute("""
+                SELECT c.case_id, c.cancer_type, c.suspected_stage, c.severity_score, p.age
+                FROM clinical_cases c LEFT JOIN patients p ON p.patient_token = c.patient_token
+                WHERE c.patient_token = ? ORDER BY c.created_at DESC LIMIT 1
+            """, (patient_token,)).fetchone()
+            return dict(row) if row else None
 
     # ==========================================
     # 7. DPDP Consent & Research Telemetry

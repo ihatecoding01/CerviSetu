@@ -1,6 +1,8 @@
 """Clinical Agentic System Configuration."""
 import os
+from datetime import date, datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -51,6 +53,14 @@ ESCALATION_POLICY = {
     "tier_3_asha_days": 3,       # Day +3 missed -> Immediate ASHA Village Home Visit Ticket (stigma-safe)
     "tier_4_authority_days": 5,  # Day +5 missed -> District CMO Statutory Emergency MMU/108 Escort
 }
+
+# Treatment clock calendar: session dates and "today" are clinic-local dates, not UTC
+CLINIC_TIMEZONE = ZoneInfo(os.getenv("CERVISETU_CLINIC_TZ", "Asia/Kolkata"))
+
+
+def clinic_today() -> date:
+    return datetime.now(CLINIC_TIMEZONE).date()
+
 
 # Severity Score Weights (0.0 to 1.0)
 SEVERITY_THRESHOLDS = {

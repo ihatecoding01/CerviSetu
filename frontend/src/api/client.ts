@@ -94,6 +94,54 @@ export interface HealingClock {
   clock_target_49d_status: string;
   clock_limit_56d_status: string;
   is_completed?: number;
+  clock_status?: string;
+  clock_source?: "TREATMENT_CLOCK" | "LEGACY_DEMO";
+}
+
+// Live CCRT treatment clock recomputed by the backend from plan, sessions and schedule exceptions
+export type ClockStatus = "OPTIMAL" | "WARNING" | "BREACH_RISK" | "NO_PLAN" | "NOT_STARTED" | "PAUSED" | "COMPLETED" | "INCOMPLETE_SCHEDULE";
+
+export interface TreatmentClock {
+  patient_token: string;
+  plan_id?: string;
+  clock_state: string;
+  clock_status: ClockStatus;
+  start_date?: string;
+  treatment_day_today?: number;
+  completed_sessions?: number;
+  total_sessions?: number;
+  remaining_sessions?: number;
+  missed_sessions?: number;
+  consecutive_missed_sessions?: number;
+  projected_finish_date?: string | null;
+  projected_finish_day?: number | null;
+  days_until_projected_finish?: number | null;
+  target_49d_status?: string | null;
+  limit_56d_status?: string | null;
+  current_escalation_tier?: string | null;
+  upcoming_sessions?: { date: string; session_number: number; phase: string }[];
+}
+
+export interface WardBoardRow {
+  patient_token: string;
+  plan_id: string;
+  stage: string | null;
+  age: number | null;
+  regimen_label: string;
+  start_date: string;
+  treatment_day_today: number;
+  completed_sessions: number;
+  total_sessions: number;
+  missed_sessions: number;
+  consecutive_missed_sessions: number;
+  projected_finish_day: number | null;
+  projected_finish_date: string | null;
+  target_49d_status: string | null;
+  limit_56d_status: string | null;
+  clock_state: string;
+  clock_status: ClockStatus;
+  current_escalation_tier: string | null;
+  next_session: { date: string; session_number: number; phase: string } | null;
 }
 
 export interface HubSpokePass {
@@ -437,6 +485,8 @@ export const api = {
     fraction_number: number;
     machine_id?: string;
     dose_gy?: number;
+    session_date?: string;
+    session_status?: "COMPLETED" | "CANCELLED";
   }): Promise<any> {
     return request<any>("/api/logs/nurse/fraction", {
       method: "POST",
@@ -489,6 +539,28 @@ export const api = {
 
   async searchFacilities(district = "Mirzapur"): Promise<{ query: string; facilities: Facility[] }> {
     return request<{ query: string; facilities: Facility[] }>(`/api/facilities/search?district=${encodeURIComponent(district)}`);
+  },
+
+  async approveTreatmentPlan(token: string, payload: { approved_by: string; start_date?: string }): Promise<{ status: string; clock: TreatmentClock }> {
+    return request(`/api/patient/${token}/treatment-plan`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getPatientClock(token: string): Promise<TreatmentClock> {
+    return request<TreatmentClock>(`/api/patient/${token}/clock`);
+  },
+
+  async getWardBoard(): Promise<{ as_of_date: string; plans: WardBoardRow[] }> {
+    return request<{ as_of_date: string; plans: WardBoardRow[] }>("/api/ward-board");
+  },
+
+  async recordNoShow(token: string, recorded_by: string): Promise<{ clock: TreatmentClock }> {
+    return request(`/api/patient/${token}/clock/no-show`, {
+      method: "POST",
+      body: JSON.stringify({ recorded_by }),
+    });
   },
 
   async getHealingClock(token: string): Promise<{ status: string; patient_token: string; clock: HealingClock }> {

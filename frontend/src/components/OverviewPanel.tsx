@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { PatientCase, LinacDowntimeStatus } from "../api/client";
+import type { PatientCase, LinacDowntimeStatus, WardBoardRow } from "../api/client";
 import { api } from "../api/client";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./careui/card";
 import { Badge } from "./careui/badge";
@@ -66,8 +66,16 @@ function getTierBadge(tier: string | null | undefined) {
 
 const DEMO_TOKENS = new Set(["PT-RURAL-7891", "PT-RURAL-4421", "PT-RURAL-1102", "PT-RURAL-9034", "PT-PREC-202"]);
 
-// Map a case from /api/cases (DB record) or a fresh /api/run-case result onto a ward board row
-function caseToRosterRow(c: PatientCase) {
+const CLOCK_LANE: Record<string, "optimal" | "warning" | "critical"> = {
+  OPTIMAL: "optimal",
+  WARNING: "warning",
+  BREACH_RISK: "critical",
+  INCOMPLETE_SCHEDULE: "critical",
+};
+
+// Map a case from /api/cases (DB record) or a fresh /api/run-case result onto a ward board row.
+// When the patient has an approved CCRT plan, the clock columns come from the live treatment clock.
+function caseToRosterRow(c: PatientCase, plan?: WardBoardRow) {
   const rec = c as PatientCase & Record<string, any>;
   const intake = rec.intake_data ?? rec.clinical_intake ?? {};
   const diag = rec.diagnostic_data ?? rec.diagnostic_synthesis ?? {};
@@ -95,6 +103,29 @@ function caseToRosterRow(c: PatientCase) {
     tier,
     severity: Number(rec.severity_score ?? rec.cancer_severity_score ?? intake.severity_score ?? 0),
     avatarColor: "bg-white text-[#BA2D0B] border-[#BA2D0B]/40",
+    ...(plan ? clockColumns(plan) : {}),
+  };
+}
+
+function clockColumns(plan: WardBoardRow) {
+  const day = plan.projected_finish_day;
+  const icon = plan.clock_status === "BREACH_RISK" ? "🔴" : plan.clock_status === "WARNING" ? "🟡" : "🟢";
+  const label =
+    plan.clock_status === "COMPLETED" ? "✅ Course Completed" :
+    plan.clock_status === "PAUSED" ? "⏸ Clinician-Approved Pause" :
+    plan.clock_status === "NOT_STARTED" ? `⚪ Starts ${plan.start_date}` :
+    `${icon} Proj: Day ${day ?? "-"} (${day !== null && day <= 49 ? "<=49d" : day !== null && day <= 56 ? "<=56d" : ">56d"})`;
+  return {
+    lane: CLOCK_LANE[plan.clock_status] ?? "optimal",
+    ottDays: day ?? 0,
+    ottBadge: label,
+    ottSub: `Live clock · Started ${plan.start_date} · Today Day ${plan.treatment_day_today}`,
+    adhStatus: plan.consecutive_missed_sessions > 0
+      ? `🔴 Missed ${plan.consecutive_missed_sessions} in a row`
+      : `🟢 ${plan.completed_sessions}/${plan.total_sessions} sessions done`,
+    adhDetail: `${plan.missed_sessions} missed total` +
+      (plan.next_session ? ` · Next #${plan.next_session.session_number} on ${plan.next_session.date}` : ""),
+    tier: plan.current_escalation_tier,
   };
 }
 
@@ -102,10 +133,63 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
   const [activeLaneFilter, setActiveLaneFilter] = useState<"all" | "optimal" | "warning" | "critical">("all");
   const [downtime, setDowntime] = useState<LinacDowntimeStatus | null>(null);
   const [togglingDowntime, setTogglingDowntime] = useState(false);
+  const [wardBoard, setWardBoard] = useState<WardBoardRow[]>([]);
+  const [clockAction, setClockAction] = useState<string | null>(null);
+  const [clockMessage, setClockMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadDowntime();
   }, []);
+
+  // Reload the live treatment clocks whenever the case list refreshes
+  useEffect(() => {
+    loadWardBoard();
+  }, [cases]);
+
+  const loadWardBoard = async () => {
+    try {
+      const res = await api.getWardBoard();
+      setWardBoard(res.plans);
+    } catch {
+      // Offline fallback: rows show intake data only
+    }
+  };
+
+  const handleLogSession = async (plan: WardBoardRow) => {
+    setClockAction(plan.patient_token);
+    setClockMessage(null);
+    try {
+      const res = await api.logNurseFraction({
+        nurse_id: "NURSE-SPOKE-01",
+        patient_token: plan.patient_token,
+        fraction_number: plan.completed_sessions + 1,
+      });
+      setClockMessage(
+        res.duplicate
+          ? `${plan.patient_token}: session already recorded`
+          : `${plan.patient_token}: session ${plan.completed_sessions + 1} recorded · Proj. Day ${res.clock?.projected_finish_day ?? "-"}`
+      );
+      await loadWardBoard();
+    } catch (err) {
+      setClockMessage(`${plan.patient_token}: ${err instanceof Error ? err.message : "Could not record session"}`);
+    } finally {
+      setClockAction(null);
+    }
+  };
+
+  const handleNoShow = async (plan: WardBoardRow) => {
+    setClockAction(plan.patient_token);
+    setClockMessage(null);
+    try {
+      await api.recordNoShow(plan.patient_token, "NURSE-SPOKE-01");
+      setClockMessage(`${plan.patient_token}: no-show recorded`);
+      await loadWardBoard();
+    } catch (err) {
+      setClockMessage(`${plan.patient_token}: ${err instanceof Error ? err.message : "Could not record no-show"}`);
+    } finally {
+      setClockAction(null);
+    }
+  };
 
   const loadDowntime = async () => {
     try {
@@ -227,7 +311,7 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
       return true;
     })
     .slice(0, 10)
-    .map(caseToRosterRow);
+    .map((c) => caseToRosterRow(c, wardBoard.find((w) => w.patient_token === c.patient_token)));
   patientRoster.push(...liveRows);
 
   const filteredRoster = patientRoster.filter((p) => {
@@ -475,6 +559,11 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
         </CardHeader>
 
         <CardContent>
+          {clockMessage && (
+            <div className="text-xs font-medium text-gray-800 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 mb-3">
+              {clockMessage}
+            </div>
+          )}
           <Table>
             <TableHeader>
               <TableRow>
@@ -489,6 +578,7 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
               {filteredRoster.map((p) => {
                 const isCriticalRow = p.lane === "critical";
                 const isWarningRow = p.lane === "warning";
+                const rowPlan = DEMO_TOKENS.has(p.token) ? undefined : wardBoard.find((w) => w.patient_token === p.token);
 
                 return (
                   <TableRow
@@ -558,6 +648,28 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
 
                     {/* Column 5: Encounter Button */}
                     <TableCell className="text-right">
+                      {rowPlan?.clock_state === "ACTIVE" && (
+                        <div className="flex justify-end gap-1 mb-1">
+                          <Button
+                            variant="outline"
+                            size="xs"
+                            disabled={clockAction === p.token}
+                            onClick={() => handleLogSession(rowPlan)}
+                            className="text-xs"
+                          >
+                            Log Session
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="xs"
+                            disabled={clockAction === p.token}
+                            onClick={() => handleNoShow(rowPlan)}
+                            className="text-xs"
+                          >
+                            No-show
+                          </Button>
+                        </div>
+                      )}
                       {onSelectCase && (
                         <Button
                           variant="obsidian"

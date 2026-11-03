@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { api } from "../api/client";
+import type { TreatmentClock } from "../api/client";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./careui/card";
 import { Button } from "./careui/button";
 import { Input } from "./careui/input";
@@ -59,6 +60,10 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [isSignedOff, setIsSignedOff] = useState(false);
   const [signingLoading, setSigningLoading] = useState(false);
+  const [planStart, setPlanStart] = useState(() => new Date().toLocaleDateString("en-CA"));
+  const [planClock, setPlanClock] = useState<TreatmentClock | null>(null);
+  const [planLoading, setPlanLoading] = useState(false);
+  const [planError, setPlanError] = useState<string | null>(null);
   const [sharpnessScore, setSharpnessScore] = useState<number | null>(null);
   const [sharpnessEvaluating, setSharpnessEvaluating] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -138,12 +143,32 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
     }
   };
 
+  // The treatment clock starts only on clinician approval of the CCRT plan, never at intake
+  const handleApprovePlan = async () => {
+    if (!result?.patient_token) return;
+    setPlanLoading(true);
+    setPlanError(null);
+    try {
+      const res = await api.approveTreatmentPlan(result.patient_token, {
+        approved_by: "DR-ONCO-CAREUI",
+        start_date: planStart || undefined,
+      });
+      setPlanClock(res.clock);
+    } catch (err) {
+      setPlanError(err instanceof Error ? err.message : "Plan approval failed");
+    } finally {
+      setPlanLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setResult(null);
     setError(null);
     setIsSignedOff(false);
+    setPlanClock(null);
+    setPlanError(null);
 
     const formData = new FormData();
     formData.append("patient_name", form.patient_name);
@@ -595,6 +620,43 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
                     </Button>
                   )}
                 </div>
+
+                {isSignedOff && (
+                  <div className="pt-2 border-t border-gray-100 space-y-2">
+                    <div className="text-xs font-semibold text-gray-800">CCRT Treatment Clock (49 / 56 days)</div>
+                    {planClock ? (
+                      <div className="text-xs bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-emerald-900 space-y-0.5">
+                        <div className="font-bold">
+                          Clock started {planClock.start_date} · Projected finish Day {planClock.projected_finish_day ?? "-"} ({planClock.clock_status})
+                        </div>
+                        <div>
+                          {planClock.completed_sessions ?? 0}/{planClock.total_sessions} sessions · {planClock.missed_sessions ?? 0} missed
+                          {planClock.upcoming_sessions?.[0] && ` · Next: ${planClock.upcoming_sessions[0].date}`}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="date"
+                          value={planStart}
+                          onChange={(e) => setPlanStart(e.target.value)}
+                          className="text-xs border border-gray-300 rounded-md px-2 py-1.5"
+                          aria-label="Treatment start date"
+                        />
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={handleApprovePlan}
+                          disabled={planLoading}
+                          className="flex-1 bg-black hover:bg-black/85 text-white font-medium text-xs py-2"
+                        >
+                          {planLoading ? "Starting Clock..." : "Approve CCRT Plan & Start Clock"}
+                        </Button>
+                      </div>
+                    )}
+                    {planError && <div className="text-xs text-rose-700">{planError}</div>}
+                  </div>
+                )}
               </div>
             )}
           </CardContent>

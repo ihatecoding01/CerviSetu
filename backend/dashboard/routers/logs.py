@@ -43,6 +43,8 @@ class NurseFractionLogRequest(BaseModel):
     fraction_number: int
     machine_id: Optional[str] = "LINAC-SPOKE-01"
     dose_gy: Optional[float] = 2.0
+    session_date: Optional[str] = None       # clinic-local YYYY-MM-DD, defaults to today
+    session_status: Optional[str] = "COMPLETED"  # or CANCELLED (does not count toward progress)
 
 
 class NurseSlipUploadRequest(BaseModel):
@@ -250,12 +252,28 @@ async def log_doctor_triage(req: DoctorTriageRequest):
 
 @router.post("/logs/nurse/fraction")
 async def log_nurse_fraction(req: NurseFractionLogRequest):
-    """Log a nurse's 1-tap completion of an EBRT radiation fraction (Step 1..25)."""
+    """Log a nurse's 1-tap session completion. With an approved plan this records the session and
+    recomputes the treatment clock; without one it stays an audit-only log (legacy demo behaviour)."""
+    from backend.tools.clock_service import ClockError, log_session
+
+    clock_result = None
+    if global_db.get_treatment_plan(req.patient_token):
+        try:
+            clock_result = log_session(
+                req.patient_token, req.fraction_number, req.session_date, req.session_status or "COMPLETED",
+                req.nurse_id, req.machine_id, req.dose_gy,
+            )
+        except ClockError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.detail)
+        if clock_result["duplicate"]:
+            return {"status": "SUCCESS", "duplicate": True, "clock_updated": False, "clock": clock_result["clock"]}
+
     log_id = f"NURSE-FRAC-{secrets.token_hex(4).upper()}"
     payload = {
         "fraction_number": req.fraction_number,
         "machine_id": req.machine_id,
-        "dose_gy": req.dose_gy
+        "dose_gy": req.dose_gy,
+        "session_status": req.session_status or "COMPLETED",
     }
     block = global_audit.record_user_event(
         user_role=UserRole.NURSE_HEALTHCARE_WORKER,
@@ -278,7 +296,12 @@ async def log_nurse_fraction(req: NurseFractionLogRequest):
         sha256_hash=block.get("current_hash"),
         timestamp=block.get("timestamp")
     )
-    return {"status": "SUCCESS", "log_id": log_id, "block": block}
+    if clock_result is None:
+        return {"status": "SUCCESS", "log_id": log_id, "block": block,
+                "clock_updated": False, "reason": "NO_ACTIVE_TREATMENT_PLAN"}
+    return {"status": "SUCCESS", "log_id": log_id, "block": block, "duplicate": False, "clock_updated": True,
+            "session_id": clock_result["session_id"], "clock": clock_result["clock"],
+            "escalation": clock_result["escalation"]}
 
 
 @router.post("/logs/nurse/slip-upload")

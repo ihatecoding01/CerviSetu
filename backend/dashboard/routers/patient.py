@@ -1,11 +1,16 @@
 """Patient Co-Pilot, 29-Step Healing Clock, and Hub-Spoke Handoff router."""
+import json
 import secrets
-from typing import Optional
+import sqlite3
+from datetime import date, timedelta
+from typing import List, Optional
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
+from backend.config import clinic_today
 from backend.core.database import global_db
 from backend.core.security import global_audit, UserRole
+from backend.tools import clock_service
 
 router = APIRouter(prefix="/api/patient", tags=["Patient Vernacular Co-Pilot (70% Weight)"])
 
@@ -23,14 +28,155 @@ class HubConfirmSlotRequest(BaseModel):
 
 @router.get("/{token}/healing-clock")
 async def get_patient_healing_clock(token: str):
-    """Retrieve 29-step visual Healing Clock progress for patient."""
-    clock = global_db.get_or_create_healing_clock(token)
+    """Healing Clock progress: from the real treatment clock when a plan is approved (clock_source
+    TREATMENT_CLOCK), seeded demo values for demo patients (LEGACY_DEMO), otherwise not started."""
+    clock = clock_service.healing_clock_view(token)
     return {"status": "SUCCESS", "patient_token": token, "clock": clock}
+
+
+# ==========================================
+# Real CCRT Treatment Clock
+# ==========================================
+
+def _parse_date(value: Optional[str], field: str) -> date:
+    if not value:
+        return clinic_today()
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        raise HTTPException(status_code=422, detail=f"{field} must be YYYY-MM-DD")
+
+
+class TreatmentPlanRequest(BaseModel):
+    approved_by: str = Field(..., min_length=1, description="Approving clinician ID")
+    start_date: Optional[str] = Field(None, description="Clinic-local YYYY-MM-DD; defaults to today, may be backdated")
+    ebrt_sessions: int = Field(25, ge=1, le=40)
+    brachy_sessions: int = Field(4, ge=0, le=8)
+    treatment_weekdays: List[int] = Field(default_factory=lambda: [0, 1, 2, 3, 4], description="Monday=0")
+    brachy_gap_days: int = Field(3, ge=0, le=30)
+    brachy_interval_days: int = Field(3, ge=1, le=14)
+    rest_dates: List[str] = Field(default_factory=list)
+    target_days: int = Field(49, ge=1, le=120)
+    limit_days: int = Field(56, ge=1, le=150)
+    facility_name: str = "Mirzapur Spoke Clinic"
+    regimen_label: str = "Sample CCRT: EBRT 25 fractions + HDR brachytherapy 4 fractions"
+
+
+@router.post("/{token}/treatment-plan")
+async def approve_treatment_plan(token: str, req: TreatmentPlanRequest):
+    """Clinician approval of a CCRT plan. This is the only thing that starts the treatment clock."""
+    if not global_db.get_latest_case(token):
+        raise HTTPException(status_code=404, detail="Unknown patient token")
+    weekdays = sorted(set(req.treatment_weekdays))
+    if not weekdays or any(d < 0 or d > 6 for d in weekdays):
+        raise HTTPException(status_code=422, detail="treatment_weekdays must be values 0-6 (Monday=0)")
+    if req.limit_days < req.target_days:
+        raise HTTPException(status_code=422, detail="limit_days must be >= target_days")
+    start = _parse_date(req.start_date, "start_date")
+    rest = sorted({_parse_date(d, "rest_dates").isoformat() for d in req.rest_dates})
+
+    try:
+        plan = global_db.create_treatment_plan({
+            "plan_id": f"PLAN-{secrets.token_hex(4).upper()}",
+            "patient_token": token,
+            "status": "ACTIVE",
+            "start_date": start.isoformat(),
+            "ebrt_sessions": req.ebrt_sessions,
+            "brachy_sessions": req.brachy_sessions,
+            "treatment_weekdays": ",".join(map(str, weekdays)),
+            "brachy_gap_days": req.brachy_gap_days,
+            "brachy_interval_days": req.brachy_interval_days,
+            "rest_dates": json.dumps(rest),
+            "target_days": req.target_days,
+            "limit_days": req.limit_days,
+            "facility_name": req.facility_name,
+            "regimen_label": req.regimen_label,
+            "approved_by": req.approved_by,
+        })
+    except sqlite3.IntegrityError:
+        raise HTTPException(status_code=409, detail="Patient already has an active treatment plan")
+
+    block = global_audit.record_user_event(
+        user_role=UserRole.DOCTOR,
+        action="CCRT_PLAN_APPROVED",
+        actor_id=req.approved_by,
+        patient_token=token,
+        details={"plan_id": plan["plan_id"], "start_date": plan["start_date"],
+                 "sessions": req.ebrt_sessions + req.brachy_sessions},
+        severity="INFO",
+        channel="WEB_CAREUI"
+    )
+    return {"status": "SUCCESS", "plan": plan, "clock": clock_service.build_clock(plan), "block": block}
+
+
+@router.get("/{token}/clock")
+async def get_treatment_clock(token: str, as_of_date: Optional[str] = None):
+    """Live 49/56-day treatment clock recomputed from plan, sessions and schedule exceptions. No PII."""
+    today = _parse_date(as_of_date, "as_of_date")
+    if today > clinic_today():
+        raise HTTPException(status_code=400, detail="as_of_date cannot be in the future")
+    return clock_service.get_patient_clock(token, today)
+
+
+class TreatmentPauseRequest(BaseModel):
+    approved_by: str = Field(..., min_length=1)
+    start_date: str
+    end_date: Optional[str] = None
+    reason: str = Field(..., min_length=1)
+
+
+@router.post("/{token}/treatment-plan/pause")
+async def pause_treatment(token: str, req: TreatmentPauseRequest):
+    """Clinician-approved treatment break (e.g. toxicity). Paused dates are not counted as misses."""
+    plan = global_db.get_treatment_plan(token)
+    if not plan or plan["status"] != "ACTIVE":
+        raise HTTPException(status_code=404, detail="NO_ACTIVE_TREATMENT_PLAN")
+    first = _parse_date(req.start_date, "start_date")
+    last = _parse_date(req.end_date or req.start_date, "end_date")
+    if last < first or (last - first).days > 60:
+        raise HTTPException(status_code=422, detail="Pause must be 1-61 days with end_date >= start_date")
+    d = first
+    while d <= last:
+        global_db.add_schedule_exception(d.isoformat(), "CLINICIAN_APPROVED_PAUSE", req.reason, req.approved_by,
+                                         plan_id=plan["plan_id"])
+        d += timedelta(days=1)
+    global_audit.record_user_event(
+        user_role=UserRole.DOCTOR, action="CCRT_CLINICIAN_APPROVED_PAUSE", actor_id=req.approved_by,
+        patient_token=token, details={"plan_id": plan["plan_id"], "from": first.isoformat(), "to": last.isoformat()},
+        severity="WARNING", channel="WEB_CAREUI"
+    )
+    return {"status": "SUCCESS", "clock": clock_service.build_clock(plan)}
+
+
+class NoShowRequest(BaseModel):
+    recorded_by: str = Field(..., min_length=1)
+    date: Optional[str] = None
+
+
+@router.post("/{token}/clock/no-show")
+async def record_no_show(token: str, req: NoShowRequest):
+    """Nurse marks today's scheduled session as a patient no-show (past slots are detected automatically)."""
+    plan = global_db.get_treatment_plan(token)
+    if not plan or plan["status"] != "ACTIVE":
+        raise HTTPException(status_code=404, detail="NO_ACTIVE_TREATMENT_PLAN")
+    day = _parse_date(req.date, "date")
+    if day > clinic_today() or day < date.fromisoformat(plan["start_date"]):
+        raise HTTPException(status_code=400, detail="No-show date must be between the plan start and today")
+    global_db.add_schedule_exception(day.isoformat(), clock_service.NO_SHOW, "Patient did not attend",
+                                     req.recorded_by, plan_id=plan["plan_id"])
+    global_audit.record_user_event(
+        user_role=UserRole.NURSE_HEALTHCARE_WORKER, action="CCRT_PATIENT_NO_SHOW", actor_id=req.recorded_by,
+        patient_token=token, details={"plan_id": plan["plan_id"], "date": day.isoformat()},
+        severity="WARNING", channel="WEB_CAREUI"
+    )
+    escalation = clock_service.evaluate_plan(plan)
+    return {"status": "SUCCESS", "escalation": escalation, "clock": clock_service.build_clock(plan)}
 
 
 @router.post("/demo/advance-fraction-15")
 async def advance_fraction_15(req: AdvanceFraction15Request):
-    """Demo trigger: Advance patient to Fraction 15 (Day 21 milestone), firing hub-spoke bridge."""
+    """Legacy demo trigger: moves the seeded demo Healing Clock to Fraction 15 (Day 21 milestone).
+    Writes only the legacy demo table; it never changes a real treatment clock."""
     clock = global_db.advance_healing_clock(req.patient_token, req.target_step or 15)
     block = global_audit.record_user_event(
         user_role=UserRole.NURSE_HEALTHCARE_WORKER,
