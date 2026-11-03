@@ -8,7 +8,8 @@ load_dotenv()
 
 # Base Paths
 BASE_DIR = Path(__file__).resolve().parent.parent
-DATA_DIR = BASE_DIR / "data"
+# CERVISETU_DATA_DIR lets the test suite use a throwaway directory instead of the demo data
+DATA_DIR = Path(os.getenv("CERVISETU_DATA_DIR") or BASE_DIR / "data")
 UPLOADS_DIR = DATA_DIR / "uploads"
 VAULT_DIR = DATA_DIR / "vault"
 DB_PATH = DATA_DIR / "clinical_system.db"

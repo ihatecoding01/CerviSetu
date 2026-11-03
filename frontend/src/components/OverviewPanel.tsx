@@ -64,7 +64,41 @@ function getTierBadge(tier: string | null | undefined) {
   return <Badge variant="primary" size="xs">Tier 1 · SMS Nudge</Badge>;
 }
 
-export function OverviewPanel({ loading, error, onRefresh, onSelectCase }: Props) {
+const DEMO_TOKENS = new Set(["PT-RURAL-7891", "PT-RURAL-4421", "PT-RURAL-1102", "PT-RURAL-9034", "PT-PREC-202"]);
+
+// Map a case from /api/cases (DB record) or a fresh /api/run-case result onto a ward board row
+function caseToRosterRow(c: PatientCase) {
+  const rec = c as PatientCase & Record<string, any>;
+  const intake = rec.intake_data ?? rec.clinical_intake ?? {};
+  const diag = rec.diagnostic_data ?? rec.diagnostic_synthesis ?? {};
+  const stage = rec.suspected_stage ?? intake.estimated_stage ?? "Stage Unknown";
+  const cancer = rec.cancer_type ?? intake.suspected_cancer_type ?? "";
+  const age = rec.age ?? intake.age;
+  const tier = rec.current_escalation_tier ?? null;
+  const daysOverdue = rec.days_overdue ?? 0;
+  const urgency = diag.urgency ?? "ROUTINE";
+  const lane = daysOverdue >= 3 ? "critical" : daysOverdue >= 1 ? "warning" : "optimal";
+
+  return {
+    token: c.patient_token,
+    name: "New Intake",
+    age: age ? `${age}Y, Female` : "Age pending",
+    village: intake.extraction_source === "SARVAM_LLM" ? "Registered via Sarvam AI intake" : "Registered via CerviSetu intake",
+    stage: `${stage === "Unknown" ? "Stage Unknown" : stage} ${cancer === "CERVICAL" ? "Cervix" : cancer}`.trim(),
+    lane,
+    ottDays: 0,
+    ottBadge: "⚪ Pre-CCRT · Clock Not Started",
+    ottSub: intake.biopsy_status === "POSITIVE" ? "Biopsy positive · Awaiting CCRT plan sign-off" : "Awaiting biopsy / staging",
+    adhStatus:
+      urgency === "CRITICAL_EMERGENCY" ? "🔴 Critical · Expedite Plan" : urgency === "PRIORITY" ? "🟡 Priority Work-up" : "🟢 Routine Work-up",
+    adhDetail: daysOverdue > 0 ? `Overdue Day +${daysOverdue}` : "New registration · No missed visits",
+    tier,
+    severity: Number(rec.severity_score ?? rec.cancer_severity_score ?? intake.severity_score ?? 0),
+    avatarColor: "bg-white text-[#BA2D0B] border-[#BA2D0B]/40",
+  };
+}
+
+export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }: Props) {
   const [activeLaneFilter, setActiveLaneFilter] = useState<"all" | "optimal" | "warning" | "critical">("all");
   const [downtime, setDowntime] = useState<LinacDowntimeStatus | null>(null);
   const [togglingDowntime, setTogglingDowntime] = useState(false);
@@ -181,6 +215,20 @@ export function OverviewPanel({ loading, error, onRefresh, onSelectCase }: Props
       avatarColor: "bg-[#DBFE87] text-black border-[#c4e872]",
     },
   ];
+
+  // Live cervical cases from the database, newest first, appended after the demo cohort
+  const seenTokens = new Set(DEMO_TOKENS);
+  const liveRows = cases
+    .filter((c) => {
+      const rec = c as PatientCase & Record<string, any>;
+      const cancer = rec.cancer_type ?? rec.clinical_intake?.suspected_cancer_type;
+      if (cancer !== "CERVICAL" || seenTokens.has(c.patient_token)) return false;
+      seenTokens.add(c.patient_token);
+      return true;
+    })
+    .slice(0, 10)
+    .map(caseToRosterRow);
+  patientRoster.push(...liveRows);
 
   const filteredRoster = patientRoster.filter((p) => {
     if (activeLaneFilter === "all") return true;
