@@ -79,3 +79,4 @@ def test_schema_initialization_and_seed_cohort(tmp_path: Path):
     completed = db.complete_precancer_treatment("PREC-202", completion_date="2026-08-16", margins_clear=1)
     assert completed["completion_date"] == "2026-08-16"
     assert completed["margins_clear"] == 1
+

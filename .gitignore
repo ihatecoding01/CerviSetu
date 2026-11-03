@@ -21,7 +21,9 @@ ENV/
 .coverage
 htmlcov/
 *.log
-data/
+data/*
+!data/supabase/
+!data/supabase/**
 *.db
 *.bin
 docs/temp.md

@@ -139,3 +139,4 @@ class SupabaseClient:
 
 # Global singleton instance
 global_supabase = SupabaseClient()
+

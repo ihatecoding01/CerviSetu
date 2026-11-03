@@ -1,0 +1,9 @@
+{
+  "name": "cervisetu-monorepo",
+  "private": true,
+  "description": "CerviSetu — Cloudflare Pages root runner",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build"
+  }
+}
+

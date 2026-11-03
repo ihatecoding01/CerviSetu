@@ -5,24 +5,21 @@ import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => {
-  const isCf = mode === "cloudflare" || process.env.BUILD_TARGET === "cloudflare";
-  const outDir = isCf
-    ? path.resolve(import.meta.dirname, "./dist")
-    : path.resolve(import.meta.dirname, "../backend/dashboard/static");
+export default defineConfig(() => {
+  const distDir = path.resolve(import.meta.dirname, "./dist");
+  const staticDir = path.resolve(import.meta.dirname, "../backend/dashboard/static");
 
   return {
     plugins: [
       react(),
       tailwindcss(),
       {
-        name: "mirror-dist-to-cf",
+        name: "mirror-dist-to-backend-static",
         closeBundle() {
-          // Automatically mirror build output to frontend/dist for Cloudflare Pages
-          const staticDir = path.resolve(import.meta.dirname, "../backend/dashboard/static");
-          const distDir = path.resolve(import.meta.dirname, "./dist");
-          if (!isCf && fs.existsSync(staticDir)) {
-            fs.cpSync(staticDir, distDir, { recursive: true });
+          // Keep ../backend/dashboard/static in sync for FastAPI local & container serving
+          if (fs.existsSync(distDir)) {
+            fs.mkdirSync(staticDir, { recursive: true });
+            fs.cpSync(distDir, staticDir, { recursive: true });
           }
         },
       },
@@ -42,7 +39,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      outDir,
+      outDir: distDir,
       emptyOutDir: true,
     },
   };

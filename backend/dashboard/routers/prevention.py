@@ -245,3 +245,4 @@ async def get_precancer_surveillance_list(status: Optional[str] = None):
     """Retrieve post-treatment precancer surveillance roster."""
     records = global_db.get_precancer_surveillance_list(status=status)
     return {"surveillance_list": records, "total": len(records)}
+

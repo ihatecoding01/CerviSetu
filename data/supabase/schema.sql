@@ -344,3 +344,4 @@ INSERT INTO public.patient_healing_clock (patient_token, ebrt_start_date, ebrt_f
     ('PT-ANON-8C52', '2026-10-25', 5, 0, 5, 42, 'OPTIMAL', 'ON_TRACK'),
     ('PT-ANON-2D91', '2026-09-18', 25, 4, 29, 48, 'COMPLETED', 'SUCCESS')
 ON CONFLICT (patient_token) DO NOTHING;
+

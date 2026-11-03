@@ -457,3 +457,4 @@ flowchart LR
 | `http://localhost:5173/staff/audit` | Security & DPDP Audit | Live interactive SHA-256 cryptographic hash chain verifier (850+ blocks). |
 | `http://localhost:5173/patient/PT-RURAL-7891` | Patient Care Companion | 29-step visual Healing Clock, 2.5L daily hydration check-in, bilingual symptom reporting. |
 | `http://localhost:5173/demo` | Dual-Screen Sync | Real-time dual display of Spoke Clinician Tablet alongside Patient Care Portal. |
+

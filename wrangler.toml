@@ -3,6 +3,9 @@ name = "cervisetu"
 compatibility_date = "2026-11-01"
 pages_build_output_dir = "frontend/dist"
 
+[build]
+command = "cd frontend && npm install && npm run build"
+
 [vars]
 ENVIRONMENT = "production"
 PROJECT_NAME = "CerviSetu Rural Oncology Platform"
