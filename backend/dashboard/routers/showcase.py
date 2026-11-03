@@ -83,26 +83,227 @@ Dr. A. K. Sharma (MD Radiation Oncology) - Govt Cancer Hospital.
 Diagnosis: Carcinoma Cervix, FIGO Stage IIB (Parametrial involvement, lower third spared).
 Biopsy Histopathology: Moderately differentiated Squamous Cell Carcinoma.
 Treatment Plan: Concurrent Chemoradiation (CCRT).
-External Beam Radiotherapy (EBRT): 50 Gy in 25 fractions (2 Gy/fraction).
-Concurrent Weekly Cisplatin 40 mg/m2 IV with pre-hydration.
-Following Fraction 25: Transfer to Regional Hub for High-Dose-Rate (HDR) Intracavitary Brachytherapy (4 fractions).
+External Beam Radiotherapy (EBRT): 50 Gy in 25 fractions (2 Gy per fraction).
+Concurrent Weekly Cisplatin 40 mg/m2 IV with pre hydration protocol.
+Following Fraction 25: Transfer to Regional Hub for High Dose Rate (HDR) Intracavitary Brachytherapy (4 fractions).
 Strict biological ceiling: 56 days total treatment time to avoid clonogenic repopulation.""",
 
     "sample_cervical_02": """District Hospital Daycare Slip - Oncology OPD
 Name: Malti Kushwaha | Age: 52 yrs | Gender: Female | Village: Sevapuri | Mobile: 9839120000
 Clinical impression: Malignant neoplasm of uterine cervix, Stage IIIA with bilateral hydronephrosis.
 Biopsy: Invasive Adenocarcinoma of endocervix.
-Treatment prescribed: Definitive Pelvic Radiotherapy (EBRT 46 Gy / 23#) followed by 3# HDR Brachy.
+Treatment prescribed: Definitive Pelvic Radiotherapy (EBRT 46 Gy / 23 fractions) followed by 3 HDR Brachy.
 Renal function: S. Creatinine 1.1 mg/dL.
 Advise: Weekly CBC, hydration chart, daily attendance tracking via ASHA coordinator.""",
 
     "sample_cervical_03": """CHC Referral Slip - Frontline Screening
-Pt: Kanti Devi | Age: 39Y | Ayushman Bharat Card: PMJAY-UP-9921-042
-C/o Foul smelling vaginal discharge for 4 months, post-coital contact bleeding.
+Pt: Kanti Devi | Age: 39Y | Ayushman Bharat Card: PMJAY UP 9921 042
+C/o Foul smelling vaginal discharge for 4 months, post coital contact bleeding.
 Speculum exam: 3x3 cm exophytic proliferative cervical growth, bleeds on contact.
 Vaginal fornices: Right fornix indurated.
 Provisional Assessment: Suspected Carcinoma Cervix Stage IIB.
 Action: Punch biopsy taken, sent to Pathology. Immediate EBRT triage scheduled at Spoke Daycare."""
+}
+
+SAMPLE_METADATA = {
+    "sample_cervical_01": {
+        "cancer_type": "CERVICAL",
+        "stage": "Stage IIB",
+        "biopsy_status": "POSITIVE",
+        "patient_display": "Sunita Devi, 46F, W/o Rameshwar",
+        "patient_masked": "PT ANON 7B93",
+        "district": "Varanasi",
+        "doctor_name": "Dr. A. K. Sharma (MD Radiation Oncology)",
+        "facility_name": "GOVERNMENT DISTRICT CANCER CARE DAYCARE & RADIOTHERAPY SPOKE",
+        "fractions_planned": {
+            "ebrt_spoke_fractions": 25,
+            "brachy_hub_fractions": 4,
+            "total_fractions": 29,
+            "curative_window_days": 56
+        },
+        "bounding_boxes": [
+            {
+                "id": "box_diag",
+                "label": "Cancer Type",
+                "text": "Carcinoma Cervix",
+                "confidence": 0.984,
+                "category": "DIAGNOSIS",
+                "rect": {"top": 24, "left": 5, "width": 45, "height": 8}
+            },
+            {
+                "id": "box_stage",
+                "label": "FIGO Stage",
+                "text": "FIGO Stage IIB",
+                "confidence": 0.962,
+                "category": "STAGING",
+                "rect": {"top": 34, "left": 5, "width": 38, "height": 8}
+            },
+            {
+                "id": "box_biopsy",
+                "label": "Histopathology",
+                "text": "Moderately differentiated Squamous Cell Carcinoma",
+                "confidence": 0.991,
+                "category": "PATHOLOGY",
+                "rect": {"top": 44, "left": 5, "width": 62, "height": 8}
+            },
+            {
+                "id": "box_ebrt",
+                "label": "External Radiation",
+                "text": "50 Gy in 25 fractions (2 Gy per fraction)",
+                "confidence": 0.978,
+                "category": "TREATMENT",
+                "rect": {"top": 58, "left": 5, "width": 64, "height": 8}
+            },
+            {
+                "id": "box_brachy",
+                "label": "Hub Brachytherapy",
+                "text": "HDR Intracavitary Brachytherapy (4 fractions)",
+                "confidence": 0.973,
+                "category": "REFERRAL",
+                "rect": {"top": 70, "left": 5, "width": 72, "height": 8}
+            },
+            {
+                "id": "box_ceiling",
+                "label": "56 Day Ceiling",
+                "text": "Strict biological ceiling: 56 days total treatment time",
+                "confidence": 0.995,
+                "category": "TIMELINE",
+                "rect": {"top": 82, "left": 5, "width": 70, "height": 8}
+            }
+        ]
+    },
+    "sample_cervical_02": {
+        "cancer_type": "ENDOCERVICAL ADENOCARCINOMA",
+        "stage": "Stage IIIA",
+        "biopsy_status": "POSITIVE",
+        "patient_display": "Malti Kushwaha, 52F, Village Sevapuri",
+        "patient_masked": "PT ANON 4E19",
+        "district": "Sevapuri",
+        "doctor_name": "Dr. S. N. Pandey (Radiation Oncology Spoke)",
+        "facility_name": "DISTRICT HOSPITAL DAYCARE ONCOLOGY OPD",
+        "fractions_planned": {
+            "ebrt_spoke_fractions": 23,
+            "brachy_hub_fractions": 3,
+            "total_fractions": 26,
+            "curative_window_days": 56
+        },
+        "bounding_boxes": [
+            {
+                "id": "box_diag",
+                "label": "Cancer Type",
+                "text": "Malignant neoplasm of uterine cervix",
+                "confidence": 0.979,
+                "category": "DIAGNOSIS",
+                "rect": {"top": 24, "left": 5, "width": 54, "height": 8}
+            },
+            {
+                "id": "box_stage",
+                "label": "FIGO Stage",
+                "text": "Stage IIIA with bilateral hydronephrosis",
+                "confidence": 0.958,
+                "category": "STAGING",
+                "rect": {"top": 34, "left": 5, "width": 52, "height": 8}
+            },
+            {
+                "id": "box_biopsy",
+                "label": "Histopathology",
+                "text": "Invasive Adenocarcinoma of endocervix",
+                "confidence": 0.987,
+                "category": "PATHOLOGY",
+                "rect": {"top": 44, "left": 5, "width": 56, "height": 8}
+            },
+            {
+                "id": "box_ebrt",
+                "label": "External Radiation",
+                "text": "Definitive Pelvic Radiotherapy (EBRT 46 Gy in 23 fractions)",
+                "confidence": 0.982,
+                "category": "TREATMENT",
+                "rect": {"top": 58, "left": 5, "width": 68, "height": 8}
+            },
+            {
+                "id": "box_brachy",
+                "label": "Hub Brachytherapy",
+                "text": "3 HDR Brachytherapy fractions at Regional Hub",
+                "confidence": 0.969,
+                "category": "REFERRAL",
+                "rect": {"top": 70, "left": 5, "width": 66, "height": 8}
+            },
+            {
+                "id": "box_ceiling",
+                "label": "56 Day Ceiling",
+                "text": "Biological window ceiling: 56 days maximum completion",
+                "confidence": 0.992,
+                "category": "TIMELINE",
+                "rect": {"top": 82, "left": 5, "width": 70, "height": 8}
+            }
+        ]
+    },
+    "sample_cervical_03": {
+        "cancer_type": "EXOPHYTIC CERVICAL GROWTH",
+        "stage": "Suspected Stage IIB",
+        "biopsy_status": "PENDING HISTOPATHOLOGY",
+        "patient_display": "Kanti Devi, 39F, PMJAY UP 9921 042",
+        "patient_masked": "PT ANON 8C52",
+        "district": "Rural Varanasi",
+        "doctor_name": "Dr. Priyanka Verma (Medical Officer CHC)",
+        "facility_name": "COMMUNITY HEALTH CENTRE PRIMARY SCREENING REFERRAL",
+        "fractions_planned": {
+            "ebrt_spoke_fractions": 25,
+            "brachy_hub_fractions": 4,
+            "total_fractions": 29,
+            "curative_window_days": 56
+        },
+        "bounding_boxes": [
+            {
+                "id": "box_diag",
+                "label": "Cancer Type",
+                "text": "Exophytic proliferative cervical growth",
+                "confidence": 0.971,
+                "category": "DIAGNOSIS",
+                "rect": {"top": 24, "left": 5, "width": 52, "height": 8}
+            },
+            {
+                "id": "box_stage",
+                "label": "FIGO Stage",
+                "text": "Suspected Stage IIB (Right fornix indurated)",
+                "confidence": 0.945,
+                "category": "STAGING",
+                "rect": {"top": 34, "left": 5, "width": 55, "height": 8}
+            },
+            {
+                "id": "box_biopsy",
+                "label": "Histopathology",
+                "text": "Punch biopsy taken and sent to Pathology",
+                "confidence": 0.976,
+                "category": "PATHOLOGY",
+                "rect": {"top": 44, "left": 5, "width": 54, "height": 8}
+            },
+            {
+                "id": "box_ebrt",
+                "label": "External Radiation",
+                "text": "Immediate EBRT triage scheduled at Spoke Daycare",
+                "confidence": 0.965,
+                "category": "TREATMENT",
+                "rect": {"top": 58, "left": 5, "width": 66, "height": 8}
+            },
+            {
+                "id": "box_brachy",
+                "label": "Hub Brachytherapy",
+                "text": "Tertiary Hub transfer protocol initiated (4 fractions)",
+                "confidence": 0.958,
+                "category": "REFERRAL",
+                "rect": {"top": 70, "left": 5, "width": 70, "height": 8}
+            },
+            {
+                "id": "box_ceiling",
+                "label": "56 Day Ceiling",
+                "text": "Strict biological limit: 56 days curative timeline",
+                "confidence": 0.998,
+                "category": "TIMELINE",
+                "rect": {"top": 82, "left": 5, "width": 68, "height": 8}
+            }
+        ]
+    }
 }
 
 
@@ -172,90 +373,48 @@ def parse_prescription_showcase(req: PrescriptionParseRequest):
     """
     start_time = time.perf_counter()
 
-    raw_text = req.raw_text or SAMPLE_SLIPS.get(req.sample_id, SAMPLE_SLIPS["sample_cervical_01"])
+    sample_key = req.sample_id if req.sample_id in SAMPLE_METADATA else "sample_cervical_01"
+    meta = SAMPLE_METADATA[sample_key]
+    raw_text = req.raw_text or SAMPLE_SLIPS.get(sample_key, SAMPLE_SLIPS["sample_cervical_01"])
 
     # Extract structured entities
     extracted = ClinicalEntityExtractorTool.extract_entities(raw_text)
-    cancer_type = extracted.get("detected_cancer", "CERVICAL")
-    stage = extracted.get("detected_stage", "Stage IIB")
-    biopsy_status = extracted.get("biopsy_status", "POSITIVE")
-    follow_up_days = extracted.get("follow_up_days", 7)
+    cancer_type = meta.get("cancer_type") or extracted.get("detected_cancer", "CERVICAL")
+    stage = meta.get("stage") or extracted.get("detected_stage", "Stage IIB")
+    biopsy_status = meta.get("biopsy_status") or extracted.get("biopsy_status", "POSITIVE")
 
     # De-identify PII
     shielded_text, detected_pii = PIIShield.mask_text(raw_text)
 
-    # Spatial Bounding Boxes (normalized percentages for bounding overlay in UI)
-    bounding_boxes = [
-        {
-            "id": "box_diag",
-            "label": "Cancer Type",
-            "text": "Carcinoma Cervix",
-            "confidence": 0.984,
-            "category": "DIAGNOSIS",
-            "rect": {"top": 18, "left": 6, "width": 42, "height": 9}
-        },
-        {
-            "id": "box_stage",
-            "label": "FIGO Stage",
-            "text": "FIGO Stage IIB",
-            "confidence": 0.962,
-            "category": "STAGING",
-            "rect": {"top": 28, "left": 6, "width": 38, "height": 8}
-        },
-        {
-            "id": "box_biopsy",
-            "label": "Histopathology",
-            "text": "Squamous Cell Carcinoma",
-            "confidence": 0.991,
-            "category": "PATHOLOGY",
-            "rect": {"top": 37, "left": 6, "width": 54, "height": 9}
-        },
-        {
-            "id": "box_ebrt",
-            "label": "External Radiation",
-            "text": "50 Gy in 25 fractions (2 Gy/fraction)",
-            "confidence": 0.978,
-            "category": "TREATMENT",
-            "rect": {"top": 54, "left": 6, "width": 64, "height": 10}
-        },
-        {
-            "id": "box_brachy",
-            "label": "Hub Brachytherapy",
-            "text": "HDR Intracavitary Brachytherapy (4 fractions)",
-            "confidence": 0.973,
-            "category": "REFERRAL",
-            "rect": {"top": 66, "left": 6, "width": 78, "height": 11}
-        },
-        {
-            "id": "box_ceiling",
-            "label": "56 Day Ceiling",
-            "text": "Strict biological ceiling: 56 days",
-            "confidence": 0.995,
-            "category": "TIMELINE",
-            "rect": {"top": 79, "left": 6, "width": 62, "height": 10}
-        }
-    ]
+    # Spatial Bounding Boxes customized for this prescription slip
+    bounding_boxes = meta.get("bounding_boxes", [])
+    fractions_planned = meta.get("fractions_planned", {
+        "ebrt_spoke_fractions": 25,
+        "brachy_hub_fractions": 4,
+        "total_fractions": 29,
+        "curative_window_days": 56
+    })
 
     elapsed_ms = round((time.perf_counter() - start_time) * 1000, 2)
 
     return {
-        "cancer_type": cancer_type or "CERVICAL",
-        "stage": stage or "Stage IIB",
-        "biopsy_status": biopsy_status or "POSITIVE",
-        "fractions_planned": {
-            "ebrt_spoke_fractions": 25,
-            "brachy_hub_fractions": 4,
-            "total_fractions": 29,
-            "curative_window_days": 56
-        },
+        "cancer_type": cancer_type,
+        "stage": stage,
+        "biopsy_status": biopsy_status,
+        "fractions_planned": fractions_planned,
         "bounding_boxes": bounding_boxes,
         "pii_shielded": {
             "detected_types": detected_pii,
-            "vault_token": "PT-ANON-" + secrets.token_hex(4).upper(),
+            "vault_token": meta.get("patient_masked", "PT-ANON-7B93").replace(" ", "-"),
             "anonymized_snippet": shielded_text[:280] + "..."
         },
         "elapsed_ms": elapsed_ms,
-        "raw_text": raw_text
+        "raw_text": raw_text,
+        "patient_display": meta.get("patient_display"),
+        "patient_masked": meta.get("patient_masked"),
+        "district": meta.get("district"),
+        "doctor_name": meta.get("doctor_name"),
+        "facility_name": meta.get("facility_name")
     }
 
 

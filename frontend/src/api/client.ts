@@ -149,6 +149,11 @@ export interface PrescriptionParseResult {
   };
   elapsed_ms: number;
   raw_text: string;
+  patient_display?: string;
+  patient_masked?: string;
+  facility_name?: string;
+  doctor_name?: string;
+  district?: string;
 }
 
 export interface VoiceScriptResult {
