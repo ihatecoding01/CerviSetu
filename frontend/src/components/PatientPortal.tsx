@@ -1,3 +1,4 @@
+import { CerviSetuLogo } from "./icons/CerviSetuLogo";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
@@ -113,8 +114,8 @@ export const PatientPortal: React.FC<Props> = ({ token, onRequireLogin, onOpenOw
     <header className="bg-white border-b border-slate-200 sticky top-0 z-30">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="size-9 rounded-xl bg-[#BA2D0B] text-white flex items-center justify-center font-bold text-sm shrink-0" aria-hidden="true">
-            CS
+          <div className="size-9 rounded-xl bg-white border border-[#0F766E]/30 flex items-center justify-center p-0.5 shrink-0" aria-hidden="true">
+            <CerviSetuLogo size={30} alt="" />
           </div>
           <div className="min-w-0">
             <p className="font-extrabold text-base text-black leading-tight">cervisetu</p>

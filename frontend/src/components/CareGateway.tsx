@@ -1,3 +1,4 @@
+import { CerviSetuLogo } from "./icons/CerviSetuLogo";
 import React, { useEffect, useState } from "react";
 import { Search, User, Users, CheckCircle2, MapPin, ShieldCheck, ArrowRight, Sparkles, QrCode, Phone } from "lucide-react";
 import { api, type Facility } from "../api/client";
@@ -87,9 +88,9 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
         {/* Top Branding */}
         <div className="flex flex-col items-center justify-center mb-10">
           <div className="flex items-center gap-3">
-            {/* Logo in Primary Burnt Terracotta */}
-            <div className="size-10 rounded-2xl bg-[#BA2D0B] text-white flex items-center justify-center font-bold text-base shadow-xs">
-              CS
+            {/* CerviSetu teal ribbon emblem */}
+            <div className="size-10 rounded-2xl bg-white border border-[#0F766E]/30 flex items-center justify-center p-0.5 shadow-xs">
+              <CerviSetuLogo size={34} />
             </div>
             <span className="text-3xl font-extrabold tracking-tight text-black">cervisetu</span>
           </div>
