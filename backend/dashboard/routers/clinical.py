@@ -407,3 +407,10 @@ async def run_escalation_cycle_now(req: EscalationCycleRequest):
     """Run the daily escalation cycle on demand; advance_days fast-forwards the clock for demos."""
     from backend.tools.escalation_scheduler import run_escalation_cycle
     return run_escalation_cycle(advance_days=req.advance_days)
+
+
+@router.get("/fhir/patient/{token}")
+async def export_patient_fhir(token: str):
+    """De-identified FHIR R4 Bundle (Patient, Condition, biopsy Observation, CarePlan) for ABDM exchange."""
+    from backend.tools.fhir_export import build_patient_bundle
+    return build_patient_bundle(token)
