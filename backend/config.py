@@ -21,10 +21,17 @@ VAULT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Security & Encryption Configuration
 # 32-byte AES key for PII Token Vault encryption (stored in env or auto-generated for local dev)
-VAULT_SECRET_KEY = os.getenv(
-    "VAULT_SECRET_KEY",
-    "k9X2mQ7vL4zP1wR8tY5nJ0bV3cE6hA8dF4gK7uM2wP9=" # Default dev key (Base64 URL safe format)
-)
+DEV_VAULT_SECRET_KEY = "k9X2mQ7vL4zP1wR8tY5nJ0bV3cE6hA8dF4gK7uM2wP9="  # Public dev key, never for real patients
+# `or` (not a getenv default) so a blank VAULT_SECRET_KEY= line in .env still falls back to the dev key
+VAULT_SECRET_KEY = os.getenv("VAULT_SECRET_KEY") or DEV_VAULT_SECRET_KEY
+
+# CERVISETU_ENV=production refuses to start without a private vault key
+APP_ENV = os.getenv("CERVISETU_ENV", "development").lower()
+if APP_ENV == "production" and (VAULT_SECRET_KEY == DEV_VAULT_SECRET_KEY or len(VAULT_SECRET_KEY) < 32):
+    raise RuntimeError(
+        "VAULT_SECRET_KEY must be set to a private key of at least 32 characters when CERVISETU_ENV=production. "
+        "Generate one with: python -c \"import secrets; print(secrets.token_urlsafe(32))\""
+    )
 
 # Image Quality Thresholds
 IMAGE_QUALITY_THRESHOLDS = {
