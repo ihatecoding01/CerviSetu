@@ -1,3 +1,4 @@
+import { CerviSetuLogo } from "./icons/CerviSetuLogo";
 import { useState, type ReactNode } from "react";
 import {
   LayoutDashboard,
@@ -16,7 +17,6 @@ import {
   Bell,
   PanelLeft,
   Home,
-  HeartPulse,
   ShieldPlus,
 } from "lucide-react";
 
@@ -73,10 +73,10 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, chi
         <div className="flex flex-col items-center gap-3">
           <div
             onClick={() => onTabChange("overview-tab")}
-            className="size-9 rounded-xl bg-[#BA2D0B] text-white flex items-center justify-center shadow-xs cursor-pointer hover:opacity-90 transition-opacity"
+            className="size-9 rounded-xl bg-white border border-[#0F766E]/30 flex items-center justify-center shadow-xs cursor-pointer hover:opacity-90 transition-opacity p-0.5"
             title="CerviSetu Clinical Platform"
           >
-            <HeartPulse className="size-5 text-white" />
+            <CerviSetuLogo size={30} />
           </div>
 
           <div className="w-7 h-px bg-slate-200/90 my-1" />
