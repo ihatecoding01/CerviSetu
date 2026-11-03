@@ -14,6 +14,7 @@ class ClinicalDatabase:
     def __init__(self, db_path: Optional[Path] = None):
         self.db_path = str(db_path or DB_PATH)
         self._init_schema()
+        self.seed_multistage_cohort()
 
     def _get_conn(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)
@@ -169,6 +170,132 @@ class ClinicalDatabase:
                     facility_type TEXT NOT NULL,
                     status TEXT DEFAULT 'PENDING',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # 1. HPV Vaccination Registry & Outreach table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS hpv_vaccinations (
+                    vaccine_id TEXT PRIMARY KEY,
+                    patient_token TEXT NOT NULL,
+                    patient_name TEXT NOT NULL,
+                    age INTEGER NOT NULL,
+                    dose_number INTEGER NOT NULL,
+                    vaccine_brand TEXT DEFAULT 'Cervavac',
+                    administered_date TEXT NOT NULL,
+                    next_due_date TEXT,
+                    school_or_center TEXT DEFAULT 'Primary Health Centre Mirzapur',
+                    status TEXT DEFAULT 'COMPLETED',
+                    outreach_sent INTEGER DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (patient_token) REFERENCES patients (patient_token)
+                )
+            """)
+
+            # 2. Screening Records (VIA, HPV DNA, Pap Smear)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS screening_records (
+                    screening_id TEXT PRIMARY KEY,
+                    patient_token TEXT NOT NULL,
+                    patient_name TEXT NOT NULL,
+                    age INTEGER NOT NULL,
+                    invitation_date TEXT,
+                    test_type TEXT NOT NULL,
+                    test_date TEXT NOT NULL,
+                    result TEXT NOT NULL,
+                    clinical_staging TEXT,
+                    triage_action TEXT NOT NULL,
+                    clinician_reviewed INTEGER DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # 3. Precancer Episodes (Thermal Ablation, Cryotherapy, LEEP & 6-12m Surveillance)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS precancer_episodes (
+                    precancer_id TEXT PRIMARY KEY,
+                    patient_token TEXT NOT NULL,
+                    patient_name TEXT NOT NULL,
+                    diagnosis TEXT NOT NULL,
+                    treatment_type TEXT NOT NULL,
+                    appointment_date TEXT NOT NULL,
+                    completion_date TEXT,
+                    margins_clear INTEGER DEFAULT 1,
+                    surveillance_interval_months INTEGER DEFAULT 6,
+                    surveillance_due_date TEXT NOT NULL,
+                    surveillance_status TEXT DEFAULT 'SCHEDULED',
+                    notes TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # 4. Weekly Chemotherapy Clearances & Safety Flags
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS chemo_clearances (
+                    clearance_id TEXT PRIMARY KEY,
+                    patient_token TEXT NOT NULL,
+                    cycle_number INTEGER NOT NULL,
+                    status TEXT NOT NULL,
+                    dose_mg REAL,
+                    hb REAL,
+                    anc INTEGER,
+                    platelets INTEGER,
+                    creatinine REAL,
+                    egfr INTEGER,
+                    doctor_id TEXT NOT NULL,
+                    clinical_notes TEXT,
+                    ebrt_must_continue INTEGER DEFAULT 1,
+                    cleared_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (patient_token) REFERENCES patients (patient_token)
+                )
+            """)
+
+            # 5. Stigma-Safe ASHA Field Tickets & 24h Arrival Watch Timer
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS asha_field_tickets (
+                    ticket_id TEXT PRIMARY KEY,
+                    patient_token TEXT NOT NULL,
+                    asha_worker_id TEXT NOT NULL,
+                    patient_first_name TEXT NOT NULL,
+                    guardian_name TEXT NOT NULL,
+                    village TEXT NOT NULL,
+                    landmark TEXT,
+                    contact_phone TEXT,
+                    days_missed INTEGER NOT NULL,
+                    current_step INTEGER NOT NULL,
+                    stigma_safe_header TEXT DEFAULT 'मातृ एवं महिला स्वास्थ्य सेवा / Women Health Follow-Up',
+                    delay_root_cause TEXT,
+                    field_outcome TEXT,
+                    arrival_watch_expires_at TIMESTAMP,
+                    is_resolved INTEGER DEFAULT 0,
+                    dispatched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    resolved_at TIMESTAMP
+                )
+            """)
+
+            # 6. Clinic-wide LINAC Maintenance Downtime Logs
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS linac_downtime_logs (
+                    downtime_id TEXT PRIMARY KEY,
+                    facility_name TEXT DEFAULT 'Mirzapur Spoke Clinic',
+                    machine_id TEXT DEFAULT 'LINAC-SPOKE-01',
+                    is_active INTEGER DEFAULT 1,
+                    reason TEXT,
+                    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    ended_at TIMESTAMP
+                )
+            """)
+
+            # 7. DPDP Consent & Research Telemetry Tracking
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS dpdp_consents (
+                    consent_id TEXT PRIMARY KEY,
+                    patient_token TEXT NOT NULL,
+                    consent_type TEXT DEFAULT 'PATHWAY_TRACKING_VOICE_AND_RESEARCH',
+                    granted_by TEXT DEFAULT 'PATIENT_OR_LEGAL_GUARDIAN',
+                    language TEXT DEFAULT 'HINDI',
+                    sha256_hash TEXT NOT NULL,
+                    granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
             conn.commit()
@@ -671,6 +798,558 @@ class ClinicalDatabase:
             )
             rows = cursor.fetchall()
             return [dict(r) for r in rows]
+
+    # ==========================================
+    # 1. HPV Vaccination Registry & Outreach
+    # ==========================================
+
+    def save_hpv_vaccination(
+        self,
+        vaccine_id: str,
+        patient_token: str,
+        patient_name: str,
+        age: int,
+        dose_number: int,
+        vaccine_brand: str = "Cervavac",
+        administered_date: Optional[str] = None,
+        next_due_date: Optional[str] = None,
+        school_or_center: str = "Primary Health Centre Mirzapur",
+        status: str = "COMPLETED",
+        outreach_sent: int = 0
+    ) -> Dict[str, Any]:
+        adm_date = administered_date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        with self._get_conn() as conn:
+            conn.execute("""
+                INSERT OR REPLACE INTO hpv_vaccinations
+                (vaccine_id, patient_token, patient_name, age, dose_number, vaccine_brand, administered_date, next_due_date, school_or_center, status, outreach_sent)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (vaccine_id, patient_token, patient_name, age, dose_number, vaccine_brand, adm_date, next_due_date, school_or_center, status, outreach_sent))
+            conn.commit()
+        return {
+            "vaccine_id": vaccine_id,
+            "patient_token": patient_token,
+            "patient_name": patient_name,
+            "age": age,
+            "dose_number": dose_number,
+            "vaccine_brand": vaccine_brand,
+            "administered_date": adm_date,
+            "next_due_date": next_due_date,
+            "status": status,
+            "outreach_sent": outreach_sent
+        }
+
+    def get_hpv_vaccinations(self, status: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
+        query = "SELECT * FROM hpv_vaccinations"
+        params: List[Any] = []
+        if status:
+            query += " WHERE status = ?"
+            params.append(status)
+        query += " ORDER BY administered_date DESC LIMIT ?"
+        params.append(limit)
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute(query, tuple(params))
+            return [dict(r) for r in cursor.fetchall()]
+
+    def trigger_vaccine_outreach(self, vaccine_id: str) -> Dict[str, Any]:
+        with self._get_conn() as conn:
+            conn.execute("UPDATE hpv_vaccinations SET outreach_sent = 1 WHERE vaccine_id = ?", (vaccine_id,))
+            conn.commit()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM hpv_vaccinations WHERE vaccine_id = ?", (vaccine_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else {}
+
+    # ==========================================
+    # 2. Screening Records (VIA, HPV DNA, Pap)
+    # ==========================================
+
+    def save_screening_record(
+        self,
+        screening_id: str,
+        patient_token: str,
+        patient_name: str,
+        age: int,
+        invitation_date: Optional[str],
+        test_type: str,
+        test_date: Optional[str],
+        result: str,
+        clinical_staging: Optional[str] = "NORMAL",
+        triage_action: str = "ROUTINE_RECALL_5Y",
+        clinician_reviewed: int = 1
+    ) -> Dict[str, Any]:
+        t_date = test_date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        with self._get_conn() as conn:
+            conn.execute("""
+                INSERT OR REPLACE INTO screening_records
+                (screening_id, patient_token, patient_name, age, invitation_date, test_type, test_date, result, clinical_staging, triage_action, clinician_reviewed)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (screening_id, patient_token, patient_name, age, invitation_date, test_type, t_date, result, clinical_staging, triage_action, clinician_reviewed))
+            conn.commit()
+        return {
+            "screening_id": screening_id,
+            "patient_token": patient_token,
+            "patient_name": patient_name,
+            "test_type": test_type,
+            "test_date": t_date,
+            "result": result,
+            "clinical_staging": clinical_staging,
+            "triage_action": triage_action
+        }
+
+    def get_screening_records(self, patient_token: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
+        query = "SELECT * FROM screening_records"
+        params: List[Any] = []
+        if patient_token:
+            query += " WHERE patient_token = ?"
+            params.append(patient_token)
+        query += " ORDER BY test_date DESC LIMIT ?"
+        params.append(limit)
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute(query, tuple(params))
+            return [dict(r) for r in cursor.fetchall()]
+
+    # ==========================================
+    # 3. Precancer Episodes (Ablation / LEEP)
+    # ==========================================
+
+    def save_precancer_episode(
+        self,
+        precancer_id: str,
+        patient_token: str,
+        patient_name: str,
+        diagnosis: str,
+        treatment_type: str,
+        appointment_date: str,
+        completion_date: Optional[str] = None,
+        margins_clear: int = 1,
+        surveillance_interval_months: int = 6,
+        surveillance_due_date: Optional[str] = None,
+        surveillance_status: str = "SCHEDULED",
+        notes: Optional[str] = None
+    ) -> Dict[str, Any]:
+        with self._get_conn() as conn:
+            conn.execute("""
+                INSERT OR REPLACE INTO precancer_episodes
+                (precancer_id, patient_token, patient_name, diagnosis, treatment_type, appointment_date, completion_date, margins_clear, surveillance_interval_months, surveillance_due_date, surveillance_status, notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (precancer_id, patient_token, patient_name, diagnosis, treatment_type, appointment_date, completion_date, margins_clear, surveillance_interval_months, surveillance_due_date or appointment_date, surveillance_status, notes))
+            conn.commit()
+        return {
+            "precancer_id": precancer_id,
+            "patient_token": patient_token,
+            "patient_name": patient_name,
+            "diagnosis": diagnosis,
+            "treatment_type": treatment_type,
+            "appointment_date": appointment_date,
+            "completion_date": completion_date,
+            "surveillance_due_date": surveillance_due_date,
+            "surveillance_status": surveillance_status
+        }
+
+    def complete_precancer_treatment(
+        self,
+        precancer_id: str,
+        completion_date: Optional[str] = None,
+        margins_clear: int = 1
+    ) -> Dict[str, Any]:
+        c_date = completion_date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        with self._get_conn() as conn:
+            conn.execute("""
+                UPDATE precancer_episodes
+                SET completion_date = ?,
+                    margins_clear = ?,
+                    surveillance_status = 'SCHEDULED'
+                WHERE precancer_id = ?
+            """, (c_date, margins_clear, precancer_id))
+            conn.commit()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM precancer_episodes WHERE precancer_id = ?", (precancer_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else {}
+
+    def get_precancer_surveillance_list(self, status: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
+        query = "SELECT * FROM precancer_episodes"
+        params: List[Any] = []
+        if status:
+            query += " WHERE surveillance_status = ?"
+            params.append(status)
+        query += " ORDER BY surveillance_due_date ASC LIMIT ?"
+        params.append(limit)
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute(query, tuple(params))
+            return [dict(r) for r in cursor.fetchall()]
+
+    # ==========================================
+    # 4. Weekly Chemotherapy Clearances
+    # ==========================================
+
+    def save_chemo_clearance(
+        self,
+        clearance_id: str,
+        patient_token: str,
+        cycle_number: int,
+        status: str,
+        dose_mg: float,
+        hb: float,
+        anc: int,
+        platelets: int,
+        creatinine: float,
+        egfr: int,
+        doctor_id: str,
+        clinical_notes: Optional[str] = None,
+        ebrt_must_continue: int = 1
+    ) -> Dict[str, Any]:
+        with self._get_conn() as conn:
+            conn.execute("""
+                INSERT OR REPLACE INTO chemo_clearances
+                (clearance_id, patient_token, cycle_number, status, dose_mg, hb, anc, platelets, creatinine, egfr, doctor_id, clinical_notes, ebrt_must_continue)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (clearance_id, patient_token, cycle_number, status, dose_mg, hb, anc, platelets, creatinine, egfr, doctor_id, clinical_notes, ebrt_must_continue))
+            conn.commit()
+        return {
+            "clearance_id": clearance_id,
+            "patient_token": patient_token,
+            "cycle_number": cycle_number,
+            "status": status,
+            "dose_mg": dose_mg,
+            "ebrt_must_continue": ebrt_must_continue
+        }
+
+    def get_chemo_clearances(self, patient_token: str, limit: int = 20) -> List[Dict[str, Any]]:
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM chemo_clearances WHERE patient_token = ? ORDER BY cleared_at DESC LIMIT ?", (patient_token, limit))
+            return [dict(r) for r in cursor.fetchall()]
+
+    # ==========================================
+    # 5. Stigma-Safe ASHA Field Tickets
+    # ==========================================
+
+    def create_asha_ticket(
+        self,
+        ticket_id: str,
+        patient_token: str,
+        asha_worker_id: str,
+        patient_first_name: str,
+        guardian_name: str,
+        village: str,
+        landmark: str,
+        contact_phone: str,
+        days_missed: int,
+        current_step: int,
+        delay_root_cause: Optional[str] = None,
+        field_outcome: Optional[str] = None
+    ) -> Dict[str, Any]:
+        with self._get_conn() as conn:
+            conn.execute("""
+                INSERT OR REPLACE INTO asha_field_tickets
+                (ticket_id, patient_token, asha_worker_id, patient_first_name, guardian_name, village, landmark, contact_phone, days_missed, current_step, delay_root_cause, field_outcome)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (ticket_id, patient_token, asha_worker_id, patient_first_name, guardian_name, village, landmark, contact_phone, days_missed, current_step, delay_root_cause, field_outcome))
+            conn.commit()
+        return {
+            "ticket_id": ticket_id,
+            "patient_token": patient_token,
+            "patient_first_name": patient_first_name,
+            "guardian_name": guardian_name,
+            "days_missed": days_missed,
+            "current_step": current_step
+        }
+
+    def update_asha_ticket_outcome(
+        self,
+        ticket_id: str,
+        outcome: str,
+        root_cause: Optional[str] = None,
+        arrival_watch_hours: int = 24
+    ) -> Dict[str, Any]:
+        with self._get_conn() as conn:
+            conn.execute("""
+                UPDATE asha_field_tickets
+                SET field_outcome = ?,
+                    delay_root_cause = coalesce(?, delay_root_cause),
+                    arrival_watch_expires_at = datetime('now', '+' || ? || ' hours'),
+                    is_resolved = 1,
+                    resolved_at = CURRENT_TIMESTAMP
+                WHERE ticket_id = ?
+            """, (outcome, root_cause, arrival_watch_hours, ticket_id))
+            conn.commit()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM asha_field_tickets WHERE ticket_id = ?", (ticket_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else {}
+
+    def get_active_asha_tickets(self, asha_worker_id: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
+        query = "SELECT * FROM asha_field_tickets"
+        params: List[Any] = []
+        if asha_worker_id:
+            query += " WHERE asha_worker_id = ?"
+            params.append(asha_worker_id)
+        query += " ORDER BY dispatched_at DESC LIMIT ?"
+        params.append(limit)
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute(query, tuple(params))
+            return [dict(r) for r in cursor.fetchall()]
+
+    # ==========================================
+    # 6. LINAC Maintenance Downtime
+    # ==========================================
+
+    def toggle_linac_downtime(
+        self,
+        facility_name: str = "Mirzapur Spoke Clinic",
+        machine_id: str = "LINAC-SPOKE-01",
+        reason: str = "Scheduled Collimator Calibration"
+    ) -> Dict[str, Any]:
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM linac_downtime_logs WHERE facility_name = ? AND is_active = 1", (facility_name,))
+            active = cursor.fetchone()
+            if active:
+                conn.execute("""
+                    UPDATE linac_downtime_logs
+                    SET is_active = 0, ended_at = CURRENT_TIMESTAMP
+                    WHERE downtime_id = ?
+                """, (active["downtime_id"],))
+                conn.commit()
+                return {"is_active": False, "facility_name": facility_name, "status": "ONLINE"}
+            else:
+                d_id = f"DOWN-{secrets.token_hex(4).upper()}"
+                conn.execute("""
+                    INSERT INTO linac_downtime_logs (downtime_id, facility_name, machine_id, is_active, reason)
+                    VALUES (?, ?, ?, 1, ?)
+                """, (d_id, facility_name, machine_id, reason))
+                conn.commit()
+                return {"is_active": True, "facility_name": facility_name, "status": "MAINTENANCE_PAUSED", "downtime_id": d_id}
+
+    def is_linac_downtime_active(self, facility_name: str = "Mirzapur Spoke Clinic") -> bool:
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) as cnt FROM linac_downtime_logs WHERE facility_name = ? AND is_active = 1", (facility_name,))
+            return cursor.fetchone()["cnt"] > 0
+
+    def get_linac_downtime_status(self, facility_name: str = "Mirzapur Spoke Clinic") -> Dict[str, Any]:
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM linac_downtime_logs WHERE facility_name = ? AND is_active = 1 ORDER BY started_at DESC LIMIT 1", (facility_name,))
+            row = cursor.fetchone()
+            if row:
+                d = dict(row)
+                d["status"] = "MAINTENANCE_PAUSED"
+                return d
+            return {"is_active": False, "status": "ONLINE", "facility_name": facility_name}
+
+    # ==========================================
+    # 7. DPDP Consent & Research Telemetry
+    # ==========================================
+
+    def record_dpdp_consent(
+        self,
+        consent_id: str,
+        patient_token: str,
+        consent_type: str = "PATHWAY_TRACKING_VOICE_AND_RESEARCH",
+        granted_by: str = "PATIENT_OR_LEGAL_GUARDIAN",
+        language: str = "HINDI",
+        sha256_hash: Optional[str] = None
+    ) -> Dict[str, Any]:
+        h = sha256_hash or f"CONSENT-{secrets.token_hex(16)}"
+        with self._get_conn() as conn:
+            conn.execute("""
+                INSERT OR REPLACE INTO dpdp_consents
+                (consent_id, patient_token, consent_type, granted_by, language, sha256_hash)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (consent_id, patient_token, consent_type, granted_by, language, h))
+            conn.commit()
+        return {"consent_id": consent_id, "patient_token": patient_token, "sha256_hash": h}
+
+    def get_patient_consent(self, patient_token: str) -> Optional[Dict[str, Any]]:
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM dpdp_consents WHERE patient_token = ? ORDER BY granted_at DESC LIMIT 1", (patient_token,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    # ==========================================
+    # 8. Seed Multi-Stage Milestone Cohort
+    # ==========================================
+
+    def seed_multistage_cohort(self):
+        """Seed 6 representative cases across prevention, screening, precancer, and curative stages."""
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) as cnt FROM patients WHERE patient_token = 'PT-RURAL-7891'")
+            already_has_patients = cursor.fetchone()["cnt"] > 0
+            if already_has_patients:
+                cursor.execute("SELECT COUNT(*) as cnt FROM hpv_vaccinations")
+                if cursor.fetchone()["cnt"] > 0:
+                    return
+
+        # 1. Base Patients
+        patients_to_seed = [
+            ("PT-VACC-101", 12, "FEMALE", "RURAL"),
+            ("PT-PREC-202", 34, "FEMALE", "RURAL"),
+            ("PT-RURAL-9034", 50, "FEMALE", "RURAL"),
+            ("PT-RURAL-4421", 46, "FEMALE", "RURAL"),
+            ("PT-RURAL-7891", 48, "FEMALE", "RURAL"),
+            ("PT-RURAL-1102", 52, "FEMALE", "RURAL"),
+        ]
+        for p in patients_to_seed:
+            self.save_patient(p[0], p[1], p[2], p[3])
+
+        # 2. Case 1: Adolescent HPV Vaccination & Outreach
+        self.save_hpv_vaccination(
+            vaccine_id="VAC-101-01",
+            patient_token="PT-VACC-101",
+            patient_name="Priya Sharma",
+            age=12,
+            dose_number=1,
+            vaccine_brand="Cervavac",
+            administered_date="2026-09-15",
+            next_due_date="2026-11-15",
+            school_or_center="Kalyanpur Girls Secondary School, Mirzapur",
+            status="COMPLETED",
+            outreach_sent=1
+        )
+        self.save_hpv_vaccination(
+            vaccine_id="VAC-101-02",
+            patient_token="PT-VACC-101",
+            patient_name="Priya Sharma",
+            age=12,
+            dose_number=2,
+            vaccine_brand="Cervavac",
+            administered_date="2026-11-15",
+            next_due_date=None,
+            school_or_center="PHC Mirzapur",
+            status="DUE",
+            outreach_sent=0
+        )
+
+        # 3. Case 2: Precancer Screening & Thermal Ablation
+        self.save_screening_record(
+            screening_id="SCR-202-01",
+            patient_token="PT-PREC-202",
+            patient_name="Sunita Devi",
+            age=34,
+            invitation_date="2026-08-01",
+            test_type="VIA",
+            test_date="2026-08-10",
+            result="VIA_POSITIVE",
+            clinical_staging="PRE_CANCEROUS",
+            triage_action="THERMAL_ABLATION",
+            clinician_reviewed=1
+        )
+        self.save_precancer_episode(
+            precancer_id="PREC-202",
+            patient_token="PT-PREC-202",
+            patient_name="Sunita Devi",
+            diagnosis="CIN_2",
+            treatment_type="THERMAL_ABLATION",
+            appointment_date="2026-08-15",
+            completion_date="2026-08-15",
+            margins_clear=1,
+            surveillance_interval_months=6,
+            surveillance_due_date="2027-02-15",
+            surveillance_status="SCHEDULED",
+            notes="Thermal ablation (100°C for 60s) completed under local anesthesia. Clean transition zone verified."
+        )
+
+        # 4. Case 3: Day 1 New Invasive Cancer Intake (Geeta Patel)
+        self.save_clinical_case(
+            case_id="CASE-9034",
+            patient_token="PT-RURAL-9034",
+            cancer_type="CERVICAL",
+            suspected_stage="Stage IIB",
+            severity_score=0.35,
+            intake_data={"patient_name": "Geeta Patel", "village": "Rampur", "biopsy": "Keratinizing SCC"},
+            diagnostic_data={"staging": "FIGO Stage IIB", "curative_ccrt_eligible": True},
+            status="ACTIVE"
+        )
+        self.advance_healing_clock("PT-RURAL-9034", 1)
+
+        # 5. Case 4: Day 14 Fraction 10 Pre-Brachy Prep (Kanti Devi)
+        self.save_clinical_case(
+            case_id="CASE-4421",
+            patient_token="PT-RURAL-4421",
+            cancer_type="CERVICAL",
+            suspected_stage="Stage IIIA",
+            severity_score=0.72,
+            intake_data={"patient_name": "Kanti Devi", "village": "Pipra", "biopsy": "Large Cell Non-Keratinizing"},
+            diagnostic_data={"staging": "FIGO Stage IIIA", "curative_ccrt_eligible": True},
+            status="ACTIVE"
+        )
+        self.advance_healing_clock("PT-RURAL-4421", 10)
+        self.save_chemo_clearance(
+            clearance_id="CHEMO-4421-02",
+            patient_token="PT-RURAL-4421",
+            cycle_number=2,
+            status="APPROVED",
+            dose_mg=65.0,
+            hb=10.2,
+            anc=2100,
+            platelets=175,
+            creatinine=0.82,
+            egfr=84,
+            doctor_id="DR-SHARMA-01",
+            clinical_notes="Tolerating weekly Cisplatin well. Pre-hydration intact."
+        )
+
+        # 6. Case 5: Day 21 Fraction 15 Hub-Spoke Bridge (Shanti Devi)
+        self.save_clinical_case(
+            case_id="CASE-7891",
+            patient_token="PT-RURAL-7891",
+            cancer_type="CERVICAL",
+            suspected_stage="Stage IIB",
+            severity_score=0.88,
+            intake_data={"patient_name": "Shanti Devi", "village": "Pipra Ward 4", "biopsy": "Squamous Cell Carcinoma"},
+            diagnostic_data={"staging": "FIGO Stage IIB", "curative_ccrt_eligible": True},
+            status="ACTIVE"
+        )
+        self.advance_healing_clock("PT-RURAL-7891", 15)
+        self.confirm_hub_ot_slot("PT-RURAL-7891", "Day 41")
+        self.save_chemo_clearance(
+            clearance_id="CHEMO-7891-03",
+            patient_token="PT-RURAL-7891",
+            cycle_number=3,
+            status="APPROVED",
+            dose_mg=65.0,
+            hb=10.4,
+            anc=2200,
+            platelets=180,
+            creatinine=0.85,
+            egfr=82,
+            doctor_id="DR-SHARMA-01",
+            clinical_notes="Mid-treatment pelvic assessment: tumor regression >50%. Intracavitary T&O suitable."
+        )
+
+        # 7. Case 6: Day +3 Missed Fractions & ASHA Field Ticket (Meera Devi)
+        self.save_clinical_case(
+            case_id="CASE-1102",
+            patient_token="PT-RURAL-1102",
+            cancer_type="CERVICAL",
+            suspected_stage="Stage IIIB",
+            severity_score=0.45,
+            intake_data={"patient_name": "Meera Devi", "village": "Sonbhadra Sector 2", "biopsy": "Invasive Cervical SCC"},
+            diagnostic_data={"staging": "FIGO Stage IIIB", "curative_ccrt_eligible": True},
+            status="ACTIVE"
+        )
+        self.advance_healing_clock("PT-RURAL-1102", 19)
+        self.create_asha_ticket(
+            ticket_id="TICK-1102-01",
+            patient_token="PT-RURAL-1102",
+            asha_worker_id="ASHA-001",
+            patient_first_name="Meera Devi",
+            guardian_name="Ram Prasad",
+            village="Gram Pipra, Ward 4",
+            landmark="Near Primary School Water Tank",
+            contact_phone="+91 98765 11223",
+            days_missed=3,
+            current_step=19,
+            delay_root_cause="FEAR_OF_PROCEDURE"
+        )
 
 
 global_db = ClinicalDatabase()
