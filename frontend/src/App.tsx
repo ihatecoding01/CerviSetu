@@ -134,6 +134,7 @@ export default function App() {
     return (
       <CareGateway
         onLoginStaff={() => navigate({ view: "staff", tab: "overview-tab" })}
+        onLoginAsha={() => navigate({ view: "staff", tab: "asha-tab" })}
         onLoginPatient={(token) => {
           if (token) navigate(`/patient/${token}`);
         }}

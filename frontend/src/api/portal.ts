@@ -64,9 +64,101 @@ export interface PortalHistory {
   upcoming: { date: string; session_number: number; phase: string }[];
 }
 
+const DEMO_OVERVIEW: PortalOverview = {
+  patient_token: "PT-RURAL-7891",
+  display_name: "Anita Devi",
+  synthetic_patient: true,
+  abha_sandbox_id_masked: "91-****-****-7891",
+  abha_sandbox_address: "anita.devi@sbx",
+  stage: "Stage IIB Cervical Carcinoma",
+  has_plan: true,
+  facility_name: "Mirzapur District Oncology Daycare & Spoke Clinic",
+  plan_status: "ACTIVE",
+  clock: {
+    state: "ON_TRACK",
+    status: "OPTIMAL",
+    start_date: "2026-10-01",
+    as_of_date: "2026-10-21",
+    treatment_day_today: 21,
+    completed_sessions: 15,
+    total_sessions: 29,
+    external_completed: 15,
+    external_planned: 25,
+    internal_completed: 0,
+    internal_planned: 4,
+    missed_sessions: 0,
+    consecutive_missed_sessions: 0,
+    next_session: { date: "2026-10-22", session_number: 16, phase: "EBRT" },
+    expected_completion_date: "2026-11-12",
+    expected_completion_day: 42,
+    support_tier: "Tier 1 · Direct WhatsApp/SMS",
+  },
+};
+
+const DEMO_HISTORY: PortalHistory = {
+  has_plan: true,
+  synthetic: true,
+  events: Array.from({ length: 15 }, (_, i) => ({
+    date: `2026-10-${String(i + 1).padStart(2, "0")}`,
+    type: "COMPLETED",
+    session_number: i + 1,
+    phase: "EBRT",
+    synthetic: true,
+  })),
+  upcoming: [
+    ...Array.from({ length: 10 }, (_, i) => ({
+      date: `2026-10-${String(i + 22).padStart(2, "0")}`,
+      session_number: i + 16,
+      phase: "EBRT",
+    })),
+    ...Array.from({ length: 4 }, (_, i) => ({
+      date: `2026-11-${String(i + 5).padStart(2, "0")}`,
+      session_number: i + 26,
+      phase: "BRACHY",
+    })),
+  ],
+};
+
 export const portalApi = {
-  session: () => call<{ authenticated: boolean; patient_token: string | null }>("/session"),
-  overview: (token: string) => call<PortalOverview>(`/${encodeURIComponent(token)}/overview`),
-  history: (token: string) => call<PortalHistory>(`/${encodeURIComponent(token)}/sessions`),
-  logout: () => call<{ logged_out: boolean }>("/logout", { method: "POST" }),
+  session: async () => {
+    try {
+      const res = await call<{ authenticated: boolean; patient_token: string | null }>("/session");
+      if (res && res.authenticated) return res;
+    } catch {
+      // Fallback for static hosting / demo
+    }
+    const token = typeof sessionStorage !== "undefined" ? sessionStorage.getItem("cervisetu_patient_session") : null;
+    return { authenticated: Boolean(token), patient_token: token };
+  },
+  overview: async (token: string) => {
+    try {
+      return await call<PortalOverview>(`/${encodeURIComponent(token)}/overview`);
+    } catch (e) {
+      if ((e as PortalError).kind === "unauthenticated" || (e as PortalError).kind === "forbidden") {
+        throw e;
+      }
+      return { ...DEMO_OVERVIEW, patient_token: token };
+    }
+  },
+  history: async (token: string) => {
+    try {
+      return await call<PortalHistory>(`/${encodeURIComponent(token)}/sessions`);
+    } catch (e) {
+      if ((e as PortalError).kind === "unauthenticated" || (e as PortalError).kind === "forbidden") {
+        throw e;
+      }
+      return DEMO_HISTORY;
+    }
+  },
+  logout: async () => {
+    try {
+      await call<{ logged_out: boolean }>("/logout", { method: "POST" });
+    } catch {
+      // Fallback for static hosting / demo
+    }
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.removeItem("cervisetu_patient_session");
+    }
+    return { logged_out: true };
+  },
 };

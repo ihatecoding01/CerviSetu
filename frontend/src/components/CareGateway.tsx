@@ -1,6 +1,6 @@
 import { CerviSetuLogo } from "./icons/CerviSetuLogo";
 import React, { useEffect, useState } from "react";
-import { Search, User, Users, CheckCircle2, MapPin, ShieldCheck, ArrowRight, Sparkles, QrCode, Phone } from "lucide-react";
+import { Search, User, Users, CheckCircle2, MapPin, ShieldCheck, ArrowRight, Sparkles, QrCode, Phone, HeartHandshake } from "lucide-react";
 import { api, type Facility } from "../api/client";
 import { AbhaRegistration } from "./AbhaRegistration";
 import { MobileOtpLogin } from "./MobileOtpLogin";
@@ -11,12 +11,13 @@ export const PATIENT_LOGIN_FLAG = "cervisetu_open_patient_login";
 
 interface Props {
   onLoginStaff: () => void;
+  onLoginAsha?: () => void;
   onLoginPatient: (token?: string) => void;
   onOpenDualView?: () => void;
   onOpenLanding?: () => void;
 }
 
-export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onOpenDualView, onOpenLanding }) => {
+export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginAsha, onLoginPatient, onOpenDualView, onOpenLanding }) => {
   const [districtQuery, setDistrictQuery] = useState("Mirzapur");
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
@@ -196,51 +197,74 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
           </div>
         </div>
 
-        {/* Section 2: Two Login Cards (Staff vs Patient) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-          {/* Card 1: Log in as Staff */}
-          <div className="group relative rounded-2xl border border-slate-200 p-7 bg-white hover:border-black hover:shadow-sm transition-all flex flex-col justify-between items-center text-center">
+        {/* Section 2: Three Distinct Login Pathways (Doctor / Staff, Frontline ASHA, Cancer Patient) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto">
+          {/* Card 1: Log in as Doctor / Staff */}
+          <div className="group relative rounded-2xl border border-slate-200 p-6 bg-white hover:border-black hover:shadow-sm transition-all flex flex-col justify-between items-center text-center">
             <div className="size-12 rounded-full bg-slate-100 flex items-center justify-center text-black mb-4 group-hover:scale-105 transition-transform">
               <User className="size-6" />
             </div>
 
-            <div className="mb-6 w-full">
+            <div className="mb-5 w-full">
               <button
                 onClick={onLoginStaff}
-                className="w-full py-2.5 px-6 rounded-full bg-black text-white hover:bg-black/85 font-semibold text-xs transition-colors shadow-xs cursor-pointer block"
+                className="w-full py-2.5 px-4 rounded-full bg-black text-white hover:bg-black/85 font-semibold text-xs transition-colors shadow-xs cursor-pointer block"
               >
-                Log in as Staff
+                Log in as Doctor / Staff
               </button>
-              <p className="text-xs text-slate-500 mt-3 leading-relaxed">
-                For hospital staff: doctors, radiation oncologists, spoke nurses, and administrators.
+              <p className="text-xs text-slate-500 mt-2.5 leading-relaxed">
+                For hospital staff: radiation oncologists, spoke nurses, and cancer clinic administrators.
               </p>
             </div>
 
-            <div className="text-xs font-semibold text-black bg-[#DBFE87]/40 px-3 py-1 rounded-full border border-[#DBFE87]">
+            <div className="text-[11px] font-semibold text-black bg-[#DBFE87]/40 px-3 py-1 rounded-full border border-[#DBFE87]">
               CareUI Workstation · Dual-Clock Board
             </div>
           </div>
 
-          {/* Card 2: Log in as Patient */}
-          <div className="group relative rounded-2xl border border-slate-200 p-7 bg-white hover:border-[#BA2D0B] hover:shadow-sm transition-all flex flex-col justify-between items-center text-center">
+          {/* Card 2: Log in as ASHA Worker */}
+          <div className="group relative rounded-2xl border border-slate-200 p-6 bg-white hover:border-[#0F766E] hover:shadow-sm transition-all flex flex-col justify-between items-center text-center">
+            <div className="size-12 rounded-full bg-[#0F766E]/10 flex items-center justify-center text-[#0F766E] mb-4 group-hover:scale-105 transition-transform">
+              <HeartHandshake className="size-6" />
+            </div>
+
+            <div className="mb-5 w-full">
+              <button
+                onClick={onLoginAsha || onLoginStaff}
+                className="w-full py-2.5 px-4 rounded-full bg-[#0F766E] text-white hover:bg-[#0d635c] font-semibold text-xs transition-colors shadow-xs cursor-pointer block"
+              >
+                Log in as ASHA Worker
+              </button>
+              <p className="text-xs text-slate-500 mt-2.5 leading-relaxed">
+                For frontline community health workers: home visit alerts, distress tickets, & travel vouchers.
+              </p>
+            </div>
+
+            <div className="text-[11px] font-semibold text-[#0F766E] bg-[#0F766E]/10 px-3 py-1 rounded-full border border-[#0F766E]/20">
+              ASHA Network · Field Coordination
+            </div>
+          </div>
+
+          {/* Card 3: Log in as Patient */}
+          <div className="group relative rounded-2xl border border-slate-200 p-6 bg-white hover:border-[#BA2D0B] hover:shadow-sm transition-all flex flex-col justify-between items-center text-center">
             <div className="size-12 rounded-full bg-[#BA2D0B]/10 flex items-center justify-center text-[#BA2D0B] mb-4 group-hover:scale-105 transition-transform">
               <Users className="size-6" />
             </div>
 
-            <div className="mb-6 w-full">
+            <div className="mb-5 w-full">
               <button
                 onClick={() => setShowPatientLoginModal(true)}
-                className="w-full py-2.5 px-6 rounded-full border border-[#BA2D0B] text-[#BA2D0B] hover:bg-[#BA2D0B] hover:text-white font-semibold text-xs transition-colors shadow-xs cursor-pointer block"
+                className="w-full py-2.5 px-4 rounded-full border-2 border-[#BA2D0B] text-[#BA2D0B] hover:bg-[#BA2D0B] hover:text-white font-semibold text-xs transition-colors shadow-xs cursor-pointer block"
               >
                 Log in as Patient
               </button>
-              <p className="text-xs text-slate-500 mt-3 leading-relaxed">
-                For cancer patients & family caregivers: view the 29-step Healing Clock, check side effects, & get travel passes.
+              <p className="text-xs text-slate-500 mt-2.5 leading-relaxed">
+                For cancer patients & caregivers: 29-step Healing Clock, hydration guide, & travel passes.
               </p>
             </div>
 
-            <div className="text-xs font-semibold text-slate-800 bg-[#90C3CB]/25 px-3 py-1 rounded-full border border-[#90C3CB]/60">
-              Vernacular Co-Pilot · Zero Password Friction
+            <div className="text-[11px] font-semibold text-slate-800 bg-[#90C3CB]/25 px-3 py-1 rounded-full border border-[#90C3CB]/60">
+              Vernacular Co-Pilot · Zero Password
             </div>
           </div>
         </div>
