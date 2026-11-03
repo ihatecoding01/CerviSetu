@@ -4,13 +4,13 @@
   <h3>Privacy-First Multi-Agent Clinical AI & Rural Oncology Hub-and-Spoke Network</h3>
   <p><strong>Keeping every cervical cancer patient inside the 56 day curative window, from district spoke to tertiary hub.</strong></p>
 
-  <a href="#running-the-test-suite"><img alt="Tests" src="https://img.shields.io/badge/pytest-163%20passed-brightgreen.svg"></a>
+  <a href="#running-the-test-suite"><img alt="Tests" src="https://img.shields.io/badge/pytest-passing-brightgreen.svg"></a>
   <a href="https://langchain-ai.github.io/langgraph/"><img alt="LangGraph" src="https://img.shields.io/badge/LangGraph-v1.2.11-blue.svg"></a>
   <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/Python-3.14%2B-blue.svg"></a>
   <a href="https://react.dev/"><img alt="React 19" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white"></a>
   <a href="https://fastapi.tiangolo.com/"><img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white"></a>
   <a href="https://www.sarvam.ai/"><img alt="Sarvam AI" src="https://img.shields.io/badge/Sarvam%20AI-bulbul%3Av4--flash-orange.svg"></a>
-  <a href="https://groq.com/"><img alt="Groq LPU" src="https://img.shields.io/badge/Groq%20LPU-qwen3.8--27b-red.svg"></a>
+  <a href="https://groq.com/"><img alt="Groq LPU" src="https://img.shields.io/badge/Groq%20LPU-llama--3.3--70b-red.svg"></a>
   <a href="https://abdm.gov.in/"><img alt="ABDM" src="https://img.shields.io/badge/ABDM-ABHA%20sandbox-018C7F.svg"></a>
   <a href="#security--privacy"><img alt="Security" src="https://img.shields.io/badge/DPDP%20Act%202023-AES--256--GCM-green.svg"></a>
 </div>
@@ -221,12 +221,12 @@ flowchart TD
 | **Agent Orchestration** | LangGraph, LangChain Core |
 | **Voice AI (TTS & ASR)** | Sarvam AI API (`bulbul:v4-flash`), Indic SSML Engine |
 | **Document OCR** | Sarvam Vision (opt-in), OpenCV blur gate |
-| **High Speed LLM** | Groq LPU (`qwen/qwen3.8-27b`), OpenAI / Anthropic / Google Fallbacks |
+| **High Speed LLM** | Groq LPU (`llama-3.3-70b-versatile`), OpenAI / Anthropic / Google Fallbacks |
 | **Computer Vision** | OpenCV Headless, NumPy, Pillow, Laplacian Spatial Kernel |
 | **Health Interoperability** | ABDM / ABHA sandbox flow, FHIR patient bundle export |
 | **Security & Privacy** | AES-256-GCM Token Vault, HMAC-SHA256 keyed hashes, signed patient sessions, SHA-256 Block Chained Audit Ledger |
 | **Persistence** | SQLite (local), optional Supabase |
-| **Testing** | pytest (163 tests) |
+| **Testing** | pytest |
 | **Package Management** | `uv` (Python), `npm` (Frontend) |
 
 ---
@@ -251,7 +251,7 @@ Add your API keys to `.env`:
 ```env
 # Groq Oncology Inference Key
 GROQ_API_KEY=gsk_your_groq_api_key_here
-GROQ_MODEL=qwen/qwen3.8-27b
+GROQ_MODEL=llama-3.3-70b-versatile
 
 # Sarvam AI Key (Indic Voice & Vision)
 SARVAM_API_KEY=sk_your_sarvam_api_key_here
@@ -311,7 +311,7 @@ Open **`http://localhost:8000`** in your browser to access the complete applicat
 ## Running the Test Suite
 
 ```bash
-# Run the full test suite (163 tests)
+# Run the full test suite
 uv run pytest -q
 
 # Windows
@@ -439,7 +439,7 @@ health_hackathon/
 │       │   ├── logs.py         # Audit ledger & multi-role logging
 │       │   └── facilities.py   # Hub & spoke directory
 │       └── static/             # Compiled production frontend assets
-└── tests/                      # Automated test suite (163 tests)
+└── tests/                      # Automated test suite
 ```
 
 ---
