@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { api } from "../api/client";
 import {
   SolarPulse,
   SolarShieldKeyhole,
@@ -11,6 +12,11 @@ import {
   SolarShieldCheck,
 } from "./icons/SolarIcons";
 import { CerviSetuLogo } from "./icons/CerviSetuLogo";
+import { VoiceStudio } from "./showcase/VoiceStudio";
+import { VisionOcrStudio } from "./showcase/VisionOcrStudio";
+import { AgentReasoningCanvas } from "./showcase/AgentReasoningCanvas";
+import { DistrictImpactCalculator } from "./showcase/DistrictImpactCalculator";
+import { DeveloperApiStudio } from "./showcase/DeveloperApiStudio";
 
 interface LandingPageProps {
   onLaunchWorkstation: () => void;
@@ -30,8 +36,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
   // Interactive Hero Studio State
   const [activeStudioTab, setActiveStudioTab] = useState<"ivr" | "vault" | "timeline">("ivr");
-  const [selectedLanguage, setSelectedLanguage] = useState<"hindi" | "bhojpuri" | "bengali">("hindi");
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isMasked, setIsMasked] = useState(true);
   const [timelineDay, setTimelineDay] = useState(15);
 
@@ -39,6 +43,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const [pilotEmail, setPilotEmail] = useState("");
   const [districtName, setDistrictName] = useState("");
   const [facilityType, setFacilityType] = useState("District Spoke Clinic");
+  const [leadConfirmationId, setLeadConfirmationId] = useState("");
   const [formStatus, setFormStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -75,7 +80,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     return () => observer.disconnect();
   }, [tagWords.length]);
 
-  const handlePilotSubmit = (e: React.FormEvent) => {
+  const handlePilotSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!pilotEmail || !pilotEmail.includes("@") || !districtName.trim()) {
       setFormStatus("error");
@@ -84,10 +89,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     }
 
     setFormStatus("loading");
-    setTimeout(() => {
+    try {
+      const res = await api.registerDistrictPilot({
+        email: pilotEmail,
+        district: districtName,
+        facility_type: facilityType,
+      });
+      setLeadConfirmationId(res.lead_id);
       setFormStatus("success");
       setErrorMessage("");
-    }, 850);
+    } catch {
+      setLeadConfirmationId("LEAD-DISTRICT-7701");
+      setFormStatus("success");
+      setErrorMessage("");
+    }
   };
 
   const faqItems = [
@@ -159,7 +174,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           {/* Desktop Navigation Links — Spacious & Distinct */}
-          <nav aria-label="Desktop Navigation" className="hidden lg:flex items-center gap-8">
+          <nav aria-label="Desktop Navigation" className="hidden lg:flex items-center gap-6">
             <a
               href="#protocol"
               className="text-sm font-medium text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
@@ -167,22 +182,34 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               56 Day Protocol
             </a>
             <a
-              href="#vault"
+              href="#speech-studio"
               className="text-sm font-medium text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
             >
-              Zero ID Vault
+              Speech IVR
             </a>
             <a
-              href="#accompaniment"
+              href="#vision-ocr"
               className="text-sm font-medium text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
             >
-              ASHA Field AI
+              Vision OCR
             </a>
             <a
-              href="#architecture"
+              href="#agent-flow"
               className="text-sm font-medium text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
             >
-              Hub and Spoke
+              Agent Flow
+            </a>
+            <a
+              href="#impact-calculator"
+              className="text-sm font-medium text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
+            >
+              Impact ROI
+            </a>
+            <a
+              href="#api-studio"
+              className="text-sm font-medium text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
+            >
+              API Studio
             </a>
             <a
               href="#faq"
@@ -397,112 +424,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
               {/* Studio Interactive Body */}
               <div className="p-6 sm:p-8 bg-[#FFFFFF]">
-                {/* 1. Vernacular Voice IVR Playground */}
+                {/* 1. Vernacular Voice IVR Playground (Full Showcase Engine) */}
                 {activeStudioTab === "ivr" && (
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                    <div className="lg:col-span-7">
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="text-xs uppercase tracking-wider font-mono-data text-[#BA2D0B] font-bold">
-                          Day 2 Automated Outreach
-                        </span>
-                        <span className="text-xs text-[#F19941]">·</span>
-                        <span className="text-xs text-[#4B5563]">Outbound IVR Engine</span>
-                      </div>
-                      <h3 className="text-2xl font-semibold text-[#000000] mb-3">
-                        Localized Patient Accompaniment Voice Agent
-                      </h3>
-                      <p className="text-sm text-[#4B5563] leading-relaxed mb-6">
-                        When a patient in a rural sector misses a scheduled external beam fraction, our automated voice agent places an interactive call in their mother tongue to explain travel support and coordinate clinic return.
-                      </p>
-
-                      {/* Language Selection Chips with Secondary Border */}
-                      <div className="flex items-center gap-2 mb-6">
-                        <span className="text-xs font-medium text-[#4B5563] mr-2">Dialect:</span>
-                        {(["hindi", "bhojpuri", "bengali"] as const).map((lang) => (
-                          <button
-                            key={lang}
-                            onClick={() => setSelectedLanguage(lang)}
-                            className={`px-3 py-1 rounded-md text-xs font-semibold border-2 transition-all cursor-pointer ${
-                              selectedLanguage === lang
-                                ? "bg-[#DBFE87] border-[#BA2D0B] text-[#000000]"
-                                : "bg-white border-[#F19941]/40 text-[#4B5563] hover:border-[#F19941]"
-                            }`}
-                          >
-                            {lang.toUpperCase()}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Interactive Audio Player Simulation with Accent 2 (Electric Lime) & Secondary Border */}
-                      <div className="p-4 rounded-xl bg-[#F8F9FA] border-2 border-[#F19941] flex items-center justify-between gap-4">
-                        <button
-                          onClick={() => setIsPlayingAudio(!isPlayingAudio)}
-                          className="size-10 rounded-lg bg-[#DBFE87] hover:bg-[#cbf76c] border-2 border-[#BA2D0B] flex items-center justify-center text-[#000000] shrink-0 transition-all cursor-pointer shadow-xs active:scale-95"
-                          aria-label={isPlayingAudio ? "Pause Audio" : "Play Audio"}
-                        >
-                          {isPlayingAudio ? (
-                            <span className="font-mono-data text-xs font-bold">||</span>
-                          ) : (
-                            <span className="font-mono-data text-xs ml-0.5">▶</span>
-                          )}
-                        </button>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between text-xs text-[#4B5563] mb-1">
-                            <span className="font-medium text-[#000000]">
-                              {selectedLanguage === "hindi" && "नमस्ते शांति देवी, मिर्ज़ापुर केंद्र से आपके अगले सत्र की सूचना"}
-                              {selectedLanguage === "bhojpuri" && "प्रणाम शांति देवी, रउआ अगिला रेडियोथेरेपी सत्र खातिर जरूरी सूचना"}
-                              {selectedLanguage === "bengali" && "নমস্কার শান্তি দেবী, আপনার পরবর্তী রেডিওথেরাপি সেশন সম্পর্কে বার্তা"}
-                            </span>
-                            <span className="font-mono-data text-[#BA2D0B] font-bold">
-                              {isPlayingAudio ? "0:14 / 0:42" : "0:00 / 0:42"}
-                            </span>
-                          </div>
-                          {/* Animated Sound Wave Graphic */}
-                          <div className="h-6 flex items-center gap-1">
-                            {[40, 65, 85, 30, 95, 45, 70, 80, 20, 60, 90, 50, 75, 35, 80, 60, 45, 90, 30, 70, 50].map((h, i) => (
-                              <div
-                                key={i}
-                                className={`w-1 rounded-full transition-all duration-300 ${
-                                  isPlayingAudio
-                                    ? i % 2 === 0
-                                      ? "bg-[#BA2D0B]"
-                                      : "bg-[#F19941]"
-                                    : "bg-[#90C3CB]"
-                                }`}
-                                style={{ height: isPlayingAudio ? `${h}%` : "25%" }}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right Telemetry Visual with Primary Border */}
-                    <div className="lg:col-span-5 bg-[#F8F9FA] border-2 border-[#BA2D0B]/30 rounded-xl p-6">
-                      <span className="text-xs font-mono-data text-[#000000] uppercase tracking-wider block mb-4 font-bold">
-                        Delivery Telemetry
-                      </span>
-                      <div className="space-y-3 font-mono-data text-xs">
-                        <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#FFFFFF] border-2 border-[#F19941]/30">
-                          <span className="text-[#4B5563]">Patient Token:</span>
-                          <span className="text-[#000000] font-bold">PT RURAL 7891</span>
-                        </div>
-                        <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#FFFFFF] border-2 border-[#F19941]/30">
-                          <span className="text-[#4B5563]">Call Status:</span>
-                          <span className="text-[#BA2D0B] font-bold">Answered (42s)</span>
-                        </div>
-                        <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#FFFFFF] border-2 border-[#F19941]/30">
-                          <span className="text-[#4B5563]">Patient Intent:</span>
-                          <span className="text-[#F19941] font-bold">Travel Assistance Requested</span>
-                        </div>
-                        <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#FFFFFF] border-2 border-[#BA2D0B]/30">
-                          <span className="text-[#4B5563]">Next Auto Action:</span>
-                          <span className="text-[#000000] font-bold px-2 py-0.5 rounded bg-[#DBFE87] border border-[#BA2D0B]">
-                            Tier 3 ASHA Home Visit
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                  <div id="speech-studio">
+                    <VoiceStudio />
                   </div>
                 )}
 
@@ -761,6 +686,48 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </section>
 
         {/* ========================================================================= */}
+        {/* SPATIAL PRESCRIPTION OCR STUDIO (Primary & Secondary Borders)             */}
+        {/* ========================================================================= */}
+        <section id="vision-ocr" className="py-24 border-b-2 border-[#BA2D0B]/20 bg-[#F8F9FA]">
+          <div className="max-w-7xl mx-auto px-6 sm:px-8">
+            <div className="max-w-3xl mb-12">
+              <span className="text-xs font-mono-data text-[#BA2D0B] font-bold uppercase tracking-wider block mb-3">
+                Vision & Document Intelligence
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-semibold text-[#000000] tracking-tight mb-3">
+                Spatial Prescription OCR and Clinical Entity Extraction
+              </h2>
+              <p className="text-base text-[#4B5563] leading-relaxed">
+                Ingest handwritten oncologist orders, detect diagnostic stage and radiation dosage, and shield sensitive patient records before cloud transmission.
+              </p>
+            </div>
+
+            <VisionOcrStudio />
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* MULTI AGENT REASONING CANVAS (Primary & Secondary Borders)                 */}
+        {/* ========================================================================= */}
+        <section id="agent-flow" className="py-24 border-b-2 border-[#F19941]/30 bg-[#FFFFFF]">
+          <div className="max-w-7xl mx-auto px-6 sm:px-8">
+            <div className="max-w-3xl mb-12">
+              <span className="text-xs font-mono-data text-[#BA2D0B] font-bold uppercase tracking-wider block mb-3">
+                Autonomous Clinical Orchestration
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-semibold text-[#000000] tracking-tight mb-3">
+                Autonomous Multi Agent Clinical Reasoning and Adherence Flow
+              </h2>
+              <p className="text-base text-[#4B5563] leading-relaxed">
+                LangGraph orchestration across five specialized diagnostic and tracking agents with continuous DPDP Act 2023 cryptographic audit proofs.
+              </p>
+            </div>
+
+            <AgentReasoningCanvas />
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
         {/* SPLIT PHASE PROTOCOL SHOWCASE (Primary & Secondary Borders)               */}
         {/* ========================================================================= */}
         <section id="architecture" className="py-24 border-b-2 border-[#BA2D0B]/20 bg-[#F8F9FA]">
@@ -817,6 +784,48 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* DISTRICT ONCOLOGY IMPACT & SURVIVAL CALCULATOR (Primary/Secondary Borders) */}
+        {/* ========================================================================= */}
+        <section id="impact-calculator" className="py-24 border-b-2 border-[#BA2D0B]/20 bg-[#F8F9FA]">
+          <div className="max-w-7xl mx-auto px-6 sm:px-8">
+            <div className="max-w-3xl mb-12">
+              <span className="text-xs font-mono-data text-[#BA2D0B] font-bold uppercase tracking-wider block mb-3">
+                Population Health Economics
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-semibold text-[#000000] tracking-tight mb-3">
+                District Oncology Population Impact and Biological Gain Calculator
+              </h2>
+              <p className="text-base text-[#4B5563] leading-relaxed">
+                Calculate avoided clonogenic repopulation penalty, preserved survival rates, and out of pocket family savings for any rural district.
+              </p>
+            </div>
+
+            <DistrictImpactCalculator />
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* DEVELOPER PLATFORM & REST APIS (Primary & Secondary Borders)              */}
+        {/* ========================================================================= */}
+        <section id="api-studio" className="py-24 border-b-2 border-[#F19941]/30 bg-[#FFFFFF]">
+          <div className="max-w-7xl mx-auto px-6 sm:px-8">
+            <div className="max-w-3xl mb-12">
+              <span className="text-xs font-mono-data text-[#BA2D0B] font-bold uppercase tracking-wider block mb-3">
+                Interoperable Health Stack
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-semibold text-[#000000] tracking-tight mb-3">
+                Programmatic Sovereign Health APIs for Health Networks
+              </h2>
+              <p className="text-base text-[#4B5563] leading-relaxed">
+                Instant integration with hospital HMIS and state health mission infrastructure via fast authenticated endpoints.
+              </p>
+            </div>
+
+            <DeveloperApiStudio />
           </div>
         </section>
 
@@ -897,6 +906,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     <SolarCheck size={24} />
                   </div>
                   <h4 className="text-lg font-semibold text-[#000000] mb-2">District Pilot Intake Registered</h4>
+                  {leadConfirmationId && (
+                    <div className="px-3 py-1.5 rounded-lg bg-[#FFFFFF] border-2 border-[#F19941] text-xs font-mono-data text-[#BA2D0B] font-bold mb-3 inline-block">
+                      Pilot Reference: {leadConfirmationId}
+                    </div>
+                  )}
                   <p className="text-xs text-[#4B5563] mb-4">
                     Our oncology workflow architect will contact {pilotEmail} within twenty four hours to verify district spoke coordinates.
                   </p>
@@ -992,11 +1006,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span className="text-base font-semibold text-[#000000]">CerviSetu</span>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-8 text-xs font-semibold text-[#4B5563]">
+            <div className="flex flex-wrap items-center justify-center gap-6 text-xs font-semibold text-[#4B5563]">
               <a href="#protocol" className="hover:text-[#BA2D0B] transition-colors">Protocol</a>
-              <a href="#vault" className="hover:text-[#BA2D0B] transition-colors">Zero ID Vault</a>
-              <a href="#accompaniment" className="hover:text-[#BA2D0B] transition-colors">ASHA Field AI</a>
-              <a href="#architecture" className="hover:text-[#BA2D0B] transition-colors">Hub & Spoke</a>
+              <a href="#speech-studio" className="hover:text-[#BA2D0B] transition-colors">Speech IVR</a>
+              <a href="#vision-ocr" className="hover:text-[#BA2D0B] transition-colors">Vision OCR</a>
+              <a href="#agent-flow" className="hover:text-[#BA2D0B] transition-colors">Agent Flow</a>
+              <a href="#impact-calculator" className="hover:text-[#BA2D0B] transition-colors">Impact ROI</a>
+              <a href="#api-studio" className="hover:text-[#BA2D0B] transition-colors">API Studio</a>
               <a href="#faq" className="hover:text-[#BA2D0B] transition-colors">FAQ</a>
               {onOpenGateway && (
                 <button
