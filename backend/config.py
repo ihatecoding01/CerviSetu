@@ -55,7 +55,12 @@ ESCALATION_POLICY = {
 }
 
 # Treatment clock calendar: session dates and "today" are clinic-local dates, not UTC
-CLINIC_TIMEZONE = ZoneInfo(os.getenv("CERVISETU_CLINIC_TZ", "Asia/Kolkata"))
+try:
+    CLINIC_TIMEZONE = ZoneInfo(os.getenv("CERVISETU_CLINIC_TZ", "Asia/Kolkata"))
+except Exception:
+    # Windows fallback when tzdata is not installed (UTC+05:30)
+    from datetime import timezone as dt_timezone, timedelta as dt_timedelta
+    CLINIC_TIMEZONE = dt_timezone(dt_timedelta(hours=5, minutes=30), name="Asia/Kolkata")
 
 
 def clinic_today() -> date:
@@ -109,5 +114,3 @@ DATABASE_URL = os.getenv("DATABASE_URL", "")
 # Cloudflare Pages & Deployment Settings
 CLOUDFLARE_API_TOKEN = os.getenv("CLOUDFLARE_API_TOKEN", "")
 CLOUDFLARE_ACCOUNT_ID = os.getenv("CLOUDFLARE_ACCOUNT_ID", "")
-
-
