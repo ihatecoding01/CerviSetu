@@ -73,11 +73,20 @@ class DiagnosticAgent:
 
         urgency = "CRITICAL_EMERGENCY" if severity >= 0.75 else "PRIORITY" if severity >= 0.45 else "ROUTINE"
 
+        # Label is derived from the score so the two never contradict each other
+        confidence_score = round(min(0.95, 0.50 + (severity * 0.45)), 2)
+        if confidence_score >= 0.80 and img_q.get("is_valid", True) and intake.get("biopsy_status") != "NEGATIVE":
+            confidence_level = "HIGH"
+        elif confidence_score >= 0.65:
+            confidence_level = "MODERATE"
+        else:
+            confidence_level = "LOW"
+
         synthesis = DiagnosticSynthesis(
             differential_diagnosis=differentials,
             primary_impression=f"Suspected {cancer_type} ({stage}) - Urgency: {urgency}",
-            confidence_level="HIGH" if img_q.get("is_valid", True) and intake.get("biopsy_status") != "NEGATIVE" else "MODERATE",
-            confidence_score=round(min(0.95, 0.50 + (severity * 0.45)), 2),
+            confidence_level=confidence_level,
+            confidence_score=confidence_score,
             red_flag_symptoms=red_flags,
             recommended_workup=workup,
             treatment_pathway_notes=f"Recommended standard multidisciplinary oncology tumor board review for {cancer_type} ({stage}).",

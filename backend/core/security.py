@@ -133,10 +133,14 @@ class TokenVault:
 class PIIShield:
     """De-Identification and PII Masking Engine."""
 
-    PHONE_PATTERN = re.compile(r'(?:\+?91[\-\s]?)?[6-9]\d{9}|\b\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}\b')
+    # Indian mobiles are commonly written split 5+5 ("98765 43210"), so allow one separator
+    PHONE_PATTERN = re.compile(r'(?:\+?91[\-\s]?)?[6-9]\d{4}[\-\s]?\d{5}\b|\b\d{3}[-\.\s]??\d{3}[-\.\s]??\d{4}\b')
     AADHAAR_PATTERN = re.compile(r'\b\d{4}[\s\-]?\d{4}[\s\-]?\d{4}\b')
     EMAIL_PATTERN = re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b')
-    NAME_PREFIXES = re.compile(r'\b(Mr\.|Mrs\.|Ms\.|Shri|Smt\.|Dr\.|Patient:?|Name:?)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)', re.IGNORECASE)
+    # Prefix is case-insensitive, but the name itself must be Capitalised words on the same line
+    NAME_PREFIXES = re.compile(r'(?i:\b(Mr\.|Mrs\.|Ms\.|Shri|Smt\.|Dr\.|Patient:?|Name:?))[ \t]+([A-Z][a-z]+(?:[ \t]+[A-Z][a-z]+)*)')
+    # Village-level address fields; District is kept for hub-spoke routing
+    LOCATION_PATTERN = re.compile(r'(?i:\b(Village|Address|Locality|Gram|Mohalla))[ \t]*:[ \t]*([^,\n]+)')
 
     @classmethod
     def generate_token(cls, prefix: str = "PT-ANON") -> str:
@@ -151,7 +155,8 @@ class PIIShield:
             "phones": [],
             "ids": [],
             "emails": [],
-            "names": []
+            "names": [],
+            "locations": []
         }
 
         # Mask Phones
@@ -173,6 +178,11 @@ class PIIShield:
         for match in cls.NAME_PREFIXES.finditer(masked):
             extracted["names"].append(match.group(2))
         masked = cls.NAME_PREFIXES.sub(r'\1 [REDACTED_NAME]', masked)
+
+        # Mask village / address fields
+        for match in cls.LOCATION_PATTERN.finditer(masked):
+            extracted["locations"].append(match.group(2).strip())
+        masked = cls.LOCATION_PATTERN.sub(r'\1: [REDACTED_LOCATION]', masked)
 
         return masked, extracted
 

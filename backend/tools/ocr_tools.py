@@ -52,11 +52,11 @@ class ClinicalEntityExtractorTool:
         "colorectal": ["colon", "rectal", "rectum", "colorectal", "bowel"],
     }
 
+    # FIGO stage with optional sub-stage letter/number, e.g. "IIB", "IB3", "4a"
+    FIGO_STAGE_PATTERN = re.compile(r'\b(?:figo\s*)?stage\s*(iv|iii|ii|i|4|3|2|1)([abc][1-3]?)?\b')
+    ARABIC_TO_ROMAN = {"1": "I", "2": "II", "3": "III", "4": "IV"}
+
     STAGE_PATTERNS = [
-        (r'\bstage\s*(?:iv|4)\b', "Stage IV"),
-        (r'\bstage\s*(?:iii|3)\b', "Stage III"),
-        (r'\bstage\s*(?:ii|2)\b', "Stage II"),
-        (r'\bstage\s*(?:i|1)\b', "Stage I"),
         (r'\badvanced\s*(?:stage|disease)\b', "Advanced"),
         (r'\bearly\s*(?:stage|lesion)\b', "Early"),
         (r'\bmetastatic\b', "Stage IV (Metastatic)"),
@@ -85,17 +85,30 @@ class ClinicalEntityExtractorTool:
 
         # 2. Identify Staging
         detected_stage = "Unknown"
-        for pattern, stage_label in cls.STAGE_PATTERNS:
-            if re.search(pattern, lower_text):
-                detected_stage = stage_label
-                break
+        figo_match = cls.FIGO_STAGE_PATTERN.search(lower_text)
+        if figo_match:
+            numeral = cls.ARABIC_TO_ROMAN.get(figo_match.group(1), figo_match.group(1).upper())
+            detected_stage = f"Stage {numeral}{(figo_match.group(2) or '').upper()}"
+        else:
+            for pattern, stage_label in cls.STAGE_PATTERNS:
+                if re.search(pattern, lower_text):
+                    detected_stage = stage_label
+                    break
 
         # 3. Identify Biopsy Status
         biopsy_status = "PENDING"
+        keyword_matched = False
         for status, kws in cls.BIOPSY_KEYWORDS.items():
             if any(k in lower_text for k in kws):
                 biopsy_status = status
+                keyword_matched = True
                 break
+        # Biopsy/HPE reported as a carcinoma in the same sentence, e.g. "biopsy: squamous cell carcinoma"
+        if not keyword_matched and re.search(
+            r'\b(?:biopsy|histopath\w*|hpe)\b[^.\n]{0,40}?\b(?:squamous cell carcinoma|adenocarcinoma|carcinoma|malignan\w*|positive)\b',
+            lower_text,
+        ):
+            biopsy_status = "POSITIVE"
 
         # 4. Extract Symptoms & Complaints
         symptoms = []
