@@ -205,6 +205,8 @@ export default function App() {
       {currentTab === "encounter-tab" && (
         <ClinicianEncounter
           patientToken={selectedPatientToken}
+          cases={cases}
+          onSelectPatient={(token) => setSelectedPatientToken(token)}
           onBackToDashboard={() => navigate({ view: "staff", tab: "overview-tab" })}
           onOpenPatientCompanion={(token) => navigate(`/patient/${token}`)}
         />

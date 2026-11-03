@@ -416,9 +416,13 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, chi
           </div>
         </header>
 
-        {/* Tab Viewport with Generous Whitespace */}
-        <main className="flex-1 h-[calc(100vh-3.5rem)] overflow-y-auto overflow-x-hidden p-6 sm:p-8 lg:p-10">
-          <div className="max-w-5xl mx-auto w-full">
+        {/* Tab Viewport with Adaptive Layout (Full-bleed for clinical encounter) */}
+        <main className={`flex-1 h-[calc(100vh-3.5rem)] overflow-y-auto overflow-x-hidden ${
+          activeTab === "encounter-tab" || activeTab === "dual-tab" ? "p-0" : "p-6 sm:p-8 lg:p-10"
+        }`}>
+          <div className={`w-full ${
+            activeTab === "encounter-tab" || activeTab === "dual-tab" ? "h-full" : "max-w-5xl mx-auto"
+          }`}>
             {children}
           </div>
         </main>
