@@ -1,6 +1,7 @@
 """Patient Co-Pilot, 29-Step Healing Clock, and Hub-Spoke Handoff router."""
+import secrets
 from typing import Optional
-from fastapi import APIRouter
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from backend.core.database import global_db
@@ -215,3 +216,54 @@ async def purge_patient_audio_cache(token: str):
         "audit_block": block
     }
 
+
+
+VOICE_TRIAGE_PROMPT = (
+    "A cervical cancer patient on chemoradiation described her symptoms by voice (transcript may be Hindi, "
+    "Bhojpuri or English). Classify the main symptom and a CTCAE-style grade: 0 none, 1 mild, 2 moderate "
+    "(limits daily activity), 3 severe (bleeding, fever, cannot eat or drink, fainting). Never give advice."
+)
+VOICE_TRIAGE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "symptom_category": {"type": "string", "enum": ["DIARRHEA", "NAUSEA_VOMITING", "PELVIC_PAIN", "BURNING_URINATION",
+                                                         "BLEEDING", "FEVER", "FATIGUE", "SKIN_REACTION", "OTHER"]},
+        "grade": {"type": "integer", "description": "0, 1, 2 or 3"},
+        "english_summary": {"type": "string"},
+    },
+    "required": ["symptom_category", "grade", "english_summary"],
+    "additionalProperties": False,
+}
+
+
+@router.post("/{token}/voice-symptoms")
+async def report_voice_symptoms(
+    token: str,
+    audio: UploadFile = File(...),
+    clock_day: int = Form(1),
+    language_code: str = Form("unknown"),
+):
+    """Patient speaks symptoms in her language: Sarvam STT -> LLM triage -> standard toxicity check-in."""
+    from backend.core.llm_client import global_llm
+
+    stt = global_llm.transcribe(await audio.read(), audio.filename or "voice.webm", language_code)
+    if not stt or not stt["transcript"].strip():
+        raise HTTPException(status_code=503, detail="Voice transcription unavailable; please use the symptom buttons.")
+
+    triage = global_llm.structured(VOICE_TRIAGE_PROMPT, stt["transcript"], VOICE_TRIAGE_SCHEMA, "voice_symptom_triage", strict=False) or {
+        "symptom_category": "OTHER", "grade": 2, "english_summary": "Unclassified voice report - nurse review needed",
+    }
+    # Unknown or out-of-range grades go to nurse review (grade 2) rather than being trusted
+    triage["grade"] = triage["grade"] if triage.get("grade") in (0, 1, 2, 3) else 2
+    checkin = await report_patient_symptoms(token, PatientSymptomReportRequest(
+        symptom_category=triage["symptom_category"],
+        reported_severity_grade=triage["grade"],
+        clock_day=clock_day,
+        vernacular_raw_text=stt["transcript"],
+    ))
+    return {
+        "transcript": stt["transcript"],
+        "detected_language": stt["language_code"],
+        "triage": triage,
+        "checkin": checkin,
+    }
