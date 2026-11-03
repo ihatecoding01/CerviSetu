@@ -64,6 +64,9 @@ GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")
 SARVAM_API_KEY = os.getenv("SARVAM_API_KEY", "")
 SARVAM_BASE_URL = os.getenv("SARVAM_BASE_URL", "https://api.sarvam.ai")
 SARVAM_TTS_MODEL = os.getenv("SARVAM_TTS_MODEL", "bulbul:v4-flash")
+SARVAM_LLM_MODEL = os.getenv("SARVAM_LLM_MODEL", "sarvam-105b")
+# Set CERVISETU_DISABLE_LLM=1 to force the deterministic rule-based pipeline (used by the test suite)
+LLM_DISABLED = os.getenv("CERVISETU_DISABLE_LLM", "").lower() in ("1", "true", "yes")
 
 # Supabase Production PostgreSQL Database Settings
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")

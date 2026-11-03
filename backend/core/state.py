@@ -35,6 +35,10 @@ class ClinicalIntake(BaseModel):
     prescribed_investigations: List[str] = Field(default_factory=list)
     next_follow_up_days: int = 7
     raw_anonymized_notes: str = ""
+    extraction_source: str = "RULES"  # RULES or SARVAM_LLM
+    histology: Optional[str] = None
+    screening_findings: List[str] = Field(default_factory=list)
+    treatment_plan: Optional[str] = None
 
 
 class DiagnosticSynthesis(BaseModel):
@@ -47,6 +51,11 @@ class DiagnosticSynthesis(BaseModel):
     recommended_workup: List[str] = Field(default_factory=list)
     treatment_pathway_notes: str = ""
     urgency: str = "ROUTINE"  # ROUTINE, PRIORITY, CRITICAL_EMERGENCY
+    ai_clinician_summary: str = ""
+    patient_message_hindi: str = ""
+    patient_message_english: str = ""
+    ai_generated: bool = False
+    requires_clinician_approval: bool = True
 
 
 class NotificationDispatch(BaseModel):

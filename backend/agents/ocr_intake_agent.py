@@ -58,7 +58,11 @@ class OCRIntakeAgent:
             severity_score=parsed_doc.severity_score,
             prescribed_investigations=["Biopsy / Histopathology", "Radiological Scan", "CBC / LFT / KFT"],
             next_follow_up_days=parsed_doc.follow_up_days,
-            raw_anonymized_notes=parsed_doc.raw_anonymized_text
+            raw_anonymized_notes=parsed_doc.raw_anonymized_text,
+            extraction_source=entities.get("extraction_source", "RULES"),
+            histology=entities.get("histology"),
+            screening_findings=entities.get("screening_findings", []),
+            treatment_plan=entities.get("treatment_plan")
         )
 
         return {
@@ -66,5 +70,5 @@ class OCRIntakeAgent:
             "clinical_intake": intake_model.model_dump(),
             "intake_status": "COMPLETED",
             "cancer_severity_score": parsed_doc.severity_score,
-            "audit_trail": [f"Intake completed for {token}. Cancer: {parsed_doc.cancer_type} ({parsed_doc.suspected_stage})"]
+            "audit_trail": [f"Intake completed for {token}. Cancer: {parsed_doc.cancer_type} ({parsed_doc.suspected_stage}) via {entities.get('extraction_source', 'RULES')}"]
         }

@@ -1,4 +1,5 @@
 ﻿"""Diagnostic Synthesis Agent for AI-assisted clinical differential and workup recommendations."""
+import json
 import secrets
 from typing import Any, Dict, List, Optional
 from backend.core.database import global_db
@@ -6,8 +7,32 @@ from backend.core.security import global_audit
 from backend.core.state import ClinicalAgentState, DiagnosticSynthesis
 
 
+AI_SUMMARY_SYSTEM_PROMPT = (
+    "You assist radiation oncologists in an Indian district hub-and-spoke cervical cancer network. "
+    "Given de-identified structured intake data, write: (1) a 2-3 sentence clinician summary that restates "
+    "the documented findings, notes missing data, and flags the 56-day overall treatment time limit for CCRT "
+    "when relevant; never invent findings or prescribe doses. (2) A short, warm patient message (max 2 sentences) "
+    "in simple Hindi (Devanagari) and the same in simple English, telling her the next step and to keep every "
+    "appointment. Do not mention the word cancer in the patient message. Do not give medical advice or numbers."
+)
+
+AI_SUMMARY_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "clinician_summary": {"type": "string"},
+        "patient_message_hindi": {"type": "string"},
+        "patient_message_english": {"type": "string"},
+    },
+    "required": ["clinician_summary", "patient_message_hindi", "patient_message_english"],
+    "additionalProperties": False,
+}
+
+
 class DiagnosticAgent:
     """Synthesizes OCR intake findings and validated medical scan parameters into a preliminary differential diagnosis."""
+
+    def __init__(self, llm: Any = None):
+        self.llm = llm
 
     def process(self, state: ClinicalAgentState) -> Dict[str, Any]:
         """Synthesize clinical intake and imaging indicators."""
@@ -93,6 +118,14 @@ class DiagnosticAgent:
             urgency=urgency
         )
 
+        # Sarvam LLM clinician summary + patient message (draft only; clinician must approve before sending)
+        ai = self._ai_summary(intake, synthesis)
+        if ai:
+            synthesis.ai_clinician_summary = ai["clinician_summary"]
+            synthesis.patient_message_hindi = ai["patient_message_hindi"]
+            synthesis.patient_message_english = ai["patient_message_english"]
+            synthesis.ai_generated = True
+
         # Persist case to database
         case_id = f"CASE-{secrets.token_hex(4).upper()}"
         global_db.save_clinical_case(
@@ -122,7 +155,8 @@ class DiagnosticAgent:
             details={
                 "case_id": case_id,
                 "primary_impression": synthesis.primary_impression,
-                "urgency": synthesis.urgency
+                "urgency": synthesis.urgency,
+                "ai_generated": synthesis.ai_generated
             }
         )
 
@@ -130,3 +164,26 @@ class DiagnosticAgent:
             "diagnostic_synthesis": synthesis.model_dump(),
             "audit_trail": [f"Diagnostic synthesis compiled. Primary: {synthesis.primary_impression}"]
         }
+
+    def _ai_summary(self, intake: Dict[str, Any], synthesis: DiagnosticSynthesis) -> Optional[Dict[str, str]]:
+        """Ask the LLM for summaries using only de-identified structured fields; None on any failure."""
+        from backend.core.llm_client import global_llm
+        client = self.llm or global_llm
+
+        facts = {
+            "cancer_type": intake.get("suspected_cancer_type"),
+            "stage": intake.get("estimated_stage"),
+            "biopsy_status": intake.get("biopsy_status"),
+            "histology": intake.get("histology"),
+            "screening_findings": intake.get("screening_findings"),
+            "treatment_plan": intake.get("treatment_plan"),
+            "symptoms": intake.get("presenting_complaints"),
+            "age": intake.get("age"),
+            "urgency": synthesis.urgency,
+            "red_flags": synthesis.red_flag_symptoms,
+        }
+        ai = client.structured(AI_SUMMARY_SYSTEM_PROMPT, json.dumps(facts, ensure_ascii=False), AI_SUMMARY_SCHEMA, "clinical_summary")
+        if not ai or not all(isinstance(ai.get(k), str) and ai[k].strip() for k in AI_SUMMARY_SCHEMA["required"]):
+            return None
+        return ai
+

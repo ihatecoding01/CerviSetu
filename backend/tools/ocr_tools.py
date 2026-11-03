@@ -145,23 +145,7 @@ class ClinicalEntityExtractorTool:
                 follow_up_days = num
 
         # 7. Calculate Baseline Clinical Severity Score (0.0 to 1.0)
-        severity = 0.2
-        if "Stage IV" in detected_stage or "Metastatic" in detected_stage:
-            severity = 0.95
-        elif "Stage III" in detected_stage:
-            severity = 0.85
-        elif "Stage II" in detected_stage:
-            severity = 0.65
-        elif "Stage I" in detected_stage:
-            severity = 0.45
-
-        if biopsy_status == "POSITIVE":
-            severity = max(severity, 0.80)
-        elif biopsy_status == "SUSPICIOUS":
-            severity = max(severity, 0.60)
-
-        if len(symptoms) >= 3:
-            severity = min(1.0, severity + 0.1)
+        severity = cls.compute_severity(detected_stage, biopsy_status, symptoms)
 
         return {
             "cancer_type": detected_cancer,
@@ -174,12 +158,107 @@ class ClinicalEntityExtractorTool:
             "severity_score": round(severity, 2)
         }
 
+    @staticmethod
+    def compute_severity(stage: str, biopsy_status: str, symptoms: List[str]) -> float:
+        """Baseline clinical severity score (0.0 to 1.0) from stage, biopsy and symptom burden."""
+        severity = 0.2
+        if "Stage IV" in stage or "Metastatic" in stage:
+            severity = 0.95
+        elif "Stage III" in stage:
+            severity = 0.85
+        elif "Stage II" in stage:
+            severity = 0.65
+        elif "Stage I" in stage:
+            severity = 0.45
+
+        if biopsy_status == "POSITIVE":
+            severity = max(severity, 0.80)
+        elif biopsy_status == "SUSPICIOUS":
+            severity = max(severity, 0.60)
+
+        if len(symptoms) >= 3:
+            severity = min(1.0, severity + 0.1)
+        return round(severity, 2)
+
+
+class LLMClinicalExtractor:
+    """Sarvam LLM structured extraction over de-identified notes, merged onto the rule-based baseline."""
+
+    SYSTEM_PROMPT = (
+        "You are a clinical documentation assistant for a cervical cancer care network in India. "
+        "Extract only what is explicitly written in the de-identified clinical note. Never guess. "
+        "Use null for anything not stated. Notes may mix English, Hindi and medical shorthand. "
+        "Staging is FIGO (e.g. IB3, IIB, IIIC1, IVA). Biopsy status: POSITIVE only if histopathology "
+        "confirms malignancy; PENDING if advised/sent/awaited; SUSPICIOUS for dysplasia/atypia/CIN; "
+        "NEGATIVE if benign."
+    )
+
+    SCHEMA = {
+        "type": "object",
+        "properties": {
+            "cancer_type": {"type": ["string", "null"], "enum": ["CERVICAL", "BREAST", "ORAL", "LUNG", "COLORECTAL", "OTHER", None]},
+            "figo_stage": {"type": ["string", "null"], "description": "FIGO stage without the word Stage, e.g. IIB"},
+            "biopsy_status": {"type": "string", "enum": ["POSITIVE", "PENDING", "SUSPICIOUS", "NEGATIVE"]},
+            "histology": {"type": ["string", "null"]},
+            "symptoms": {"type": "array", "items": {"type": "string"}},
+            "age": {"type": ["integer", "null"]},
+            "gender": {"type": ["string", "null"], "enum": ["FEMALE", "MALE", None]},
+            "screening_findings": {"type": "array", "items": {"type": "string"}, "description": "e.g. VIA positive, HPV DNA positive"},
+            "treatment_plan": {"type": ["string", "null"], "description": "e.g. CCRT 25# EBRT + weekly cisplatin + 4# HDR brachy"},
+            "follow_up_days": {"type": ["integer", "null"]},
+        },
+        "required": ["cancer_type", "figo_stage", "biopsy_status", "histology", "symptoms", "age",
+                     "gender", "screening_findings", "treatment_plan", "follow_up_days"],
+        "additionalProperties": False,
+    }
+
+    FIGO_PATTERN = re.compile(r'^(IV|III|II|I)([ABC][1-3]?)?$')
+
+    @classmethod
+    def enhance(cls, masked_text: str, rule_entities: Dict[str, Any], llm: Any = None) -> Dict[str, Any]:
+        """Return rule entities upgraded with validated LLM fields; unchanged if the LLM is unavailable."""
+        from backend.core.llm_client import global_llm
+        client = llm or global_llm
+
+        merged = dict(rule_entities)
+        merged["extraction_source"] = "RULES"
+
+        ai = client.structured(cls.SYSTEM_PROMPT, masked_text, cls.SCHEMA, "clinical_entities")
+        if not ai:
+            return merged
+
+        stage = (ai.get("figo_stage") or "").upper().replace("STAGE", "").replace(" ", "")
+        if cls.FIGO_PATTERN.match(stage):
+            merged["suspected_stage"] = f"Stage {stage}"
+        if ai.get("cancer_type") and ai["cancer_type"] != "OTHER":
+            merged["cancer_type"] = ai["cancer_type"]
+        if ai.get("biopsy_status") in ("POSITIVE", "PENDING", "SUSPICIOUS", "NEGATIVE"):
+            merged["biopsy_status"] = ai["biopsy_status"]
+        if ai.get("symptoms"):
+            merged["symptoms"] = [s.strip().lower() for s in ai["symptoms"] if s.strip()]
+        if isinstance(ai.get("age"), int) and 0 < ai["age"] < 120:
+            merged["age"] = ai["age"]
+        if ai.get("gender") in ("FEMALE", "MALE"):
+            merged["gender"] = ai["gender"]
+        if isinstance(ai.get("follow_up_days"), int) and 0 < ai["follow_up_days"] <= 365:
+            merged["follow_up_days"] = ai["follow_up_days"]
+
+        merged["histology"] = ai.get("histology")
+        merged["screening_findings"] = ai.get("screening_findings") or []
+        merged["treatment_plan"] = ai.get("treatment_plan")
+        merged["severity_score"] = ClinicalEntityExtractorTool.compute_severity(
+            merged["suspected_stage"], merged["biopsy_status"], merged["symptoms"]
+        )
+        merged["extraction_source"] = "SARVAM_LLM"
+        return merged
+
 
 class OCRIntakePipeline:
     """Full Intake Pipeline: Ingestion -> PII Redaction -> Tokenization Vault -> Clinical Entity Extraction."""
 
-    def __init__(self, vault: Optional[TokenVault] = None):
+    def __init__(self, vault: Optional[TokenVault] = None, llm: Any = None):
         self.vault = vault or global_vault
+        self.llm = llm
 
     def process_raw_intake(
         self,
@@ -209,6 +288,8 @@ class OCRIntakePipeline:
 
         # 5. Extract Clinical Entities from sanitized text
         entities = ClinicalEntityExtractorTool.extract_entities(masked_text)
+        # 5b. Upgrade with Sarvam LLM extraction (only de-identified text leaves the server)
+        entities = LLMClinicalExtractor.enhance(masked_text, entities, llm=self.llm)
 
         # 6. Record Audit Event
         global_audit.record_event(
@@ -218,7 +299,8 @@ class OCRIntakePipeline:
             details={
                 "cancer_type": entities["cancer_type"],
                 "suspected_stage": entities["suspected_stage"],
-                "severity_score": entities["severity_score"]
+                "severity_score": entities["severity_score"],
+                "extraction_source": entities["extraction_source"]
             }
         )
 

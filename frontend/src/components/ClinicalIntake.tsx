@@ -465,6 +465,42 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
                   </p>
                 </div>
 
+                {/* Sarvam AI Extraction & Draft Messages (clinician must approve) */}
+                {result.diagnostic_synthesis?.ai_generated ? (
+                  <div className="p-4 rounded-xl bg-white border border-[#BA2D0B]/25 flex flex-col gap-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-bold text-[#BA2D0B] uppercase tracking-wider">
+                        Sarvam AI Clinical Summary
+                      </span>
+                      <Badge variant="warning" size="xs">Draft · Needs Clinician Approval</Badge>
+                    </div>
+                    <p className="text-xs text-gray-800 leading-relaxed">
+                      {result.diagnostic_synthesis.ai_clinician_summary}
+                    </p>
+                    {result.clinical_intake?.treatment_plan && (
+                      <p className="text-xs text-gray-600">
+                        <span className="font-semibold text-gray-800">Extracted plan: </span>
+                        {result.clinical_intake.treatment_plan}
+                      </p>
+                    )}
+                    <div className="rounded-lg bg-gray-50 border border-gray-200 p-3">
+                      <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider block mb-1">
+                        Patient Message (Hindi)
+                      </span>
+                      <p className="text-sm text-gray-900 leading-relaxed">
+                        {result.diagnostic_synthesis.patient_message_hindi}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
+                        {result.diagnostic_synthesis.patient_message_english}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-gray-500">
+                    Extracted with rule-based fallback (Sarvam AI unavailable).
+                  </p>
+                )}
+
                 {/* Differential Diagnosis Tags */}
                 {result.diagnostic_synthesis?.differential_diagnosis && (
                   <div>

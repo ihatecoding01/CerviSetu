@@ -112,7 +112,7 @@ export default function App() {
     if (newCase && newCase.patient_token) {
       setCases((prev) => [newCase, ...prev]);
     }
-    navigate({ view: "staff", tab: "overview-tab" });
+    // Stay on the intake screen so the clinician can review the AI output and sign off
   };
 
   // 0. Landing Page View (URL: / or /landing)
