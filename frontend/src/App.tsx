@@ -10,10 +10,13 @@ import { AuditLedger } from "./components/AuditLedger";
 import { CareGateway } from "./components/CareGateway";
 import { PatientCompanion } from "./components/PatientCompanion";
 import { DualScreenDemo } from "./components/DualScreenDemo";
+import { ClinicianEncounter } from "./components/ClinicianEncounter";
+import { LandingPage } from "./components/LandingPage";
 import { useRouter } from "./lib/router";
 
 export default function App() {
   const { currentRoute, navigate } = useRouter();
+  const [selectedPatientToken, setSelectedPatientToken] = useState<string>("PT-RURAL-7891");
   const [cases, setCases] = useState<PatientCase[]>([
     {
       patient_token: "PT-RURAL-7891",
@@ -112,7 +115,19 @@ export default function App() {
     navigate({ view: "staff", tab: "overview-tab" });
   };
 
-  // 1. Initial / Logout Gateway View (URL: / or /gateway)
+  // 0. Landing Page View (URL: / or /landing)
+  if (currentRoute.view === "landing") {
+    return (
+      <LandingPage
+        onLaunchWorkstation={() => navigate({ view: "staff", tab: "overview-tab" })}
+        onOpenPatientCompanion={() => navigate("/patient/PT-RURAL-7891")}
+        onOpenDualView={() => navigate("/demo")}
+        onOpenGateway={() => navigate("/gateway")}
+      />
+    );
+  }
+
+  // 1. Initial / Logout Gateway View (URL: /gateway)
   if (currentRoute.view === "gateway") {
     return (
       <CareGateway
@@ -121,40 +136,74 @@ export default function App() {
           navigate({ view: "patient", token: token || "PT-RURAL-7891" });
         }}
         onOpenDualView={() => navigate("/demo")}
+        onOpenLanding={() => navigate("/landing")}
       />
     );
   }
 
-  // 2. Direct Patient Mobile Companion View (URL: /patient or /patient/:token)
+  // 2. Direct Patient Care Web Portal View (URL: /patient or /patient/:token)
   if (currentRoute.view === "patient") {
     const activeToken = currentRoute.patientToken || "PT-RURAL-7891";
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
-        <div className="mb-4 flex flex-wrap items-center justify-center gap-3">
-          <button
-            onClick={() => navigate("/")}
-            className="text-xs text-slate-400 hover:text-white bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 transition-colors cursor-pointer"
-          >
-            ← CARE Gateway
-          </button>
-          <button
-            onClick={() => navigate({ view: "staff", tab: "overview-tab" })}
-            className="text-xs text-emerald-400 hover:text-emerald-300 bg-emerald-950/60 px-3 py-1.5 rounded-lg border border-emerald-800 transition-colors cursor-pointer"
-          >
-            Switch to Staff Workstation ➔
-          </button>
-          <button
-            onClick={() => navigate("/demo")}
-            className="text-xs text-indigo-400 hover:text-indigo-300 bg-indigo-950/60 px-3 py-1.5 rounded-lg border border-indigo-800 transition-colors cursor-pointer"
-          >
-            Dual View (Tablet | Phone) ➔
-          </button>
-        </div>
+      <div className="min-h-screen bg-[#FAFAFA] flex flex-col font-sans antialiased text-black">
+        {/* Top Web Portal Header */}
+        <header className="bg-white border-b border-slate-200/90 px-6 sm:px-8 py-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sticky top-0 z-30 shadow-2xs">
+          <div className="flex items-center gap-3">
+            {/* Logo in Burnt Terracotta Crimson */}
+            <div className="size-8 rounded-xl bg-[#BA2D0B] text-white flex items-center justify-center font-bold text-sm shadow-xs">
+              CS
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-base text-black tracking-tight">cervisetu</span>
+                <span className="text-xs bg-[#DBFE87] text-black border border-[#c4e872] px-2.5 py-0.5 rounded-full font-bold">
+                  Patient Web Portal
+                </span>
+              </div>
+              <span className="text-xs text-slate-500 block leading-tight">
+                सर्वाइसेतु रोगी एवं परिजन वेब पोर्टल · Rural Oncology Pathway
+              </span>
+            </div>
+          </div>
 
-        <PatientCompanion
-          patientToken={activeToken}
-          onExitToGateway={() => navigate("/")}
-        />
+          <div className="flex items-center flex-wrap gap-2.5">
+            <button
+              onClick={() => navigate("/")}
+              className="text-xs text-slate-600 hover:text-black bg-slate-100 hover:bg-slate-200 px-3.5 py-1.5 rounded-full border border-slate-200 transition-colors cursor-pointer font-medium"
+            >
+              ← Gateway
+            </button>
+            <button
+              onClick={() => {
+                setSelectedPatientToken(activeToken);
+                navigate({ view: "staff", tab: "encounter-tab" });
+              }}
+              className="text-xs text-[#BA2D0B] hover:text-white bg-[#BA2D0B]/10 hover:bg-[#BA2D0B] px-3.5 py-1.5 rounded-full border border-[#BA2D0B]/30 font-semibold transition-colors cursor-pointer"
+            >
+              Clinician Encounter ➔
+            </button>
+            <button
+              onClick={() => navigate({ view: "staff", tab: "overview-tab" })}
+              className="text-xs text-black hover:text-black bg-slate-100 hover:bg-slate-200 px-3.5 py-1.5 rounded-full border border-slate-200 font-semibold transition-colors cursor-pointer"
+            >
+              Staff Workstation ➔
+            </button>
+            <button
+              onClick={() => navigate("/demo")}
+              className="text-xs text-white bg-black hover:bg-black/85 px-4 py-1.5 rounded-full font-semibold transition-colors cursor-pointer"
+            >
+              Dual View Demo ➔
+            </button>
+          </div>
+        </header>
+
+        {/* Responsive Patient Web Page Container */}
+        <main className="flex-1 w-full max-w-5xl mx-auto px-6 sm:px-8 py-8">
+          <PatientCompanion
+            patientToken={activeToken}
+            onExitToGateway={() => navigate("/")}
+          />
+        </main>
       </div>
     );
   }
@@ -185,22 +234,23 @@ export default function App() {
           error={error}
           onRefresh={fetchCases}
           onSelectCase={(token) => {
-            navigate(`/patient/${token}`);
+            setSelectedPatientToken(token);
+            navigate({ view: "staff", tab: "encounter-tab" });
           }}
         />
       )}
 
+      {currentTab === "encounter-tab" && (
+        <ClinicianEncounter
+          patientToken={selectedPatientToken}
+          onBackToDashboard={() => navigate({ view: "staff", tab: "overview-tab" })}
+          onOpenPatientCompanion={(token) => navigate(`/patient/${token}`)}
+        />
+      )}
+
       {currentTab === "patient-tab" && (
-        <div className="flex flex-col items-center justify-center py-2">
-          <div className="mb-4 text-center">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
-              Patient-Side Vernacular Co-Pilot (70% Functional Weight)
-            </span>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Testing active session for Token: <strong className="font-mono text-slate-700">PT-RURAL-7891</strong>
-            </p>
-          </div>
-          <PatientCompanion patientToken="PT-RURAL-7891" />
+        <div className="w-full max-w-6xl mx-auto py-2">
+          <PatientCompanion patientToken={selectedPatientToken || "PT-RURAL-7891"} />
         </div>
       )}
 
@@ -208,6 +258,7 @@ export default function App() {
         <DualScreenDemo
           onBackToStaff={() => navigate({ view: "staff", tab: "overview-tab" })}
           onBackToGateway={() => navigate("/")}
+          isInsideDashboard={true}
         />
       )}
 

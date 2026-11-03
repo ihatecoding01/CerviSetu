@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Tab } from "../components/DashboardLayout";
 
-export type ViewType = "gateway" | "staff" | "patient" | "dual";
+export type ViewType = "landing" | "gateway" | "staff" | "patient" | "dual";
 
 export interface AppRoute {
   view: ViewType;
@@ -16,6 +16,7 @@ export interface AppRoute {
 
 const TAB_PATH_MAP: Record<string, Tab> = {
   overview: "overview-tab",
+  encounter: "encounter-tab",
   intake: "intake-tab",
   image: "image-tab",
   tracker: "tracker-tab",
@@ -28,6 +29,7 @@ const TAB_PATH_MAP: Record<string, Tab> = {
 
 const TAB_TO_SLUG: Record<Tab, string> = {
   "overview-tab": "overview",
+  "encounter-tab": "encounter",
   "intake-tab": "intake",
   "image-tab": "image",
   "tracker-tab": "tracker",
@@ -60,8 +62,18 @@ export function parsePath(pathname: string): AppRoute {
     return { view: "staff", tab: mappedTab, path: `/staff/${TAB_TO_SLUG[mappedTab]}` };
   }
 
-  // 4. Default / Login / CARE Gateway Paths
-  return { view: "gateway", path: "/" };
+  // 4. Dedicated Gateway Path
+  if (cleanPath === "/gateway") {
+    return { view: "gateway", path: "/gateway" };
+  }
+
+  // 5. Landing Page Paths (/ or /landing)
+  if (cleanPath === "/" || cleanPath === "/landing") {
+    return { view: "landing", path: cleanPath };
+  }
+
+  // 6. Default Fallback
+  return { view: "landing", path: "/" };
 }
 
 export function useRouter() {
@@ -86,8 +98,10 @@ export function useRouter() {
     if (typeof target === "string") {
       targetPath = target;
     } else {
-      if (target.view === "gateway") {
+      if (target.view === "landing") {
         targetPath = "/";
+      } else if (target.view === "gateway") {
+        targetPath = "/gateway";
       } else if (target.view === "dual") {
         targetPath = "/demo";
       } else if (target.view === "patient") {

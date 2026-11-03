@@ -6,9 +6,10 @@ interface Props {
   onLoginStaff: () => void;
   onLoginPatient: (token?: string) => void;
   onOpenDualView?: () => void;
+  onOpenLanding?: () => void;
 }
 
-export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onOpenDualView }) => {
+export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onOpenDualView, onOpenLanding }) => {
   const [districtQuery, setDistrictQuery] = useState("Mirzapur");
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
@@ -57,35 +58,36 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-amber-100 via-rose-100 to-indigo-100 flex items-center justify-center p-4 sm:p-6 md:p-8 font-sans antialiased text-[#111418]">
+    <div className="min-h-screen w-full bg-[#FAFAFA] flex items-center justify-center p-6 sm:p-8 md:p-12 font-sans antialiased text-black">
       {/* Main Care Gateway Card */}
-      <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl border border-gray-100/80 p-8 sm:p-12 transition-all">
+      <div className="w-full max-w-4xl bg-white rounded-3xl shadow-xs border border-slate-200/90 p-8 sm:p-12 transition-all relative">
+        {onOpenLanding && (
+          <button
+            onClick={onOpenLanding}
+            className="sm:absolute sm:top-8 sm:left-8 mb-4 sm:mb-0 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-black bg-slate-100 hover:bg-slate-200 px-3.5 py-1.5 rounded-full border border-slate-200 transition-colors cursor-pointer"
+          >
+            ← System Overview
+          </button>
+        )}
+
         {/* Top Branding */}
-        <div className="flex flex-col items-center justify-center mb-8">
+        <div className="flex flex-col items-center justify-center mb-10">
           <div className="flex items-center gap-3">
-            {/* CARE Cross Symbol (5 square dots) */}
-            <div className="grid grid-cols-3 gap-1 size-9 items-center justify-center">
-              <div />
-              <div className="size-2.5 bg-[#2E7D6F] rounded-xs" />
-              <div />
-              <div className="size-2.5 bg-[#2E7D6F] rounded-xs" />
-              <div className="size-2.5 bg-[#2E7D6F] rounded-xs" />
-              <div className="size-2.5 bg-[#2E7D6F] rounded-xs" />
-              <div />
-              <div className="size-2.5 bg-[#2E7D6F] rounded-xs" />
-              <div />
+            {/* Logo in Primary Burnt Terracotta */}
+            <div className="size-10 rounded-2xl bg-[#BA2D0B] text-white flex items-center justify-center font-bold text-base shadow-xs">
+              CS
             </div>
-            <span className="text-4xl font-extrabold tracking-tight text-[#1E293B]">care</span>
+            <span className="text-3xl font-extrabold tracking-tight text-black">cervisetu</span>
           </div>
-          <span className="text-xs font-semibold uppercase tracking-widest text-[#2E7D6F] mt-2">
-            CerviSetu Hub-and-Spoke Oncology Portal
+          <span className="text-xs font-bold uppercase tracking-widest text-[#BA2D0B] bg-[#BA2D0B]/10 border border-[#BA2D0B]/20 px-3 py-1 rounded-full mt-3">
+            District Hub-and-Spoke Oncology Portal
           </span>
         </div>
 
         {/* Section 1: Search for Available Facilities */}
-        <div className="bg-[#F8FAFC] rounded-2xl p-6 border border-slate-200/70 mb-8">
-          <h2 className="text-sm font-semibold text-center text-slate-700 mb-4">
-            Search for available facilities to book an appointment <span className="font-bold text-slate-900">(for new patients)</span>
+        <div className="bg-slate-50/80 rounded-2xl p-6 sm:p-8 border border-slate-200/80 mb-10">
+          <h2 className="text-sm font-semibold text-center text-slate-700 mb-5">
+            Search for available facilities to book an appointment <span className="font-bold text-black">(for new patients)</span>
           </h2>
 
           <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto">
@@ -96,13 +98,13 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
                 value={districtQuery}
                 onChange={(e) => setDistrictQuery(e.target.value)}
                 placeholder="Enter district name to find facilities..."
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-[#2E7D6F] focus:ring-2 focus:ring-[#2E7D6F]/20 text-slate-800 placeholder:text-slate-400 shadow-2xs"
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-black focus:ring-2 focus:ring-black/10 text-slate-800 placeholder:text-slate-400 shadow-2xs"
               />
             </div>
             <button
               type="submit"
               disabled={isSearching}
-              className="px-6 py-2.5 bg-[#2E7D6F] hover:bg-[#25665a] text-white font-medium text-sm rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
+              className="px-6 py-2.5 bg-[#BA2D0B] hover:bg-[#a02609] text-white font-semibold text-sm rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
             >
               {isSearching ? "Searching..." : "Search Facilities"}
             </button>
@@ -110,12 +112,12 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
 
           {/* Results: Hub-and-Spoke Paired Cards */}
           {hasSearched && (
-            <div className="mt-6 pt-5 border-t border-slate-200">
-              <div className="flex items-center justify-between mb-3 px-1">
-                <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+            <div className="mt-8 pt-6 border-t border-slate-200">
+              <div className="flex items-center justify-between mb-4 px-1">
+                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                   Matched Hub-and-Spoke Pathway for "{districtQuery}"
                 </span>
-                <span className="text-[11px] text-[#2E7D6F] font-semibold bg-[#2E7D6F]/10 px-2.5 py-0.5 rounded-full">
+                <span className="text-xs text-black font-bold bg-[#DBFE87] border border-[#c4e872] px-2.5 py-0.5 rounded-full">
                   ABDM & PMJAY Empanelled
                 </span>
               </div>
@@ -124,14 +126,14 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
                 {facilities.map((fac, idx) => (
                   <div
                     key={idx}
-                    className={`rounded-2xl p-4 border transition-all ${
+                    className={`rounded-2xl p-5 border transition-all ${
                       fac.facility_type === "REGIONAL_EBRT_SPOKE"
-                        ? "bg-emerald-50/50 border-emerald-200 hover:border-emerald-300"
-                        : "bg-blue-50/50 border-blue-200 hover:border-blue-300"
+                        ? "bg-[#DBFE87]/15 border-[#DBFE87]/40"
+                        : "bg-[#90C3CB]/15 border-[#90C3CB]/40"
                     }`}
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 shadow-2xs">
+                      <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-800 shadow-2xs">
                         {fac.badge}
                       </span>
                       <span className="text-xs font-mono font-bold text-slate-600 flex items-center gap-1">
@@ -139,21 +141,21 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
                       </span>
                     </div>
 
-                    <h3 className="text-sm font-bold text-slate-900 leading-snug mb-1">{fac.facility_name}</h3>
-                    <p className="text-[11px] text-slate-500 mb-3 font-medium">{fac.role_label}</p>
+                    <h3 className="text-sm font-bold text-black leading-snug mb-1">{fac.facility_name}</h3>
+                    <p className="text-xs text-slate-600 mb-3 font-medium">{fac.role_label}</p>
 
-                    <div className="space-y-1 mb-3">
+                    <div className="space-y-1.5 mb-3">
                       {fac.services.map((srv, sIdx) => (
-                        <div key={sIdx} className="flex items-center gap-1.5 text-[11px] text-slate-700">
-                          <CheckCircle2 className="size-3 text-emerald-600 shrink-0" />
+                        <div key={sIdx} className="flex items-center gap-1.5 text-xs text-slate-700">
+                          <CheckCircle2 className="size-3.5 text-black shrink-0" />
                           <span>{srv}</span>
                         </div>
                       ))}
                     </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 text-[10px] text-slate-500">
-                      <span className="font-semibold text-emerald-700">✓ Free Treatment (PMJAY)</span>
-                      {fac.has_dharamshala && <span className="text-blue-700 font-semibold">🏠 Dharamshala Pass</span>}
+                    <div className="flex items-center justify-between pt-2.5 border-t border-slate-200/80 text-xs text-slate-600">
+                      <span className="font-bold text-black">✓ Free Treatment (PMJAY)</span>
+                      {fac.has_dharamshala && <span className="text-black font-bold">🏠 Dharamshala Pass</span>}
                     </div>
                   </div>
                 ))}
@@ -163,13 +165,13 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
         </div>
 
         {/* Dotted Divider */}
-        <div className="relative my-8">
+        <div className="relative my-10">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t-2 border-dotted border-slate-300" />
+            <div className="w-full border-t border-dashed border-slate-300" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-white px-4 text-slate-500 font-semibold tracking-wider">
-              Already registered? Log in to your account.
+              Already registered? Log in to your account
             </span>
           </div>
         </div>
@@ -177,15 +179,15 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
         {/* Section 2: Two Login Cards (Staff vs Patient) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
           {/* Card 1: Log in as Staff */}
-          <div className="group relative rounded-2xl border border-slate-200 p-6 bg-gradient-to-b from-emerald-50/60 via-white to-white hover:border-emerald-500 hover:shadow-lg transition-all flex flex-col justify-between items-center text-center">
-            <div className="size-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 mb-4 group-hover:scale-105 transition-transform">
+          <div className="group relative rounded-2xl border border-slate-200 p-7 bg-white hover:border-black hover:shadow-sm transition-all flex flex-col justify-between items-center text-center">
+            <div className="size-12 rounded-full bg-slate-100 flex items-center justify-center text-black mb-4 group-hover:scale-105 transition-transform">
               <User className="size-6" />
             </div>
 
-            <div className="mb-6">
+            <div className="mb-6 w-full">
               <button
                 onClick={onLoginStaff}
-                className="w-full py-2.5 px-6 rounded-xl border-2 border-emerald-600 text-emerald-800 hover:bg-emerald-600 hover:text-white font-bold text-sm transition-all shadow-xs cursor-pointer block"
+                className="w-full py-2.5 px-6 rounded-full bg-black text-white hover:bg-black/85 font-semibold text-xs transition-colors shadow-xs cursor-pointer block"
               >
                 Log in as Staff
               </button>
@@ -194,21 +196,21 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
               </p>
             </div>
 
-            <div className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200/60">
-              CareUI Workstation · Dual-Clock Ward Board
+            <div className="text-xs font-semibold text-black bg-[#DBFE87]/40 px-3 py-1 rounded-full border border-[#DBFE87]">
+              CareUI Workstation · Dual-Clock Board
             </div>
           </div>
 
           {/* Card 2: Log in as Patient */}
-          <div className="group relative rounded-2xl border border-slate-200 p-6 bg-gradient-to-b from-blue-50/60 via-white to-white hover:border-blue-500 hover:shadow-lg transition-all flex flex-col justify-between items-center text-center">
-            <div className="size-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 mb-4 group-hover:scale-105 transition-transform">
+          <div className="group relative rounded-2xl border border-slate-200 p-7 bg-white hover:border-[#BA2D0B] hover:shadow-sm transition-all flex flex-col justify-between items-center text-center">
+            <div className="size-12 rounded-full bg-[#BA2D0B]/10 flex items-center justify-center text-[#BA2D0B] mb-4 group-hover:scale-105 transition-transform">
               <Users className="size-6" />
             </div>
 
-            <div className="mb-6">
+            <div className="mb-6 w-full">
               <button
                 onClick={() => setShowPatientLoginModal(true)}
-                className="w-full py-2.5 px-6 rounded-xl border-2 border-[#2E7D6F] text-[#2E7D6F] hover:bg-[#2E7D6F] hover:text-white font-bold text-sm transition-all shadow-xs cursor-pointer block"
+                className="w-full py-2.5 px-6 rounded-full border border-[#BA2D0B] text-[#BA2D0B] hover:bg-[#BA2D0B] hover:text-white font-semibold text-xs transition-colors shadow-xs cursor-pointer block"
               >
                 Log in as Patient
               </button>
@@ -217,7 +219,7 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
               </p>
             </div>
 
-            <div className="text-[10px] font-mono text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-200/60">
+            <div className="text-xs font-semibold text-slate-800 bg-[#90C3CB]/25 px-3 py-1 rounded-full border border-[#90C3CB]/60">
               Vernacular Co-Pilot · Zero Password Friction
             </div>
           </div>
@@ -225,16 +227,16 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
 
         {/* Hackathon Live Demo Shortcut Bar */}
         {onOpenDualView && (
-          <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+          <div className="mt-10 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
             <div className="flex items-center gap-1.5">
-              <Sparkles className="size-3.5 text-amber-500" />
+              <Sparkles className="size-3.5 text-[#F19941]" />
               <span>Hackathon Evaluation Shortcut:</span>
             </div>
             <button
               onClick={onOpenDualView}
-              className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg border border-indigo-200 transition-colors flex items-center gap-1 cursor-pointer"
+              className="text-xs font-semibold text-black bg-slate-100 hover:bg-slate-200 px-4 py-1.5 rounded-full border border-slate-200 transition-colors flex items-center gap-1.5 cursor-pointer"
             >
-              Open Live Demo: Clinic Tablet | Patient's Phone <ArrowRight className="size-3" />
+              Open Live Demo: Clinic Tablet | Patient Web Portal <ArrowRight className="size-3" />
             </button>
           </div>
         )}
@@ -287,29 +289,29 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
                     type="text"
                     value={mobileNumber}
                     onChange={(e) => setMobileNumber(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono text-slate-800 focus:outline-none focus:border-[#2E7D6F]"
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono text-slate-800 focus:outline-none focus:border-black"
                   />
                 </div>
 
                 <div>
                   <div className="flex justify-between items-center mb-1">
                     <label className="text-xs font-semibold text-slate-700">4-Digit Security OTP:</label>
-                    <span className="text-[10px] text-emerald-600 font-mono">Demo Auto-Filled</span>
+                    <span className="text-xs text-black bg-[#DBFE87] px-2 py-0.5 rounded font-mono font-bold">Auto-Filled</span>
                   </div>
                   <input
                     type="text"
                     value={otpCode}
                     onChange={(e) => setOtpCode(e.target.value)}
                     maxLength={4}
-                    className="w-full px-3.5 py-2 text-center bg-slate-50 border border-slate-300 rounded-xl text-sm font-mono tracking-widest text-slate-800 focus:outline-none focus:border-[#2E7D6F]"
+                    className="w-full px-3.5 py-2 text-center bg-slate-50 border border-slate-300 rounded-xl text-sm font-mono tracking-widest text-slate-800 focus:outline-none focus:border-black"
                   />
                 </div>
 
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-[11px] text-emerald-900 flex items-start gap-2">
-                  <ShieldCheck className="size-4 text-emerald-600 shrink-0 mt-0.5" />
+                <div className="bg-[#DBFE87]/20 border border-[#DBFE87] rounded-xl p-3 text-xs text-black flex items-start gap-2">
+                  <ShieldCheck className="size-4 text-black shrink-0 mt-0.5" />
                   <div>
                     <span className="font-bold">DPDP Act 2023 Token Isolation:</span>
-                    <p className="text-[10px] text-emerald-700 mt-0.5">
+                    <p className="text-xs text-slate-700 mt-0.5">
                       Your identity maps strictly to token <strong>PT-RURAL-7891</strong>. No personal name or phone is stored in plaintext.
                     </p>
                   </div>
@@ -320,7 +322,7 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
                     setShowPatientLoginModal(false);
                     onLoginPatient("PT-RURAL-7891");
                   }}
-                  className="w-full py-2.5 bg-[#2E7D6F] hover:bg-[#25665a] text-white font-bold text-sm rounded-xl shadow-md transition-colors cursor-pointer"
+                  className="w-full py-2.5 bg-black hover:bg-black/85 text-white font-semibold text-xs rounded-full shadow-xs transition-colors cursor-pointer"
                 >
                   पोर्टल में प्रवेश करें (Enter Portal)
                 </button>
@@ -328,11 +330,11 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
             ) : (
               <div className="space-y-4 text-center">
                 <div className="size-48 mx-auto bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center p-4">
-                  <QrCode className="size-20 text-[#2E7D6F] mb-2 animate-pulse" />
-                  <span className="text-[11px] font-semibold text-slate-600">
+                  <QrCode className="size-20 text-[#BA2D0B] mb-2" />
+                  <span className="text-xs font-semibold text-slate-600">
                     Point camera at OPD Card QR code
                   </span>
-                  <span className="text-[9px] text-slate-400 mt-1 font-mono">
+                  <span className="text-xs text-slate-400 mt-1 font-mono">
                     https://care.cervisetu.in/p?token=PT-RURAL-7891
                   </span>
                 </div>
@@ -342,7 +344,7 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
                     setShowPatientLoginModal(false);
                     onLoginPatient("PT-RURAL-7891");
                   }}
-                  className="w-full py-2.5 bg-[#2E7D6F] hover:bg-[#25665a] text-white font-bold text-sm rounded-xl shadow-md transition-colors cursor-pointer"
+                  className="w-full py-2.5 bg-black hover:bg-black/85 text-white font-semibold text-xs rounded-full shadow-xs transition-colors cursor-pointer"
                 >
                   Simulate QR Scan (Token PT-RURAL-7891)
                 </button>
