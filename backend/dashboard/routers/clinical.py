@@ -4,7 +4,7 @@ import secrets
 from typing import List, Optional
 from fastapi import APIRouter, File, Form, UploadFile
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from backend.config import UPLOADS_DIR
 from backend.core.database import global_db
@@ -396,3 +396,14 @@ async def encounter_discharge_signoff(patient_token: str, req: EncounterDischarg
         "message": "Discharge sign-off sealed in the SHA-256 audit ledger.",
         "dpdp_compliance": "Audio cache purge requested per DPDP Act 2023 storage limitation"
     }
+
+
+class EscalationCycleRequest(BaseModel):
+    advance_days: int = Field(default=1, ge=1, le=14)
+
+
+@router.post("/escalation/run-cycle")
+async def run_escalation_cycle_now(req: EscalationCycleRequest):
+    """Run the daily escalation cycle on demand; advance_days fast-forwards the clock for demos."""
+    from backend.tools.escalation_scheduler import run_escalation_cycle
+    return run_escalation_cycle(advance_days=req.advance_days)

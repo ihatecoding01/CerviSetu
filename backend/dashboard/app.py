@@ -1,4 +1,7 @@
 """FastAPI Application Factory and Modular Router Assembler for CerviSetu."""
+import asyncio
+import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,6 +17,7 @@ from backend.dashboard.routers import (
     showcase_router,
 )
 from backend.dashboard.routers.clinical import IntakeRequest, SimulationRequest
+from backend.tools.escalation_scheduler import escalation_loop
 from backend.dashboard.routers.logs import (
     UserActivityLogRequest,
     DoctorSignOffRequest,
@@ -28,8 +32,20 @@ from backend.dashboard.routers.patient import (
     HubConfirmSlotRequest,
 )
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Start the daily missed-visit escalation loop (off in the test suite)."""
+    task = None
+    if not os.getenv("CERVISETU_DISABLE_SCHEDULER"):
+        task = asyncio.create_task(escalation_loop())
+    yield
+    if task:
+        task.cancel()
+
+
 # Initialize FastAPI Application
 app = FastAPI(
+    lifespan=lifespan,
     title="CerviSetu - Clinical Diagnostic & Rural Patient Tracking AI",
     description="Privacy-first LangGraph multi-agent clinical diagnostic and rural cancer tracking system",
     version="2.1.0",
