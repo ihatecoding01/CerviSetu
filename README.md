@@ -4,15 +4,16 @@
   <h3>Privacy-First Multi-Agent Clinical AI & Rural Oncology Hub-and-Spoke Network</h3>
   <p><strong>Keeping every cervical cancer patient inside the 56 day curative window, from district spoke to tertiary hub.</strong></p>
 
-  <a href="#running-the-test-suite"><img alt="Tests" src="https://img.shields.io/badge/pytest-passing-brightgreen.svg"></a>
-  <a href="https://langchain-ai.github.io/langgraph/"><img alt="LangGraph" src="https://img.shields.io/badge/LangGraph-v1.2.11-blue.svg"></a>
-  <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/Python-3.14%2B-blue.svg"></a>
-  <a href="https://react.dev/"><img alt="React 19" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white"></a>
-  <a href="https://fastapi.tiangolo.com/"><img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white"></a>
-  <a href="https://www.sarvam.ai/"><img alt="Sarvam AI" src="https://img.shields.io/badge/Sarvam%20AI-bulbul%3Av4--flash-orange.svg"></a>
-  <a href="https://groq.com/"><img alt="Groq LPU" src="https://img.shields.io/badge/Groq%20LPU-llama--3.3--70b-red.svg"></a>
-  <a href="https://abdm.gov.in/"><img alt="ABDM" src="https://img.shields.io/badge/ABDM-ABHA%20sandbox-018C7F.svg"></a>
-  <a href="#security--privacy"><img alt="Security" src="https://img.shields.io/badge/DPDP%20Act%202023-AES--256--GCM-green.svg"></a>
+  <a href="#running-the-test-suite"><img alt="pytest" src="https://img.shields.io/badge/pytest-passing-4C9A2A?style=for-the-badge&labelColor=555555&logo=pytest&logoColor=white"></a>
+  <a href="https://langchain-ai.github.io/langgraph/"><img alt="LangGraph" src="https://img.shields.io/badge/LangGraph-v1.2.11-1C3C3C?style=for-the-badge&labelColor=555555&logo=langchain&logoColor=white"></a>
+  <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/Python-3.14%2B-3776AB?style=for-the-badge&labelColor=555555&logo=python&logoColor=white"></a>
+  <a href="https://react.dev/"><img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&labelColor=555555&logo=react&logoColor=white"></a>
+  <a href="https://fastapi.tiangolo.com/"><img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-0.141-009688?style=for-the-badge&labelColor=555555&logo=fastapi&logoColor=white"></a>
+  <br>
+  <a href="https://www.sarvam.ai/"><img alt="Sarvam AI" src="https://img.shields.io/badge/Sarvam%20AI-bulbul%3Av4--flash-F19941?style=for-the-badge&labelColor=555555"></a>
+  <a href="https://groq.com/"><img alt="Groq LPU" src="https://img.shields.io/badge/Groq%20LPU-llama--3.3--70b-F55036?style=for-the-badge&labelColor=555555"></a>
+  <a href="https://abdm.gov.in/"><img alt="ABDM" src="https://img.shields.io/badge/ABDM-ABHA%20sandbox-018C7F?style=for-the-badge&labelColor=555555"></a>
+  <a href="#security--privacy"><img alt="DPDP Act 2023" src="https://img.shields.io/badge/DPDP%20Act%202023-AES--256--GCM-2E7D32?style=for-the-badge&labelColor=555555"></a>
 </div>
 
 <br>
@@ -211,6 +212,23 @@ flowchart TD
 ---
 
 ## Tech Stack
+
+<div align="center">
+  <a href="https://react.dev/"><img alt="React" src="https://img.shields.io/badge/React-19.3-61DAFB?style=for-the-badge&labelColor=555555&logo=react&logoColor=white"></a>
+  <a href="https://www.typescriptlang.org/"><img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-6.0-3178C6?style=for-the-badge&labelColor=555555&logo=typescript&logoColor=white"></a>
+  <a href="https://vite.dev/"><img alt="Vite" src="https://img.shields.io/badge/Vite-8.3-646CFF?style=for-the-badge&labelColor=555555&logo=vite&logoColor=white"></a>
+  <a href="https://tailwindcss.com/"><img alt="Tailwind CSS" src="https://img.shields.io/badge/Tailwind%20CSS-v4-06B6D4?style=for-the-badge&labelColor=555555&logo=tailwindcss&logoColor=white"></a>
+  <br>
+  <a href="https://fastapi.tiangolo.com/"><img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-0.141-009688?style=for-the-badge&labelColor=555555&logo=fastapi&logoColor=white"></a>
+  <a href="https://docs.pydantic.dev/"><img alt="Pydantic" src="https://img.shields.io/badge/Pydantic-v2-E92063?style=for-the-badge&labelColor=555555&logo=pydantic&logoColor=white"></a>
+  <a href="https://langchain-ai.github.io/langgraph/"><img alt="LangGraph" src="https://img.shields.io/badge/LangGraph-1.2-1C3C3C?style=for-the-badge&labelColor=555555&logo=langchain&logoColor=white"></a>
+  <a href="https://opencv.org/"><img alt="OpenCV" src="https://img.shields.io/badge/OpenCV-5.0-5C3EE8?style=for-the-badge&labelColor=555555&logo=opencv&logoColor=white"></a>
+  <br>
+  <a href="https://sqlite.org/"><img alt="SQLite" src="https://img.shields.io/badge/SQLite-local-003B57?style=for-the-badge&labelColor=555555&logo=sqlite&logoColor=white"></a>
+  <a href="https://supabase.com/"><img alt="Supabase" src="https://img.shields.io/badge/Supabase-optional-3FCF8E?style=for-the-badge&labelColor=555555&logo=supabase&logoColor=white"></a>
+  <a href="https://hl7.org/fhir/"><img alt="FHIR" src="https://img.shields.io/badge/FHIR-R4%20export-E34F26?style=for-the-badge&labelColor=555555"></a>
+  <a href="https://github.com/astral-sh/uv"><img alt="uv" src="https://img.shields.io/badge/uv-python-DE5FE9?style=for-the-badge&labelColor=555555&logo=uv&logoColor=white"></a>
+</div>
 
 | Layer | Technology |
 |---|---|
