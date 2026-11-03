@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Search, User, Users, CheckCircle2, MapPin, ShieldCheck, ArrowRight, Sparkles, QrCode, Phone } from "lucide-react";
 import { api, type Facility } from "../api/client";
+import { AbhaRegistration } from "./AbhaRegistration";
 
 interface Props {
   onLoginStaff: () => void;
@@ -15,7 +16,7 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
   const [hasSearched, setHasSearched] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [showPatientLoginModal, setShowPatientLoginModal] = useState(false);
-  const [authMethod, setAuthMethod] = useState<"OTP" | "QR">("OTP");
+  const [authMethod, setAuthMethod] = useState<"OTP" | "QR" | "ABHA">("ABHA");
   const [mobileNumber, setMobileNumber] = useState("+91 98765 43210");
   const [otpCode, setOtpCode] = useState("7891");
 
@@ -250,7 +251,7 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
       {/* Frictionless Rural Patient Auth Modal */}
       {showPatientLoginModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 relative animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl border border-slate-200 relative animate-in fade-in zoom-in-95 duration-150">
             <div className="flex justify-between items-center mb-4">
               <div>
                 <h3 className="text-base font-bold text-slate-900">मरीज लॉगिन (Patient Login)</h3>
@@ -265,7 +266,15 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
             </div>
 
             {/* Auth Tab Selector */}
-            <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1 rounded-xl mb-5 text-xs font-semibold">
+            <div className="grid grid-cols-3 gap-2 bg-slate-100 p-1 rounded-xl mb-5 text-xs font-semibold">
+              <button
+                onClick={() => setAuthMethod("ABHA")}
+                className={`py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                  authMethod === "ABHA" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                <ShieldCheck className="size-3.5" /> ABHA (ABDM)
+              </button>
               <button
                 onClick={() => setAuthMethod("OTP")}
                 className={`py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
@@ -284,7 +293,14 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
               </button>
             </div>
 
-            {authMethod === "OTP" ? (
+            {authMethod === "ABHA" ? (
+              <AbhaRegistration
+                onVerified={(token) => {
+                  setShowPatientLoginModal(false);
+                  onLoginPatient(token);
+                }}
+              />
+            ) : authMethod === "OTP" ? (
               <div className="space-y-4">
                 <div>
                   <label className="text-xs font-semibold text-slate-700 block mb-1">

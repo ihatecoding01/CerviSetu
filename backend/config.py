@@ -97,6 +97,9 @@ OCR_TIMEOUT_SECONDS = float(os.getenv("CERVISETU_OCR_TIMEOUT_SECONDS", "60"))
 # Document photos: reject only clearly unreadable images (sharpness below this fraction of the blur threshold)
 OCR_BLUR_REJECT_RATIO = float(os.getenv("CERVISETU_OCR_BLUR_REJECT_RATIO", "0.5"))
 
+# ABDM / ABHA registration. Only "sandbox_simulated" exists until NHA gateway credentials are issued.
+ABDM_MODE = os.getenv("CERVISETU_ABDM_MODE", "sandbox_simulated").strip().lower()
+
 # Supabase Production PostgreSQL Database Settings
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", os.getenv("SUPABASE_KEY", ""))
