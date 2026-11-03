@@ -24,6 +24,10 @@ class ResendRequest(BaseModel):
     txn_id: str
 
 
+class MobileLoginRequest(BaseModel):
+    mobile: str
+
+
 class VerifyRequest(BaseModel):
     txn_id: str
     otp: str
@@ -54,3 +58,14 @@ async def resend_otp(req: ResendRequest):
 @router.post("/otp/verify")
 async def verify_otp(req: VerifyRequest):
     return _call(abdm.verify_otp, req.txn_id, req.otp)
+
+
+@router.post("/login/mobile/request")
+async def request_mobile_login(req: MobileLoginRequest):
+    """Demo patient login by mobile OTP (sandbox OTP; not production authentication)."""
+    return _call(abdm.request_mobile_login, req.mobile)
+
+
+@router.get("/profile/{token}")
+async def patient_profile(token: str):
+    return abdm.patient_profile(token)

@@ -23,6 +23,7 @@ import {
   CircleDot,
 } from "lucide-react";
 import { api, type HealingClock, type HubSpokePass, type SoundboardTrack } from "../api/client";
+import type { PatientProfile } from "../api/client";
 
 interface Props {
   patientToken?: string;
@@ -345,10 +346,12 @@ export const PatientCompanion: React.FC<Props> = ({
     type: "success" | "alert" | "info";
   } | null>(null);
   const [showPassModal, setShowPassModal] = useState(false);
+  const [profile, setProfile] = useState<PatientProfile | null>(null);
 
   // Load backend state
   const refreshData = async () => {
     try {
+      api.getPatientProfile(patientToken).then(setProfile).catch(() => setProfile(null));
       const clockRes = await api.getHealingClock(patientToken);
       if (clockRes?.clock) setClock(clockRes.clock);
 
@@ -649,12 +652,31 @@ export const PatientCompanion: React.FC<Props> = ({
                   {patientToken}
                 </span>
                 <span className="text-xs bg-[#DBFE87] text-black border border-[#c6ea6d] px-2.5 py-0.5 rounded-full font-bold">
-                  {t.stageBadge}
+                  {profile?.synthetic_patient && profile.stage ? `Stage ${profile.stage} Cervical` : t.stageBadge}
                 </span>
+                {profile?.synthetic_patient && (
+                  <span className="text-xs bg-[#BA2D0B]/10 text-[#BA2D0B] border border-[#BA2D0B]/30 px-2.5 py-0.5 rounded-full font-bold">
+                    SYNTHETIC DEMO
+                  </span>
+                )}
                 <span className="text-xs bg-[#90C3CB]/20 text-slate-800 border border-[#90C3CB]/50 px-2.5 py-0.5 rounded-full font-semibold">
                   {t.dpdpBadge}
                 </span>
               </div>
+              {profile?.display_name && (
+                <p className="text-sm font-bold text-slate-900 mt-2">
+                  {language === "hi" ? "नमस्ते" : "Namaste"}, {profile.display_name}
+                  {profile.abha_number_masked && (
+                    <span className="ml-2 text-xs font-mono font-semibold text-slate-500">ABHA {profile.abha_number_masked}</span>
+                  )}
+                </p>
+              )}
+              {profile?.synthetic_patient && (
+                <p className="text-xs text-[#BA2D0B] bg-[#BA2D0B]/5 border border-[#BA2D0B]/20 rounded-lg px-2.5 py-1.5 mt-2">
+                  Synthetic demo patient: treatment history, clock and escalations are generated demo data, not real
+                  clinical records. ABHA shown is a {profile.abha_label}.
+                </p>
+              )}
               <div className="text-xs text-slate-600 mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                 <span className="flex items-center gap-1.5">
                   <MapPin className="size-3.5 text-slate-400" />

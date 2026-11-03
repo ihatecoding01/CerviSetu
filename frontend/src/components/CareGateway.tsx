@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Search, User, Users, CheckCircle2, MapPin, ShieldCheck, ArrowRight, Sparkles, QrCode, Phone } from "lucide-react";
 import { api, type Facility } from "../api/client";
 import { AbhaRegistration } from "./AbhaRegistration";
+import { MobileOtpLogin } from "./MobileOtpLogin";
 
 interface Props {
   onLoginStaff: () => void;
@@ -17,8 +18,6 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
   const [isSearching, setIsSearching] = useState(false);
   const [showPatientLoginModal, setShowPatientLoginModal] = useState(false);
   const [authMethod, setAuthMethod] = useState<"OTP" | "QR" | "ABHA">("ABHA");
-  const [mobileNumber, setMobileNumber] = useState("+91 98765 43210");
-  const [otpCode, setOtpCode] = useState("7891");
 
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -281,7 +280,7 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
                   authMethod === "OTP" ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
                 }`}
               >
-                <Phone className="size-3.5" /> Mobile OTP / ABHA
+                <Phone className="size-3.5" /> Mobile OTP
               </button>
               <button
                 onClick={() => setAuthMethod("QR")}
@@ -295,59 +294,20 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginPatient, onO
 
             {authMethod === "ABHA" ? (
               <AbhaRegistration
+                onUseMobileLogin={() => setAuthMethod("OTP")}
                 onVerified={(token) => {
                   setShowPatientLoginModal(false);
                   onLoginPatient(token);
                 }}
               />
             ) : authMethod === "OTP" ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1">
-                    Registered Mobile or ABHA Number:
-                  </label>
-                  <input
-                    type="text"
-                    value={mobileNumber}
-                    onChange={(e) => setMobileNumber(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono text-slate-800 focus:outline-none focus:border-black"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="text-xs font-semibold text-slate-700">4-Digit Security OTP:</label>
-                    <span className="text-xs text-black bg-[#DBFE87] px-2 py-0.5 rounded font-mono font-bold">Auto-Filled</span>
-                  </div>
-                  <input
-                    type="text"
-                    value={otpCode}
-                    onChange={(e) => setOtpCode(e.target.value)}
-                    maxLength={4}
-                    className="w-full px-3.5 py-2 text-center bg-slate-50 border border-slate-300 rounded-xl text-sm font-mono tracking-widest text-slate-800 focus:outline-none focus:border-black"
-                  />
-                </div>
-
-                <div className="bg-[#DBFE87]/20 border border-[#DBFE87] rounded-xl p-3 text-xs text-black flex items-start gap-2">
-                  <ShieldCheck className="size-4 text-black shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold">DPDP Act 2023 Token Isolation:</span>
-                    <p className="text-xs text-slate-700 mt-0.5">
-                      Your identity maps strictly to token <strong>PT-RURAL-7891</strong>. No personal name or phone is stored in plaintext.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setShowPatientLoginModal(false);
-                    onLoginPatient("PT-RURAL-7891");
-                  }}
-                  className="w-full py-2.5 bg-black hover:bg-black/85 text-white font-semibold text-xs rounded-full shadow-xs transition-colors cursor-pointer"
-                >
-                  पोर्टल में प्रवेश करें (Enter Portal)
-                </button>
-              </div>
+              <MobileOtpLogin
+                onVerified={(token) => {
+                  setShowPatientLoginModal(false);
+                  onLoginPatient(token);
+                }}
+                onRegister={() => setAuthMethod("ABHA")}
+              />
             ) : (
               <div className="space-y-4 text-center">
                 <div className="size-48 mx-auto bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center p-4">

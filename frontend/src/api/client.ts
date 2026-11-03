@@ -405,7 +405,23 @@ async function request<T>(
   return res.json();
 }
 
+export interface PatientProfile {
+  patient_token: string;
+  display_name: string | null;
+  abha_number_masked: string | null;
+  abha_address: string | null;
+  abha_label: string | null;
+  stage: string | null;
+  facility_name: string | null;
+  synthetic_patient: boolean;
+  data_label: string | null;
+}
+
 export const api = {
+  async getPatientProfile(token: string): Promise<PatientProfile> {
+    return request<PatientProfile>(`/api/abdm/profile/${token}`);
+  },
+
   async runCase(formData: FormData): Promise<PatientCase> {
     const res = await fetch(`${BASE_URL}/api/run-case`, {
       method: "POST",

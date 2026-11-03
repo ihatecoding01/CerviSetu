@@ -90,6 +90,9 @@ def build_patient_bundle(patient_token: str) -> Dict[str, Any]:
     return {
         "resourceType": "Bundle",
         "type": "collection",
+        **({"meta": {"tag": [{"system": "urn:cervisetu:data-label", "code": "SYNTHETIC_DEMO",
+                              "display": "Synthetic demo patient - not real clinical data"}]}}
+           if global_db.is_synthetic_patient(patient_token) else {}),
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "entry": entries,
     }

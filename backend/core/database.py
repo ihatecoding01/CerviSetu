@@ -8,6 +8,9 @@ from typing import Any, Dict, List, Optional
 from backend.config import DB_PATH
 
 
+# region_code marking generated demo patients; kept out of every real clinical queue
+SYNTHETIC_REGION = "SYNTHETIC_ABDM"
+
 class ClinicalDatabase:
     """Database interface for clinical intake, tracking, image logs, and notifications."""
 
@@ -532,8 +535,9 @@ class ClinicalDatabase:
                 SELECT c.*, p.age, p.gender, p.region_code 
                 FROM clinical_cases c
                 JOIN patients p ON c.patient_token = p.patient_token
+                WHERE COALESCE(p.region_code, '') != ?
                 ORDER BY c.created_at DESC LIMIT ?
-            """, (limit,))
+            """, (SYNTHETIC_REGION, limit))
             rows = cursor.fetchall()
             results = []
             for row in rows:
@@ -1291,12 +1295,21 @@ class ClinicalDatabase:
             """, (patient_token,)).fetchone()
             return dict(row) if row else None
 
-    def list_treatment_plans(self, status: Optional[str] = None) -> List[Dict[str, Any]]:
-        query, params = "SELECT * FROM treatment_plans", ()
+    def list_treatment_plans(self, status: Optional[str] = None, include_synthetic: bool = False) -> List[Dict[str, Any]]:
+        """Plans for the ward board and escalation scheduler; synthetic demo patients are excluded by default."""
+        query = "SELECT t.* FROM treatment_plans t LEFT JOIN patients p ON p.patient_token = t.patient_token WHERE 1 = 1"
+        params: tuple = ()
         if status:
-            query, params = query + " WHERE status = ?", (status,)
+            query, params = query + " AND t.status = ?", params + (status,)
+        if not include_synthetic:
+            query, params = query + " AND COALESCE(p.region_code, '') != ?", params + (SYNTHETIC_REGION,)
         with self._get_conn() as conn:
-            return [dict(r) for r in conn.execute(query + " ORDER BY approved_at DESC", params).fetchall()]
+            return [dict(r) for r in conn.execute(query + " ORDER BY t.approved_at DESC", params).fetchall()]
+
+    def is_synthetic_patient(self, patient_token: str) -> bool:
+        with self._get_conn() as conn:
+            row = conn.execute("SELECT region_code FROM patients WHERE patient_token = ?", (patient_token,)).fetchone()
+        return bool(row) and row["region_code"] == SYNTHETIC_REGION
 
     def set_treatment_plan_status(self, plan_id: str, status: str):
         with self._get_conn() as conn:

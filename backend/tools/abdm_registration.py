@@ -1,10 +1,13 @@
-"""ABDM (ABHA) M1 registration: consent capture + Aadhaar/ABHA OTP verification.
+"""ABDM-style (ABHA) registration and demo patient login: consent capture + sandbox OTP.
 
-Without NHA gateway credentials this runs in SANDBOX_SIMULATED mode: the OTP is generated here and
-returned to the caller (clearly labelled) instead of being sent by UIDAI, and the ABHA number/address
-issued is a fake "@sbx" identity. Everything else is real: consent is mandatory and recorded, the
-OTP is hashed with expiry / resend window / attempt limit, and the Aadhaar/VID is never stored
-(only a keyed hash and the last 4 digits).
+DEMO / SANDBOX ONLY. Without NHA gateway credentials nothing here talks to ABDM or UIDAI:
+- identity verification is SIMULATED: no SMS is sent, the OTP is returned to the caller on screen;
+- the ABHA number/address issued is a "Synthetic ABHA Sandbox ID - not issued by ABDM";
+- the OTP is demo authentication, not secure production authentication (refused when CERVISETU_ENV=production).
+What is real: every consent is mandatory and recorded, OTPs are stored hashed with expiry / resend
+window / attempt lockout, and Aadhaar/VID and mobile numbers are never stored (keyed hash + last 4 only).
+An Aadhaar number is never a login credential: re-registering the same identity is refused and the
+patient is pointed to mobile OTP or ABHA-number login instead.
 
 Demographic and biometric verification need ABDM facility approval (biometrics also needs a
 UIDAI-certified RD device), so they are reported as unavailable rather than faked.
@@ -19,12 +22,18 @@ from typing import Any, Dict, Optional
 
 from backend.config import ABDM_MODE, APP_ENV, VAULT_SECRET_KEY
 from backend.core.database import global_db
+from backend.tools.synthetic_journey import ensure_synthetic_journey
 from backend.core.security import global_audit, global_vault
 
 OTP_TTL_SECONDS = 600
 OTP_RESEND_SECONDS = 60
 OTP_MAX_ATTEMPTS = 5
 OTP_MAX_SENDS = 3
+
+SYNTHETIC_ABHA_LABEL = "Synthetic ABHA Sandbox ID - not issued by ABDM"
+AUTH_NOTICE = "Demo authentication: sandbox OTP shown on screen; not secure production authentication."
+# The seeded demo patient can log in by mobile OTP like any registered patient
+DEMO_MOBILE_LINKS = {"9876543210": "PT-RURAL-7891"}
 
 # The five consents shown on the CARE ABDM form; every one must be explicitly accepted
 CONSENT_ITEMS = {
@@ -92,15 +101,26 @@ def _init_table():
                 pending_json TEXT
             )
         """)
+        # Every identifier is a keyed hash: Aadhaar/VID, synthetic ABHA number and address
         conn.execute("""
-            CREATE TABLE IF NOT EXISTS abha_links (
-                identifier_hash TEXT PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS synthetic_abha_ids (
+                patient_token TEXT PRIMARY KEY,
+                identity_hash TEXT UNIQUE,
+                abha_number_hash TEXT UNIQUE NOT NULL,
+                abha_address_hash TEXT UNIQUE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS patient_mobile_links (
+                mobile_hash TEXT PRIMARY KEY,
                 patient_token TEXT NOT NULL,
-                abha_number TEXT NOT NULL,
-                abha_address TEXT NOT NULL,
                 linked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        for mobile, token in DEMO_MOBILE_LINKS.items():
+            conn.execute("INSERT OR IGNORE INTO patient_mobile_links (mobile_hash, patient_token) VALUES (?, ?)",
+                         (_keyed_hash(mobile), token))
         conn.commit()
 
 
@@ -125,11 +145,46 @@ def _normalise_identifier(mode: str, identifier: str) -> Dict[str, str]:
     raise RegistrationError("INVALID_IDENTIFIER", "Enter a 14-digit ABHA number or an ABHA address (name@sbx).")
 
 
+def _mobile10(mobile: Optional[str]) -> str:
+    return re.sub(r"\D", "", mobile or "")[-10:]
+
+
 def _check_mode():
     if ABDM_MODE != "sandbox_simulated":
         raise RegistrationError("ABDM_GATEWAY_NOT_CONFIGURED", "Live ABDM gateway integration is not configured.", 503)
     if APP_ENV == "production":
-        raise RegistrationError("SIMULATION_DISABLED", "Simulated ABDM OTP is disabled in production.", 503)
+        raise RegistrationError("SIMULATION_DISABLED", "Sandbox OTP is demo authentication and is disabled in production.", 503)
+
+
+def _new_otp_session(mode: str, id_type: str, identifier_hash: str, last4: str, mobile_last4: Optional[str],
+                     link_token: Optional[str], pending: Dict[str, Any]) -> Dict[str, str]:
+    otp = f"{secrets.randbelow(1_000_000):06d}"
+    txn_id = f"ABDM-TXN-{secrets.token_hex(8)}"
+    now = time.time()
+    with global_db._get_conn() as conn:
+        conn.execute("""
+            INSERT INTO abdm_otp_sessions
+            (txn_id, mode, id_type, identifier_hash, identifier_last4, mobile_last4, otp_hash,
+             created_at, last_sent_at, expires_at, link_token, pending_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (txn_id, mode, id_type, identifier_hash, last4, mobile_last4, _keyed_hash(txn_id + otp),
+              now, now, now + OTP_TTL_SECONDS, link_token, json.dumps(pending)))
+        conn.commit()
+    return {"txn_id": txn_id, "otp": otp}
+
+
+def _otp_response(txn_id: str, otp: str, sent_to: str, **extra) -> Dict[str, Any]:
+    return {
+        "txn_id": txn_id,
+        "otp_sent_to": sent_to,
+        "resend_after_seconds": OTP_RESEND_SECONDS,
+        "expires_in_seconds": OTP_TTL_SECONDS,
+        "mode": "SANDBOX_SIMULATED",
+        "identity_verification": "SIMULATED",
+        "auth_notice": AUTH_NOTICE,
+        "sandbox_otp": otp,
+        **extra,
+    }
 
 
 def request_otp(
@@ -151,38 +206,41 @@ def request_otp(
     name = (beneficiary_name or "").strip()
     if not (2 <= len(name) <= 80):
         raise RegistrationError("NAME_REQUIRED", "Beneficiary name is required.")
-    mobile_digits = re.sub(r"\D", "", mobile or "")[-10:]
+    mobile_digits = _mobile10(mobile)
     if mobile and not re.fullmatch(r"[6-9]\d{9}", mobile_digits):
         raise RegistrationError("INVALID_MOBILE", "Enter a valid 10-digit Indian mobile number.")
     _check_mode()
 
     ident = _normalise_identifier(mode, identifier)
-    otp = f"{secrets.randbelow(1_000_000):06d}"
-    txn_id = f"ABDM-TXN-{secrets.token_hex(8)}"
-    now = time.time()
-    # Name/mobile wait here (encrypted) until the OTP is verified; never stored if it isn't
-    global_vault.store_pii(txn_id, {"name": name, "mobile": mobile_digits or None})
-    with global_db._get_conn() as conn:
-        conn.execute("""
-            INSERT INTO abdm_otp_sessions
-            (txn_id, mode, id_type, identifier_hash, identifier_last4, mobile_last4, otp_hash,
-             created_at, last_sent_at, expires_at, link_token, pending_json)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (txn_id, mode, ident["id_type"], _keyed_hash(ident["value"]), ident["value"][-4:],
-              mobile_digits[-4:] or None, _keyed_hash(txn_id + otp), now, now, now + OTP_TTL_SECONDS,
-              link_token, json.dumps({"consents": consents, "requested_by": requested_by})))
-        conn.commit()
-    global_audit.record_event("ABDM_OTP_REQUESTED", requested_by, txn_id,
+    session = _new_otp_session(mode, ident["id_type"], _keyed_hash(ident["value"]), ident["value"][-4:],
+                               mobile_digits[-4:] or None, link_token,
+                               {"consents": consents, "requested_by": requested_by})
+    # Name/mobile wait here (encrypted) until the OTP is verified
+    global_vault.store_pii(session["txn_id"], {"name": name, "mobile": mobile_digits or None})
+    global_audit.record_event("ABDM_OTP_REQUESTED", requested_by, session["txn_id"],
                               {"mode": mode, "id_type": ident["id_type"], "simulated": True})
-    return {
-        "txn_id": txn_id,
-        "id_type": ident["id_type"],
-        "otp_sent_to": f"Aadhaar-linked mobile ******{mobile_digits[-4:]}" if mobile_digits else "Aadhaar-linked mobile",
-        "resend_after_seconds": OTP_RESEND_SECONDS,
-        "expires_in_seconds": OTP_TTL_SECONDS,
-        "mode": "SANDBOX_SIMULATED",
-        "sandbox_otp": otp,
-    }
+    sent_to = f"Aadhaar-linked mobile ******{mobile_digits[-4:]}" if mobile_digits else "Aadhaar-linked mobile"
+    return _otp_response(session["txn_id"], session["otp"], sent_to, id_type=ident["id_type"])
+
+
+def request_mobile_login(mobile: str) -> Dict[str, Any]:
+    """Demo patient login by mobile OTP. Only works for mobiles linked during registration (or the demo patient)."""
+    digits = _mobile10(mobile)
+    if not re.fullmatch(r"[6-9]\d{9}", digits):
+        raise RegistrationError("INVALID_MOBILE", "Enter a valid 10-digit Indian mobile number.")
+    _check_mode()
+    with global_db._get_conn() as conn:
+        row = conn.execute("SELECT patient_token FROM patient_mobile_links WHERE mobile_hash = ?",
+                           (_keyed_hash(digits),)).fetchone()
+    if not row:
+        # Revealing "not registered" is acceptable only because this path exists solely in the sandbox demo
+        # (_check_mode refuses it in production); a real deployment must answer identically either way.
+        raise RegistrationError("MOBILE_NOT_REGISTERED", "This mobile is not registered. Register with ABHA first.", 404)
+    session = _new_otp_session("MOBILE_LOGIN", "MOBILE", _keyed_hash(digits), digits[-4:], digits[-4:],
+                               row["patient_token"], {"requested_by": "PATIENT"})
+    global_audit.record_event("PATIENT_LOGIN_OTP_REQUESTED", "PATIENT", row["patient_token"],
+                              {"txn_id": session["txn_id"], "simulated": True})
+    return _otp_response(session["txn_id"], session["otp"], f"mobile ******{digits[-4:]}")
 
 
 def _session(txn_id: str) -> Dict[str, Any]:
@@ -210,7 +268,8 @@ def resend_otp(txn_id: str) -> Dict[str, Any]:
                         attempts = 0, sends = sends + 1 WHERE txn_id = ?""",
                      (_keyed_hash(txn_id + otp), now, now + OTP_TTL_SECONDS, txn_id))
         conn.commit()
-    return {"txn_id": txn_id, "resend_after_seconds": OTP_RESEND_SECONDS, "mode": "SANDBOX_SIMULATED", "sandbox_otp": otp}
+    return {"txn_id": txn_id, "resend_after_seconds": OTP_RESEND_SECONDS, "mode": "SANDBOX_SIMULATED",
+            "auth_notice": AUTH_NOTICE, "sandbox_otp": otp}
 
 
 def _set_status(txn_id: str, status: str):
@@ -219,7 +278,8 @@ def _set_status(txn_id: str, status: str):
         conn.commit()
 
 
-def verify_otp(txn_id: str, otp: str) -> Dict[str, Any]:
+def _check_otp(txn_id: str, otp: str) -> Dict[str, Any]:
+    """Validate an OTP attempt (expiry, lockout, constant-time compare). Returns the session on success."""
     _check_mode()
     s = _session(txn_id)
     if s["status"] != "PENDING":
@@ -238,40 +298,102 @@ def verify_otp(txn_id: str, otp: str) -> Dict[str, Any]:
         if left <= 0:
             _set_status(txn_id, "LOCKED")
         raise RegistrationError("OTP_INVALID", f"Incorrect OTP. {max(left, 0)} attempt(s) left.", 401)
+    _set_status(txn_id, "VERIFIED")
+    return s
+
+
+def _find_abha(column: str, value_hash: str) -> Optional[Dict[str, Any]]:
+    assert column in ("identity_hash", "abha_number_hash", "abha_address_hash", "patient_token")
+    with global_db._get_conn() as conn:
+        row = conn.execute(f"SELECT * FROM synthetic_abha_ids WHERE {column} = ?", (value_hash,)).fetchone()
+    return dict(row) if row else None
+
+
+def _profile(token: str) -> Dict[str, Any]:
+    try:
+        return global_vault.retrieve_pii(f"{token}::ABHA")
+    except Exception:
+        return {}
+
+
+def _abha_card(token: str, verified_via: str) -> Dict[str, Any]:
+    p = _profile(token)
+    return {
+        "label": SYNTHETIC_ABHA_LABEL,
+        "abha_number": p.get("abha_number"),
+        "abha_address": p.get("abha_address"),
+        "full_name": p.get("name"),
+        "mobile_masked": f"******{p['mobile'][-4:]}" if p.get("mobile") else None,
+        "id_verified_via": verified_via,
+    }
+
+
+def _link_mobile(mobile: Optional[str], token: str):
+    # First patient keeps the mobile: a shared family phone must not hijack another patient's login
+    # (later patients on the same phone log in with their Synthetic ABHA number instead)
+    if mobile:
+        with global_db._get_conn() as conn:
+            conn.execute("INSERT OR IGNORE INTO patient_mobile_links (mobile_hash, patient_token) VALUES (?, ?)",
+                         (_keyed_hash(mobile), token))
+            conn.commit()
+
+
+def verify_otp(txn_id: str, otp: str) -> Dict[str, Any]:
+    s = _check_otp(txn_id, otp)
+    if s["mode"] == "MOBILE_LOGIN":
+        token = s["link_token"]
+        global_audit.record_event("PATIENT_LOGIN_VERIFIED", "PATIENT", token, {"txn_id": txn_id, "simulated": True})
+        abha = _find_abha("patient_token", token)
+        return {"verified": True, "patient_token": token, "abha_created": False, "returning": True,
+                "mode": "SANDBOX_SIMULATED", "auth_notice": AUTH_NOTICE,
+                "synthetic_patient": global_db.is_synthetic_patient(token),
+                "abha_card": _abha_card(token, f"Mobile OTP ending {s['identifier_last4']}") if abha else None}
 
     pii = global_vault.retrieve_pii(txn_id)
     pending = json.loads(s["pending_json"] or "{}")
-    with global_db._get_conn() as conn:
-        existing = conn.execute("SELECT * FROM abha_links WHERE identifier_hash = ?", (s["identifier_hash"],)).fetchone()
+    verified_via = f"{s['id_type']} ending {s['identifier_last4']} (simulated)"
+
+    if s["mode"] == "GENERATE":
+        if _find_abha("identity_hash", s["identifier_hash"]):
+            # Aadhaar is never a login credential: point to mobile OTP / ABHA-number login instead
+            raise RegistrationError("ALREADY_REGISTERED",
+                                    "This identity already has a Synthetic ABHA. Log in with Mobile OTP or Link existing ABHA.", 409)
+        existing = None
+    else:
+        column = "abha_number_hash" if s["id_type"] == "ABHA_NUMBER" else "abha_address_hash"
+        existing = _find_abha(column, s["identifier_hash"])
+        if not existing and not s["link_token"]:
+            raise RegistrationError("ABHA_NOT_FOUND", "No Synthetic ABHA found for this identifier; generate one first.", 404)
 
     if existing:
-        token, abha_number, abha_address = existing["patient_token"], existing["abha_number"], existing["abha_address"]
-        created = False
-    elif s["mode"] == "LINK" and not s["link_token"]:
-        raise RegistrationError("ABHA_NOT_FOUND", "No ABHA found for this identifier in the sandbox; generate one first.", 404)
+        token, created = existing["patient_token"], False
+        _link_mobile(pii.get("mobile"), token)
     else:
         token = s["link_token"] or f"PT-ABHA-{secrets.token_hex(3).upper()}"
         digits = f"91{secrets.randbelow(10**12):012d}"
         abha_number = f"{digits[:2]}-{digits[2:6]}-{digits[6:10]}-{digits[10:]}"
         handle = re.sub(r"[^a-z0-9]", "", pii["name"].lower())[:16] or "beneficiary"
         abha_address = f"{handle}.{secrets.randbelow(10000):04d}@sbx"
-        if not s["link_token"]:
-            global_db.save_patient(token, None, "F", "ABDM")
         with global_db._get_conn() as conn:
-            conn.execute("INSERT INTO abha_links (identifier_hash, patient_token, abha_number, abha_address) VALUES (?, ?, ?, ?)",
-                         (s["identifier_hash"], token, abha_number, abha_address))
+            conn.execute("""INSERT INTO synthetic_abha_ids (patient_token, identity_hash, abha_number_hash, abha_address_hash)
+                            VALUES (?, ?, ?, ?)""",
+                         (token, s["identifier_hash"] if s["mode"] == "GENERATE" else None,
+                          _keyed_hash(digits), _keyed_hash(abha_address)))
             conn.commit()
+        global_vault.store_pii(f"{token}::ABHA", {"name": pii["name"], "mobile": pii.get("mobile"),
+                                                  "abha_number": abha_number, "abha_address": abha_address})
+        _link_mobile(pii.get("mobile"), token)
+        if not s["link_token"]:
+            # New demo patient: deterministic SYNTHETIC journey, isolated from real clinical queues
+            ensure_synthetic_journey(token)
         created = True
 
-    profile = {"name": pii["name"], "mobile": pii.get("mobile"), "abha_number": abha_number, "abha_address": abha_address}
-    global_vault.store_pii(f"{token}::ABHA", profile)
     for key in CONSENT_ITEMS:
         global_db.record_dpdp_consent(
             consent_id=f"{txn_id}-{key}", patient_token=token, consent_type=f"ABDM_{key.upper()}",
             granted_by="PATIENT_VIA_HEALTH_WORKER", language="ENGLISH",
             sha256_hash=hashlib.sha256(f"{txn_id}|{key}|{CONSENT_ITEMS[key]}".encode()).hexdigest(),
         )
-    _set_status(txn_id, "VERIFIED")
     global_audit.record_event("ABDM_ABHA_VERIFIED", pending.get("requested_by", "CARE_ADMIN"), token,
                               {"txn_id": txn_id, "mode": s["mode"], "created": created, "simulated": True,
                                "consents": list(CONSENT_ITEMS)})
@@ -279,12 +401,28 @@ def verify_otp(txn_id: str, otp: str) -> Dict[str, Any]:
         "verified": True,
         "patient_token": token,
         "abha_created": created,
+        "returning": not created,
         "mode": "SANDBOX_SIMULATED",
-        "abha_card": {
-            "abha_number": abha_number,
-            "abha_address": abha_address,
-            "full_name": pii["name"],
-            "mobile_masked": f"******{pii['mobile'][-4:]}" if pii.get("mobile") else None,
-            "id_verified_via": f"{s['id_type']} ending {s['identifier_last4']}",
-        },
+        "auth_notice": AUTH_NOTICE,
+        "synthetic_patient": global_db.is_synthetic_patient(token),
+        "abha_card": _abha_card(token, verified_via),
+    }
+
+
+def patient_profile(token: str) -> Dict[str, Any]:
+    """Portal header data: name + masked synthetic ABHA + synthetic flag. Empty profile for non-ABHA patients."""
+    p = _profile(token)
+    number = p.get("abha_number") or ""
+    case = global_db.get_latest_case(token) or {}
+    plan = global_db.get_treatment_plan(token) or {}
+    return {
+        "stage": case.get("suspected_stage"),
+        "facility_name": plan.get("facility_name"),
+        "patient_token": token,
+        "display_name": p.get("name"),
+        "abha_number_masked": f"XX-XXXX-XXXX-{number[-4:]}" if number else None,
+        "abha_address": p.get("abha_address"),
+        "abha_label": SYNTHETIC_ABHA_LABEL if number else None,
+        "synthetic_patient": global_db.is_synthetic_patient(token),
+        "data_label": "SYNTHETIC_DEMO" if global_db.is_synthetic_patient(token) else None,
     }

@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
-import { ShieldCheck, Fingerprint, UserCheck, KeyRound, CheckCircle2, ArrowLeft } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { ShieldCheck, Fingerprint, UserCheck, KeyRound, CheckCircle2, ArrowLeft, Printer } from "lucide-react";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+import { AbdmError, post, printAbhaCard } from "../api/abdm";
+import { OtpBoxes } from "./OtpBoxes";
 
 const CONSENTS: { key: string; text: string }[] = [
   { key: "share_identity_with_nha", text: "I voluntarily share my Aadhaar / Virtual ID and demographic details with UIDAI and NHA to create my ABHA number and ABHA address." },
@@ -33,37 +34,14 @@ function checkIdentifier(mode: "GENERATE" | "LINK", value: string): [boolean, st
   return [false, `${d.length}/16 digits for Virtual ID`];
 }
 
-// Plain-language messages for server error codes
-const FRIENDLY: Record<string, string> = {
-  OTP_INVALID: "That code didn't match.",
-  OTP_EXPIRED: "This code has expired. Tap Resend OTP to get a new one.",
-  TOO_MANY_ATTEMPTS: "Too many wrong tries. Go back and start again.",
-  TRANSACTION_CLOSED: "This attempt has ended. Go back and start again.",
-  ABHA_NOT_FOUND: "No ABHA found for this number. Try Generate instead, or add the CerviSetu token.",
-};
-
-type Card = { abha_number: string; abha_address: string; full_name: string; mobile_masked: string | null; id_verified_via: string };
-
-async function post<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${BASE_URL}/api/abdm${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const code = data?.detail?.code as string | undefined;
-    const msg = data?.detail?.message || data?.detail || "Something went wrong. Please try again.";
-    throw new Error(code && FRIENDLY[code] ? `${FRIENDLY[code]}${code === "OTP_INVALID" ? " " + msg.replace(/^Incorrect OTP\. /, "") : ""}` : msg);
-  }
-  return data as T;
-}
+type Card = { label: string; abha_number: string; abha_address: string; full_name: string; mobile_masked: string | null; id_verified_via: string };
 
 interface Props {
   onVerified: (patientToken: string) => void;
+  onUseMobileLogin?: () => void;
 }
 
-export const AbhaRegistration: React.FC<Props> = ({ onVerified }) => {
+export const AbhaRegistration: React.FC<Props> = ({ onVerified, onUseMobileLogin }) => {
   const [mode, setMode] = useState<"GENERATE" | "LINK">("GENERATE");
   const [identifier, setIdentifier] = useState("");
   const [mobile, setMobile] = useState("");
@@ -75,15 +53,12 @@ export const AbhaRegistration: React.FC<Props> = ({ onVerified }) => {
   const [sentTo, setSentTo] = useState("");
   const [otp, setOtp] = useState("");
   const [countdown, setCountdown] = useState(0);
-  const [card, setCard] = useState<(Card & { token: string }) | null>(null);
+  const [card, setCard] = useState<(Card & { token: string; returning: boolean }) | null>(null);
   const [error, setError] = useState("");
+  const [errorCode, setErrorCode] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState<"ID" | "CONSENT">("ID");
-  const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-  useEffect(() => {
-    if (txnId && !card) otpRefs.current[0]?.focus();
-  }, [txnId, card]);
+  const [otpFocus, setOtpFocus] = useState(0);
 
   useEffect(() => {
     if (otp.length === 6 && txnId && !busy && !card) verify();
@@ -116,6 +91,7 @@ export const AbhaRegistration: React.FC<Props> = ({ onVerified }) => {
       setSentTo(r.otp_sent_to);
       setCountdown(r.resend_after_seconds);
       setOtp("");
+      setOtpFocus((n) => n + 1);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -140,12 +116,13 @@ export const AbhaRegistration: React.FC<Props> = ({ onVerified }) => {
     setError("");
     setBusy(true);
     try {
-      const r = await post<{ patient_token: string; abha_card: Card }>("/otp/verify", { txn_id: txnId, otp });
-      setCard({ ...r.abha_card, token: r.patient_token });
+      const r = await post<{ patient_token: string; abha_card: Card; returning: boolean }>("/otp/verify", { txn_id: txnId, otp });
+      setCard({ ...r.abha_card, token: r.patient_token, returning: r.returning });
     } catch (e) {
       setError((e as Error).message);
+      setErrorCode((e as AbdmError).code);
       setOtp("");
-      otpRefs.current[0]?.focus();
+      setOtpFocus((n) => n + 1);
     } finally {
       setBusy(false);
     }
@@ -174,7 +151,7 @@ export const AbhaRegistration: React.FC<Props> = ({ onVerified }) => {
     { label: "पहचान", title: "Identify the beneficiary", help: "Enter the Aadhaar / Virtual ID (or existing ABHA) and mobile number." },
     { label: "सहमति", title: "Explain & record consent", help: "Read each item aloud to the beneficiary, then tick it." },
     { label: "OTP", title: "Enter the OTP", help: "Ask the beneficiary for the 6-digit code sent to their Aadhaar-linked mobile." },
-    { label: "ABHA", title: "ABHA ready", help: "Check the details with the beneficiary, then enter the portal." },
+    { label: "ABHA", title: "Synthetic ABHA ready", help: "Demo sandbox ID, not issued by ABDM. Check details with the beneficiary, then enter the portal." },
   ];
   // Completed steps are tappable to go back (not after the ABHA is issued)
   const goTo = (i: number) => {
@@ -221,7 +198,14 @@ export const AbhaRegistration: React.FC<Props> = ({ onVerified }) => {
   const hint = (text: string) => <p className="text-xs text-slate-500 text-center -mt-2">{text}</p>;
 
   const errorLine = error && (
-    <p role="alert" className="text-xs text-[#BA2D0B] bg-[#BA2D0B]/5 border border-[#BA2D0B]/20 rounded-xl px-3 py-2">{error}</p>
+    <div role="alert" className="text-xs text-[#BA2D0B] bg-[#BA2D0B]/5 border border-[#BA2D0B]/20 rounded-xl px-3 py-2">
+      {error}
+      {errorCode === "ALREADY_REGISTERED" && onUseMobileLogin && (
+        <button type="button" onClick={onUseMobileLogin} className="block mt-1 font-semibold underline text-black cursor-pointer">
+          Log in with Mobile OTP →
+        </button>
+      )}
+    </div>
   );
 
   if (card) {
@@ -231,10 +215,11 @@ export const AbhaRegistration: React.FC<Props> = ({ onVerified }) => {
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs space-y-2">
           <div className="flex items-center justify-between">
             <span className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-              <CheckCircle2 className="size-4 text-black" /> ABHA कार्ड (ABHA Card)
+              <CheckCircle2 className="size-4 text-black" /> {card.returning ? "Welcome back" : "ABHA कार्ड (ABHA Card)"}
             </span>
-            <span className="text-xs text-black bg-[#DBFE87] px-2 py-0.5 rounded font-bold">Verified</span>
+            <span className="text-xs text-black bg-[#DBFE87] px-2 py-0.5 rounded font-bold">Sandbox</span>
           </div>
+          <p className="text-[11px] font-semibold text-[#BA2D0B]">{card.label}</p>
           {[
             ["ABHA Number", card.abha_number],
             ["ABHA Address", card.abha_address],
@@ -251,6 +236,23 @@ export const AbhaRegistration: React.FC<Props> = ({ onVerified }) => {
             ))}
         </div>
         {note("DPDP Act 2023 Token Isolation:", <>Your record maps to token <strong>{card.token}</strong>. Name and mobile are stored only in the encrypted vault.</>)}
+        <button
+          onClick={() =>
+            printAbhaCard(
+              [
+                ["ABHA Number", card.abha_number],
+                ["ABHA Address", card.abha_address],
+                ["Full Name", card.full_name],
+                ["Mobile", card.mobile_masked],
+                ["Verified via", card.id_verified_via],
+              ],
+              card.label,
+            )
+          }
+          className="w-full py-2.5 border border-slate-300 hover:border-black text-slate-800 font-semibold text-xs rounded-full flex items-center justify-center gap-1.5 cursor-pointer"
+        >
+          <Printer className="size-3.5" /> Print / Save Demo ABHA Card
+        </button>
         <button onClick={() => onVerified(card.token)} className={primary}>
           पोर्टल में प्रवेश करें (Enter Portal)
         </button>
@@ -259,18 +261,6 @@ export const AbhaRegistration: React.FC<Props> = ({ onVerified }) => {
   }
 
   if (txnId) {
-    const digits = otp.padEnd(6, " ").split("").slice(0, 6);
-    const setDigit = (i: number, v: string) => {
-      const d = v.replace(/\D/g, "");
-      if (d.length > 1) {
-        setOtp(d.slice(0, 6));
-        otpRefs.current[Math.min(d.length, 6) - 1]?.focus();
-        return;
-      }
-      const next = digits.map((c, j) => (j === i ? d || " " : c)).join("").trimEnd();
-      setOtp(next.replace(/ /g, ""));
-      if (d && i < 5) otpRefs.current[i + 1]?.focus();
-    };
     return (
       <div className="space-y-4">
         {progress}
@@ -279,24 +269,7 @@ export const AbhaRegistration: React.FC<Props> = ({ onVerified }) => {
             <label className="text-xs font-semibold text-slate-700">6-Digit OTP:</label>
             <span className="text-xs font-mono text-slate-500">{sentTo}</span>
           </div>
-          <div className="grid grid-cols-6 gap-2">
-            {digits.map((c, i) => (
-              <input
-                key={i}
-                ref={(el) => {
-                  otpRefs.current[i] = el;
-                }}
-                value={c.trim()}
-                inputMode="numeric"
-                maxLength={6}
-                onChange={(e) => setDigit(i, e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Backspace" && !c.trim() && i > 0) otpRefs.current[i - 1]?.focus();
-                }}
-                className="h-11 text-center bg-slate-50 border border-slate-300 rounded-xl text-sm font-mono text-slate-800 focus:outline-none focus:border-black"
-              />
-            ))}
-          </div>
+          <OtpBoxes value={otp} onChange={setOtp} focusKey={`${txnId}-${otpFocus}`} />
           <div className="flex justify-between items-center text-xs mt-2">
             <button onClick={() => goTo(1)} className="text-slate-500 hover:text-black flex items-center gap-1 cursor-pointer">
               <ArrowLeft className="size-3" /> Change details
@@ -431,7 +404,7 @@ export const AbhaRegistration: React.FC<Props> = ({ onVerified }) => {
           <input value={linkToken} onChange={(e) => setLinkToken(e.target.value)} placeholder="PT-RURAL-7891" className={`${input} font-mono`} />
         </div>
       )}
-      {note("Aadhaar is never stored:", "Only the last 4 digits and a keyed hash are kept. Name and mobile go to the encrypted vault after OTP.")}
+      {note("Simulated verification:", "This sandbox does not contact UIDAI or ABDM. Use test numbers only; Aadhaar is never stored (keyed hash + last 4 digits).")}
       <button disabled={!idReady} onClick={() => setStep("CONSENT")} className={primary}>
         आगे बढ़ें (Continue to Consent)
       </button>
