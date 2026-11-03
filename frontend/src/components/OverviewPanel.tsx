@@ -1,5 +1,6 @@
-import { useState } from "react";
-import type { PatientCase } from "../api/client";
+import { useState, useEffect } from "react";
+import type { PatientCase, LinacDowntimeStatus } from "../api/client";
+import { api } from "../api/client";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./careui/card";
 import { Badge } from "./careui/badge";
 import { Button } from "./careui/button";
@@ -10,15 +11,12 @@ import {
   AlertTriangle,
   Users,
   Clock,
-  Activity,
   ArrowUpRight,
-  ArrowDownRight,
-  Check,
-  ChevronRight,
   Calendar,
-  AlertOctagon,
-  PhoneCall,
   Stethoscope,
+  PowerOff,
+  ShieldCheck,
+  Flame,
 } from "lucide-react";
 
 interface Props {
@@ -60,23 +58,134 @@ function DotMatrix({
 
 function getTierBadge(tier: string | null | undefined) {
   if (!tier) return <Badge variant="neutral" size="xs">Routine Watch</Badge>;
-  if (tier.includes("4")) return <Badge variant="destructive" size="xs">Tier 4 · Authority</Badge>;
-  if (tier.includes("3")) return <Badge variant="warning" size="xs">Tier 3 · ASHA</Badge>;
-  if (tier.includes("2")) return <Badge variant="warning" size="xs">Tier 2 · IVR</Badge>;
-  return <Badge variant="primary" size="xs">Tier 1 · SMS</Badge>;
+  if (tier.includes("4")) return <Badge variant="destructive" size="xs">Tier 4 · CMO Escort</Badge>;
+  if (tier.includes("3")) return <Badge variant="warning" size="xs">Tier 3 · ASHA Visit</Badge>;
+  if (tier.includes("2")) return <Badge variant="warning" size="xs">Tier 2 · IVR Dial</Badge>;
+  return <Badge variant="primary" size="xs">Tier 1 · SMS Nudge</Badge>;
 }
 
-export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }: Props) {
-  const [recommendationApplied, setRecommendationApplied] = useState(false);
-  const [resolvedAlerts, setResolvedAlerts] = useState<Record<string, boolean>>({});
+export function OverviewPanel({ loading, error, onRefresh, onSelectCase }: Props) {
+  const [activeLaneFilter, setActiveLaneFilter] = useState<"all" | "optimal" | "warning" | "critical">("all");
+  const [downtime, setDowntime] = useState<LinacDowntimeStatus | null>(null);
+  const [togglingDowntime, setTogglingDowntime] = useState(false);
 
-  const total = cases.length || 1284;
-  const critical = cases.filter((c) => (c.cancer_severity_score || 0) >= 0.8).length || 38;
-  const overdue = cases.filter((c) => (c.days_overdue || 0) > 0).length || 42;
+  useEffect(() => {
+    loadDowntime();
+  }, []);
 
-  const toggleResolve = (id: string) => {
-    setResolvedAlerts((prev) => ({ ...prev, [id]: !prev[id] }));
+  const loadDowntime = async () => {
+    try {
+      const res = await api.getLinacDowntimeStatus("Mirzapur Spoke Clinic");
+      setDowntime(res);
+    } catch {
+      // Offline fallback
+    }
   };
+
+  const handleToggleDowntime = async () => {
+    setTogglingDowntime(true);
+    try {
+      await api.toggleLinacDowntime({
+        facility_name: "Mirzapur Spoke Clinic",
+        machine_id: "LINAC-SPOKE-01",
+        reason: downtime?.is_downtime_active ? undefined : "Beam Steering Calibration / Scheduled Servicing",
+      });
+      await loadDowntime();
+    } catch {
+      // Ignored
+    } finally {
+      setTogglingDowntime(false);
+    }
+  };
+
+  // Enriched clinical cohort registry with unmasked local identity and 3-lane status
+  const patientRoster = [
+    {
+      token: "PT-RURAL-7891",
+      name: "Shanti Devi",
+      age: "48Y, Female",
+      village: "Kalyanpur, Mirzapur",
+      stage: "Stage IIB Cervix (CCRT)",
+      lane: "optimal",
+      ottDays: 44,
+      ottBadge: "🟢 Proj: Day 44 (<=49d)",
+      ottSub: "GEC-ESTRO Optimal On-Track",
+      adhStatus: "🟢 Attending Daily",
+      adhDetail: "Fraction 14 Done · Step 15 Due Today",
+      tier: null,
+      severity: 0.76,
+      avatarColor: "bg-[#DBFE87] text-black border-[#c4e872]",
+    },
+    {
+      token: "PT-RURAL-4421",
+      name: "Sunita Maurya",
+      age: "45Y, Female",
+      village: "Vindhyachal Sector 2",
+      stage: "Stage IIIA Cervix (CCRT)",
+      lane: "warning",
+      ottDays: 52,
+      ottBadge: "🟡 Proj: Day 52 (<=56d)",
+      ottSub: "NCG Warning Margin · Pre-Brachy Due",
+      adhStatus: "🟡 Missed Day +1",
+      adhDetail: "Tier 1 SMS/WhatsApp Sent · Cycle 3 Labs Pending",
+      tier: "TIER_1_SMS",
+      severity: 0.82,
+      avatarColor: "bg-[#F19941]/30 text-[#BA2D0B] border-[#F19941]",
+    },
+    {
+      token: "PT-RURAL-1102",
+      name: "Manju Verma",
+      age: "50Y, Female",
+      village: "Robertsganj Rural",
+      stage: "Stage IIIB Cervix (CCRT)",
+      lane: "critical",
+      ottDays: 59,
+      ottBadge: "🔴 Proj: Day 59 (>56d)",
+      ottSub: "HARD CLOCK BREACH · ~1%/d Pelvic Loss",
+      adhStatus: "🔴 Overdue Day +3 (Missed 2 Fractions)",
+      adhDetail: "Tier 3 ASHA Ticket Dispatched · Home Visit Active",
+      tier: "TIER_3_ASHA",
+      severity: 0.94,
+      avatarColor: "bg-[#BA2D0B]/20 text-[#BA2D0B] border-[#BA2D0B]",
+    },
+    {
+      token: "PT-RURAL-9034",
+      name: "Anjali Patel",
+      age: "42Y, Female",
+      village: "Chunar Block B",
+      stage: "Stage IIB Cervix (New CCRT)",
+      lane: "optimal",
+      ottDays: 45,
+      ottBadge: "🟢 Proj: Day 45 (<=49d)",
+      ottSub: "GEC-ESTRO Optimal On-Track",
+      adhStatus: "🟢 Day 1 Baseline Verified",
+      adhDetail: "CBC/RFT Verified · Fraction 1 Scheduled",
+      tier: null,
+      severity: 0.68,
+      avatarColor: "bg-[#90C3CB]/40 text-black border-[#90C3CB]",
+    },
+    {
+      token: "PT-PREC-202",
+      name: "Rekha Devi",
+      age: "36Y, Female",
+      village: "Pipra, Mirzapur",
+      stage: "Precancer CIN-2 (VIA+)",
+      lane: "optimal",
+      ottDays: 0,
+      ottBadge: "🟢 Precancer Surveillance",
+      ottSub: "Thermal Ablation Complete · 6m Recall",
+      adhStatus: "🟢 Margin Clear",
+      adhDetail: "Follow-up due March 2027",
+      tier: null,
+      severity: 0.35,
+      avatarColor: "bg-[#DBFE87] text-black border-[#c4e872]",
+    },
+  ];
+
+  const filteredRoster = patientRoster.filter((p) => {
+    if (activeLaneFilter === "all") return true;
+    return p.lane === activeLaneFilter;
+  });
 
   return (
     <div className="flex flex-col gap-6 w-full">
@@ -84,11 +193,11 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-[#111418]">
-            Welcome, Dr. Morgan
+            Clinical Workstation &middot; Dr. Sharma (MD, Radiation Oncology)
           </h1>
           <p className="text-xs text-gray-500 mt-1 flex items-center gap-2">
             <Calendar className="size-3.5 text-gray-400" />
-            <span>Thursday, August 13, 2026 · Mirzapur District Screening Cluster</span>
+            <span>Mirzapur District Oncology Spoke &middot; Affiliated with RCC Varanasi Hub (~75 km)</span>
           </p>
         </div>
 
@@ -103,8 +212,52 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
             <RefreshCw className={`size-3.5 mr-1.5 ${loading ? "animate-spin" : ""}`} />
             Sync Registry
           </Button>
+
+          <Button
+            variant={downtime?.is_downtime_active ? "destructive" : "outline"}
+            size="sm"
+            onClick={handleToggleDowntime}
+            disabled={togglingDowntime}
+            className="text-xs font-medium gap-1.5"
+          >
+            <PowerOff className="size-3.5" />
+            {downtime?.is_downtime_active ? "Resume LINAC-01" : "Report LINAC Downtime"}
+          </Button>
         </div>
       </div>
+
+      {/* LINAC Maintenance Downtime Banner */}
+      {downtime?.is_downtime_active && (
+        <div className="p-4 rounded-xl bg-amber-50 border-2 border-amber-400 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="size-9 rounded-lg bg-amber-500 text-white flex items-center justify-center shrink-0">
+              <PowerOff className="size-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-900 bg-amber-200/80 px-2 py-0.5 rounded">
+                  Spoke Machine Alert
+                </span>
+                <span className="text-sm font-bold text-amber-950">
+                  Mirzapur Spoke LINAC-01 Under Scheduled Maintenance / Calibration
+                </span>
+              </div>
+              <p className="text-xs text-amber-900 mt-1">
+                Biological Healing Clocks Paused Spoke-Wide &middot; Acute Overdue Timers Suspended to Prevent False ASHA/IVR Dispatches. Reason: {downtime.reason || "Scheduled Calibration"}.
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleToggleDowntime}
+            disabled={togglingDowntime}
+            className="shrink-0 bg-white border-amber-400 text-amber-900 hover:bg-amber-100 text-xs font-bold"
+          >
+            Clear Downtime &amp; Resume Clock
+          </Button>
+        </div>
+      )}
 
       {/* Error Alert */}
       {error && (
@@ -115,7 +268,7 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
         </Alert>
       )}
 
-      {/* 4 KPI Metric Cards with 12x5 Dot-Matrix Sparklines (from components2.png) */}
+      {/* 4 KPI Metric Cards with 12x5 Dot-Matrix Sparklines */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Total Patients */}
         <Card size="sm" className="bg-white border-gray-200 shadow-2xs">
@@ -126,13 +279,13 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
                   <Users className="size-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-gray-600">Total Patients</div>
+                  <div className="text-xs font-semibold text-gray-600">Curative Cohort</div>
                   <div className="text-[11px] font-medium text-emerald-600 flex items-center gap-0.5">
-                    <ArrowUpRight className="size-3" /> 8.4% vs last week
+                    <ArrowUpRight className="size-3" /> 100% on GEC-ESTRO
                   </div>
                 </div>
               </div>
-              <div className="text-2xl font-bold text-[#111418] tracking-tight">{total.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-[#111418] tracking-tight">{patientRoster.length} Cases</div>
             </div>
           </CardHeader>
           <CardContent className="pt-2">
@@ -143,31 +296,33 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
           </CardContent>
         </Card>
 
-        {/* Card 2: Screening Adherence */}
+        {/* Card 2: Optimal Lane */}
         <Card size="sm" className="bg-white border-gray-200 shadow-2xs">
           <CardHeader className="pb-1">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <div className="size-8 rounded-lg bg-[#BA2D0B]/10 border border-[#BA2D0B]/20 flex items-center justify-center text-[#BA2D0B]">
-                  <Activity className="size-4" />
+                <div className="size-8 rounded-lg bg-[#DBFE87]/50 border border-[#DBFE87] flex items-center justify-center text-black">
+                  <ShieldCheck className="size-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-gray-600">Screening Adherence</div>
-                  <div className="text-xs font-medium text-gray-500">42 in active triage</div>
+                  <div className="text-xs font-semibold text-gray-600">Optimal Lane (&le;49d)</div>
+                  <div className="text-xs font-medium text-emerald-700">GEC-ESTRO Target</div>
                 </div>
               </div>
-              <div className="text-2xl font-bold text-black tracking-tight">87%</div>
+              <div className="text-2xl font-bold text-black tracking-tight">
+                {patientRoster.filter(p => p.lane === "optimal").length}
+              </div>
             </div>
           </CardHeader>
           <CardContent className="pt-2">
             <DotMatrix
               pattern={[2, 1, 2, 3, 2, 4, 3, 2, 3, 4, 3, 2]}
-              colorClass="bg-[#BA2D0B]"
+              colorClass="bg-emerald-500"
             />
           </CardContent>
         </Card>
 
-        {/* Card 3: Avg Diagnostic Turnaround */}
+        {/* Card 3: Warning Lane */}
         <Card size="sm" className="bg-white border-gray-200 shadow-2xs">
           <CardHeader className="pb-1">
             <div className="flex items-start justify-between">
@@ -176,13 +331,13 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
                   <Clock className="size-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-gray-600">Avg. Turnaround</div>
-                  <div className="text-xs font-medium text-slate-700 flex items-center gap-0.5">
-                    <ArrowDownRight className="size-3 text-[#BA2D0B]" /> 12% vs target
-                  </div>
+                  <div className="text-xs font-semibold text-gray-600">Warning Lane (50-56d)</div>
+                  <div className="text-xs font-medium text-amber-700">ABS Upper Margin</div>
                 </div>
               </div>
-              <div className="text-2xl font-bold text-black tracking-tight">24 min</div>
+              <div className="text-2xl font-bold text-black tracking-tight">
+                {patientRoster.filter(p => p.lane === "warning").length}
+              </div>
             </div>
           </CardHeader>
           <CardContent className="pt-2">
@@ -193,390 +348,188 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
           </CardContent>
         </Card>
 
-        {/* Card 4: High-Risk Overdue */}
+        {/* Card 4: Breach Risk Lane */}
         <Card size="sm" className="bg-white border-gray-200 shadow-2xs">
           <CardHeader className="pb-1">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <div className="size-8 rounded-lg bg-[#90C3CB]/20 border border-[#90C3CB]/40 flex items-center justify-center text-slate-800">
-                  <AlertTriangle className="size-4 text-[#BA2D0B]" />
+                <div className="size-8 rounded-lg bg-[#BA2D0B]/10 border border-[#BA2D0B]/30 flex items-center justify-center text-[#BA2D0B]">
+                  <Flame className="size-4 text-[#BA2D0B]" />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-gray-600">Urgent Follow-Up</div>
-                  <div className="text-xs font-medium text-slate-700 flex items-center gap-0.5">
-                    <ArrowUpRight className="size-3 text-[#BA2D0B]" /> {overdue} cases pending
-                  </div>
+                  <div className="text-xs font-semibold text-gray-600">Breach Risk (&gt;56d)</div>
+                  <div className="text-xs font-medium text-[#BA2D0B]">ASHA Escalated</div>
                 </div>
               </div>
-              <div className="text-2xl font-bold text-black tracking-tight">{critical}</div>
+              <div className="text-2xl font-bold text-[#BA2D0B] tracking-tight">
+                {patientRoster.filter(p => p.lane === "critical").length}
+              </div>
             </div>
           </CardHeader>
           <CardContent className="pt-2">
             <DotMatrix
               pattern={[1, 2, 2, 3, 4, 3, 2, 4, 5, 4, 3, 2]}
-              colorClass="bg-[#90C3CB]"
+              colorClass="bg-[#BA2D0B]"
             />
           </CardContent>
         </Card>
       </div>
 
-      {/* CerviSetu AI Clinical Engine Banner */}
-      <Card className="bg-white border-gray-200 shadow-xs overflow-hidden">
-        <CardContent className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          {/* Engine Title and Metrics */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-6">
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                Multi-Agent Framework
-              </div>
-              <div className="text-lg font-bold text-black tracking-tight mt-0.5">
-                CerviSetu Diagnostic &amp; Tracking Engine
-              </div>
-            </div>
-
-            {/* Striped Benchmark 1 */}
-            <div className="flex items-center gap-3 pl-0 sm:pl-4 sm:border-l border-gray-200">
-              <div className="striped-glyph text-gray-900">
-                <span></span><span></span><span></span><span></span><span></span>
-              </div>
-              <div>
-                <div className="text-xl font-bold text-black leading-none">87%</div>
-                <div className="text-xs text-gray-500 mt-0.5">Triage Precision · 42 Checked</div>
-              </div>
-            </div>
-
-            {/* Striped Benchmark 2 */}
-            <div className="flex items-center gap-3 pl-0 sm:pl-4 sm:border-l border-gray-200">
-              <div className="striped-glyph text-gray-900">
-                <span></span><span></span><span></span><span></span><span></span>
-              </div>
-              <div>
-                <div className="text-xl font-bold text-black leading-none">24m</div>
-                <div className="text-xs text-gray-500 mt-0.5">Avg Turnaround Time</div>
-              </div>
-            </div>
-          </div>
-
-          {/* AI Recommendation Pill + Action */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3">
-            <div className="flex items-center gap-2.5">
-              <div className="size-7 rounded-lg bg-[#BA2D0B] text-white flex items-center justify-center shrink-0">
-                <Activity className="size-4" />
-              </div>
-              <div className="text-xs text-gray-800">
-                <span className="font-semibold text-black">AI Clinical Insight: </span>
-                {recommendationApplied
-                  ? "Directive issued: Dispatch order assigned to Sector 4 ASHA lead."
-                  : "PT-RURAL-7891 is 8 days overdue. Tier 4 District Authority dossier prepared."}
-              </div>
-            </div>
-
-            <Button
-              size="xs"
-              variant={recommendationApplied ? "outline" : "obsidian"}
-              onClick={() => setRecommendationApplied(!recommendationApplied)}
-              className="shrink-0 text-xs gap-1 font-medium"
-            >
-              {recommendationApplied ? (
-                <>
-                  <Check className="size-3" /> Dispatched
-                </>
-              ) : (
-                "Apply Directive"
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Split Grid: Coverage Progress + Critical Alerts (from homepage.png & components3.png) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column: Oncology Screening & Staging Coverage */}
-        <Card className="bg-white border-gray-200 shadow-2xs">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-base font-bold text-[#111418]">Screening Coverage by Department</CardTitle>
-              <CardDescription className="text-xs text-gray-500">Active screening clinics vs sector targets</CardDescription>
-            </div>
-            <div className="text-right">
-              <span className="text-lg font-bold text-[#111418]">94%</span>
-              <span className="text-[11px] text-emerald-600 block font-medium">▲ 8.4% vs last cycle</span>
-            </div>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3.5 pt-1">
-            {[
-              { dept: "Cervical Colposcopy Unit", val: 88 },
-              { dept: "Oral Biopsy Screening", val: 96 },
-              { dept: "Histopathology Staging", val: 87 },
-              { dept: "Rural Mobile ASHA Camps", val: 98 },
-              { dept: "Primary Triage Clinic", val: 82 },
-            ].map((item) => (
-              <div key={item.dept} className="flex flex-col gap-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-gray-700">{item.dept}</span>
-                  <span className="font-semibold text-gray-900">{item.val}%</span>
-                </div>
-                <div className="w-full h-2.5 rounded-full bg-gray-100 overflow-hidden flex">
-                  <div
-                    className="h-full bg-[#BA2D0B] rounded-full transition-all"
-                    style={{ width: `${item.val}%` }}
-                  />
-                  <div
-                    className="h-full bg-hatch flex-1"
-                  />
-                </div>
-              </div>
-            ))}
-
-            {/* Capacity Multi-Segment Bar */}
-            <div className="pt-3 border-t border-gray-100 flex flex-col gap-2">
-              <div className="flex items-center justify-between text-xs font-semibold text-gray-700">
-                <span>Rural Tracking Quota</span>
-                <span>520 Cases Targeted</span>
-              </div>
-              <div className="w-full h-3 rounded-lg overflow-hidden flex bg-gray-100">
-                <div style={{ width: "57%" }} className="bg-black text-xs text-white flex items-center justify-center font-bold">57%</div>
-                <div style={{ width: "18%" }} className="bg-[#BA2D0B] text-xs text-white flex items-center justify-center font-bold">18%</div>
-                <div style={{ width: "15%" }} className="bg-[#90C3CB] text-xs text-black flex items-center justify-center font-bold">15%</div>
-                <div style={{ width: "10%" }} className="bg-hatch" />
-              </div>
-              <div className="flex items-center gap-4 text-xs text-gray-500 pt-1">
-                <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-black"></span> Active Checkups</span>
-                <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#BA2D0B]"></span> Overdue Alerts</span>
-                <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#90C3CB]"></span> ASHA Dispatched</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Right Column: Critical Follow-up Alerts */}
-        <Card className="bg-white border-gray-200 shadow-2xs">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-base font-bold text-black">Critical Escalation Alerts</CardTitle>
-              <CardDescription className="text-xs text-gray-500">Tier-gated patient non-responder triggers</CardDescription>
-            </div>
-            <button
-              onClick={() => onSelectCase && onSelectCase("PT-RURAL-7891")}
-              className="text-xs font-medium text-[#BA2D0B] hover:underline flex items-center gap-0.5 cursor-pointer"
-            >
-              View Matrix <ChevronRight className="size-3" />
-            </button>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3 pt-1">
-            {/* Alert 1: Critical Rose Pastel (Tier 4) */}
-            <div
-              className={`p-3.5 rounded-xl border transition-all ${
-                resolvedAlerts["alert-1"]
-                  ? "bg-gray-50 border-gray-200 opacity-60"
-                  : "bg-[#FFF1F0] border-[#FED7D7]"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <div className="size-8 rounded-lg bg-[#E02424] text-white flex items-center justify-center shrink-0 shadow-2xs">
-                    <AlertOctagon className="size-4" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-[#771D1D]">Critical Tier 4 · Emergency Directive</span>
-                      <span className="text-[10px] text-gray-500">32 min ago</span>
-                    </div>
-                    <p className="text-xs text-[#991B1B] mt-0.5">
-                       PT-RURAL-7891 (Stage III Oral Biopsy): 8 days overdue. AES-256 address unmasked for District Medical Officer.
-                    </p>
-                  </div>
-                </div>
-
-                <Button
-                  size="xs"
-                  variant={resolvedAlerts["alert-1"] ? "secondary" : "outline"}
-                  onClick={() => toggleResolve("alert-1")}
-                  className="shrink-0 text-xs bg-white/80 border-[#FED7D7] text-[#771D1D] hover:bg-white"
-                >
-                  {resolvedAlerts["alert-1"] ? "Resolved" : "Resolve"}
-                </Button>
-              </div>
-            </div>
-
-            {/* Alert 2: High Cream Pastel (Tier 3) */}
-            <div
-              className={`p-3.5 rounded-xl border transition-all ${
-                resolvedAlerts["alert-2"]
-                  ? "bg-gray-50 border-gray-200 opacity-60"
-                  : "bg-[#FEF9C3] border-[#FDE047]"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <div className="size-8 rounded-lg bg-[#D97706] text-white flex items-center justify-center shrink-0 shadow-2xs">
-                    <AlertTriangle className="size-4" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-[#78350F]">High Tier 3 · ASHA Physical Visit</span>
-                      <span className="text-[10px] text-gray-500">47 min ago</span>
-                    </div>
-                    <p className="text-xs text-[#92400E] mt-0.5">
-                      PT-RURAL-4421: 6 days overdue post-colposcopy. Sunita Devi dispatched with sector GPS coordinates.
-                    </p>
-                  </div>
-                </div>
-
-                <Button
-                  size="xs"
-                  variant={resolvedAlerts["alert-2"] ? "secondary" : "outline"}
-                  onClick={() => toggleResolve("alert-2")}
-                  className="shrink-0 text-xs bg-white/80 border-[#FDE047] text-[#78350F] hover:bg-white"
-                >
-                  {resolvedAlerts["alert-2"] ? "Resolved" : "Resolve"}
-                </Button>
-              </div>
-            </div>
-
-            {/* Alert 3: Medium Seafoam Pastel (Tier 2/1) */}
-            <div
-              className={`p-3.5 rounded-xl border transition-all ${
-                resolvedAlerts["alert-3"]
-                  ? "bg-gray-50 border-gray-200 opacity-60"
-                  : "bg-[#F0FDF4] border-[#BBF7D0]"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <div className="size-8 rounded-lg bg-[#059669] text-white flex items-center justify-center shrink-0 shadow-2xs">
-                    <PhoneCall className="size-4" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-[#065F46]">Medium Tier 2 · Automated IVR Call</span>
-                      <span className="text-[10px] text-gray-500">1 hr ago</span>
-                    </div>
-                    <p className="text-xs text-[#166534] mt-0.5">
-                      PT-RURAL-1102: Bhojpuri dialect automated voice reminder delivered; primary guardian confirmed callback.
-                    </p>
-                  </div>
-                </div>
-
-                <Button
-                  size="xs"
-                  variant={resolvedAlerts["alert-3"] ? "secondary" : "outline"}
-                  onClick={() => toggleResolve("alert-3")}
-                  className="shrink-0 text-xs bg-white/80 border-[#BBF7D0] text-[#065F46] hover:bg-white"
-                >
-                  {resolvedAlerts["alert-3"] ? "Resolved" : "Resolve"}
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Patient Cases Registry Table (modeled on Section 6.1 Clinician Ward Board) */}
+      {/* Traffic-Light Ward Board */}
       <Card className="bg-white border-gray-200 shadow-2xs">
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 gap-3">
           <div>
-            <CardTitle className="text-base font-bold text-[#111418]">
-              Curative Cervical Cancer Cohort (GEC-ESTRO &le; 49d Target · NCG &le; 56d Limit)
-            </CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-base font-bold text-[#111418]">
+                Traffic-Light Curative Ward Board (NCG &amp; GEC-ESTRO 49/56-Day Biological Clock)
+              </CardTitle>
+            </div>
             <CardDescription className="text-xs text-gray-500">
-              Active treatment surveillance roster with biological clock projections and 4-tier safety triggers
+              Unmasked point-of-care identity for attending clinicians &middot; AES-256 tokenization maintained for external sync
             </CardDescription>
           </div>
-          <Badge variant="neutral" size="sm">{cases.length} Tracked Patients</Badge>
-        </CardHeader>
-        <CardContent>
-          {cases.length === 0 ? (
-            <div className="text-center py-10 text-gray-400 flex flex-col items-center gap-2">
-              <Users className="size-8 text-gray-300" />
-              <p className="text-sm">No cases currently logged. Ingest a case via Clinical Intake.</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Patient &amp; Diagnosis</TableHead>
-                  <TableHead>Biological Clock (OTT)</TableHead>
-                  <TableHead>Adherence &amp; Care Status</TableHead>
-                  <TableHead>Severity</TableHead>
-                  <TableHead className="text-right">Clinical Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {cases.map((c, index) => {
-                  const demoNames = [
-                    { name: "Shanti Devi", age: "48F", diag: "Cervix Stage IIB (CCRT)", spoke: "Mirzapur", ott: "🟢 Proj: Day 44 (<=49d)", ottSub: "GEC-ESTRO On-Track", adh: "🟢 Attending Daily", adhSub: "Fraction 14 Done · Step 15 Due" },
-                    { name: "Geeta Kushwaha", age: "52F", diag: "Cervix Stage IIIA", spoke: "Chunar", ott: "🟡 Proj: Day 52 (<=56d)", ottSub: "NCG Warning Margin", adh: "🟡 Missed Day +1", adhSub: "Tier 1 WhatsApp/SMS Nudge Sent" },
-                    { name: "Kamla Bind", age: "45F", diag: "Cervix Stage IIIC1", spoke: "Robertsganj", ott: "🔴 Proj: Day 58 (>56d)", ottSub: "HARD CLOCK BREACH", adh: "🔴 Overdue Day +3", adhSub: "Tier 3 ASHA Home Visit Dispatched" },
-                    { name: "Meera Singh", age: "41F", diag: "Cervix Stage IB3", spoke: "Varanasi", ott: "🟢 Proj: Day 42 (<=49d)", ottSub: "GEC-ESTRO On-Track", adh: "🟢 Attending Daily", adhSub: "Fraction 6 Done · Step 7 Due" },
-                  ];
-                  const demo = demoNames[index % demoNames.length];
 
-                  return (
-                    <TableRow key={c.patient_token} className="hover:bg-gray-50/80 transition-colors">
-                      <TableCell>
-                        <div className="flex items-center gap-2.5">
-                          <div className="size-8 rounded-lg bg-[#DBFE87]/30 text-black font-bold text-xs flex items-center justify-center border border-[#DBFE87]">
-                            {demo.name[0]}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold text-black">{demo.name}</span>
-                              <span className="text-xs text-gray-500">{demo.age}</span>
-                            </div>
-                            <div className="text-xs text-gray-500 flex items-center gap-1">
-                              <span className="font-mono text-xs text-[#BA2D0B] bg-[#BA2D0B]/10 px-1.5 rounded">{c.patient_token}</span>
-                              <span>• {demo.diag}</span>
-                            </div>
-                          </div>
+          {/* 3-Lane Filter Tabs */}
+          <div className="flex items-center gap-1.5 p-1 bg-gray-100 rounded-lg">
+            <button
+              onClick={() => setActiveLaneFilter("all")}
+              className={`px-3 py-1 rounded text-xs font-semibold transition-all cursor-pointer ${
+                activeLaneFilter === "all" ? "bg-white text-black shadow-2xs" : "text-gray-600 hover:text-black"
+              }`}
+            >
+              All Cases ({patientRoster.length})
+            </button>
+            <button
+              onClick={() => setActiveLaneFilter("optimal")}
+              className={`px-3 py-1 rounded text-xs font-semibold transition-all cursor-pointer ${
+                activeLaneFilter === "optimal" ? "bg-emerald-600 text-white shadow-2xs" : "text-emerald-700 hover:bg-emerald-50"
+              }`}
+            >
+              🟢 Optimal (&le;49d)
+            </button>
+            <button
+              onClick={() => setActiveLaneFilter("warning")}
+              className={`px-3 py-1 rounded text-xs font-semibold transition-all cursor-pointer ${
+                activeLaneFilter === "warning" ? "bg-amber-500 text-white shadow-2xs" : "text-amber-800 hover:bg-amber-50"
+              }`}
+            >
+              🟡 Warning (50-56d)
+            </button>
+            <button
+              onClick={() => setActiveLaneFilter("critical")}
+              className={`px-3 py-1 rounded text-xs font-semibold transition-all cursor-pointer ${
+                activeLaneFilter === "critical" ? "bg-[#BA2D0B] text-white shadow-2xs" : "text-[#BA2D0B] hover:bg-rose-50"
+              }`}
+            >
+              🔴 Breach Risk (&gt;56d)
+            </button>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Point-of-Care Patient Identity</TableHead>
+                <TableHead>Biological Clock (OTT 49/56d)</TableHead>
+                <TableHead>Acute Adherence &amp; ASHA Trigger</TableHead>
+                <TableHead>Risk Profile</TableHead>
+                <TableHead className="text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredRoster.map((p) => {
+                const isCriticalRow = p.lane === "critical";
+                const isWarningRow = p.lane === "warning";
+
+                return (
+                  <TableRow
+                    key={p.token}
+                    className={`transition-colors ${
+                      isCriticalRow
+                        ? "bg-rose-50/40 hover:bg-rose-50/70"
+                        : isWarningRow
+                        ? "bg-amber-50/30 hover:bg-amber-50/60"
+                        : "hover:bg-gray-50/80"
+                    }`}
+                  >
+                    {/* Column 1: Unmasked POC Identity */}
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className={`size-9 rounded-lg font-bold text-sm flex items-center justify-center border ${p.avatarColor}`}>
+                          {p.name[0]}
                         </div>
-                      </TableCell>
-                      <TableCell>
                         <div>
-                          <div className="text-xs font-semibold text-gray-900">{demo.ott}</div>
-                          <div className="text-xs text-gray-500">{demo.ottSub}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="text-xs font-semibold text-gray-900">{demo.adh}</div>
-                          <div className="text-xs text-gray-500">{demo.adhSub}</div>
-                          <div className="mt-1">{getTierBadge(c.current_escalation_tier)}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-semibold text-gray-800">
-                            {c.cancer_severity_score ? `${(c.cancer_severity_score * 100).toFixed(0)}%` : "78%"}
-                          </span>
-                          {(c.cancer_severity_score || 0) >= 0.7 && (
-                            <Badge variant="destructive" size="xs">High Risk</Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {onSelectCase && (
-                          <div className="flex items-center justify-end gap-1.5">
-                            <Button
-                              variant="obsidian"
-                              size="xs"
-                              onClick={() => onSelectCase(c.patient_token)}
-                              className="text-xs font-semibold bg-black hover:bg-black/85 text-white gap-1"
-                            >
-                              <Stethoscope className="size-3" />
-                              Open Encounter
-                            </Button>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-bold text-black">{p.name}</span>
+                            <span className="text-xs text-gray-500 font-medium">{p.age}</span>
                           </div>
+                          <div className="text-xs text-gray-600 flex items-center gap-1.5 mt-0.5">
+                            <span className="font-mono text-xs text-[#BA2D0B] bg-[#BA2D0B]/10 px-1.5 py-0.2 rounded font-semibold border border-[#BA2D0B]/20">
+                              {p.token}
+                            </span>
+                            <span>&middot;</span>
+                            <span className="text-gray-700 font-medium">{p.village}</span>
+                          </div>
+                          <div className="text-[11px] text-gray-500 mt-0.5 font-medium">{p.stage}</div>
+                        </div>
+                      </div>
+                    </TableCell>
+
+                    {/* Column 2: Biological Clock OTT */}
+                    <TableCell>
+                      <div>
+                        <div className="text-xs font-bold text-gray-900">{p.ottBadge}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">{p.ottSub}</div>
+                      </div>
+                    </TableCell>
+
+                    {/* Column 3: Acute Adherence & Tier */}
+                    <TableCell>
+                      <div>
+                        <div className="text-xs font-semibold text-gray-900">{p.adhStatus}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">{p.adhDetail}</div>
+                        <div className="mt-1">{getTierBadge(p.tier)}</div>
+                      </div>
+                    </TableCell>
+
+                    {/* Column 4: Severity & Risk */}
+                    <TableCell>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-gray-800">
+                          {(p.severity * 100).toFixed(0)}%
+                        </span>
+                        {p.severity >= 0.8 && (
+                          <Badge variant="destructive" size="xs">High Risk</Badge>
                         )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
+                        {p.lane === "optimal" && (
+                          <Badge variant="primary" size="xs">Optimal</Badge>
+                        )}
+                      </div>
+                    </TableCell>
+
+                    {/* Column 5: Encounter Button */}
+                    <TableCell className="text-right">
+                      {onSelectCase && (
+                        <Button
+                          variant="obsidian"
+                          size="xs"
+                          onClick={() => onSelectCase(p.token)}
+                          className="text-xs font-semibold bg-black hover:bg-black/85 text-white gap-1"
+                        >
+                          <Stethoscope className="size-3" />
+                          Open Encounter
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>
   );
 }
+

@@ -237,6 +237,106 @@ export interface PilotRegisterResult {
   message: string;
 }
 
+export interface HpvVaccination {
+  vaccine_id: string;
+  patient_token: string;
+  patient_name: string;
+  age: number;
+  dose_number: number;
+  vaccine_brand: string;
+  administered_date: string;
+  next_due_date?: string | null;
+  school_or_center: string;
+  status: "COMPLETED" | "DUE" | "OVERDUE";
+  outreach_sent: number;
+  created_at?: string;
+}
+
+export interface ScreeningRecord {
+  screening_id: string;
+  patient_token: string;
+  patient_name: string;
+  age: number;
+  invitation_date?: string;
+  test_type: "VIA" | "HPV_DNA" | "PAP_SMEAR";
+  test_date: string;
+  result: "NEGATIVE" | "VIA_POSITIVE" | "SUSPECTED_HIGH_RISK_HPV" | "ABNORMAL_PAP";
+  notes?: string;
+  triage_status: string;
+  created_at?: string;
+}
+
+export interface PrecancerEpisode {
+  precancer_id: string;
+  patient_token: string;
+  patient_name: string;
+  diagnosis: "CIN_1" | "CIN_2" | "CIN_3_HSIL";
+  treatment_type: "THERMAL_ABLATION" | "CRYOTHERAPY" | "LEEP";
+  appointment_date: string;
+  completion_date?: string;
+  margins_clear: number;
+  surveillance_interval_months: number;
+  surveillance_due_date: string;
+  surveillance_status: "SCHEDULED" | "COMPLETED" | "OVERDUE";
+  notes?: string;
+  created_at?: string;
+}
+
+export interface ChemoClearance {
+  clearance_id: string;
+  patient_token: string;
+  cycle_number: number;
+  status: "APPROVED" | "HELD" | "REDUCED" | "PENDING";
+  dose_mg: number;
+  hb: number;
+  anc: number;
+  platelets: number;
+  creatinine: number;
+  egfr: number;
+  doctor_id: string;
+  clinical_notes?: string;
+  ebrt_must_continue: boolean;
+  clearance_timestamp?: string;
+}
+
+export interface LinacDowntimeStatus {
+  facility_name: string;
+  machine_id: string;
+  is_downtime_active: boolean;
+  status: "OPERATIONAL" | "MAINTENANCE_PAUSED";
+  started_at?: string | null;
+  reason?: string | null;
+  clock_paused_message?: string;
+}
+
+export interface AshaFieldTicket {
+  ticket_id: string;
+  patient_token: string;
+  patient_name: string;
+  guardian_name?: string;
+  village: string;
+  landmark?: string;
+  phone?: string;
+  days_overdue: number;
+  escalation_tier: string;
+  stigma_safe_category: string;
+  status: "DISPATCHED" | "VISITED" | "TRAVELING_TOMORROW" | "ESCORT_NEEDED" | "CLOSED";
+  delay_root_cause?: string;
+  arrival_watch_active?: number;
+  arrival_watch_expires?: string;
+  notes?: string;
+  created_at?: string;
+}
+
+export interface ChainVerifyResult {
+  status: string;
+  is_valid: boolean;
+  total_blocks_verified: number;
+  tamper_detected: boolean;
+  error?: string | null;
+}
+
+
 async function request<T>(
   endpoint: string,
   options?: RequestInit
@@ -599,4 +699,197 @@ export const api = {
       };
     }
   },
+
+  // ==========================================
+  // Prevention & Screening APIs
+  // ==========================================
+  async logHpvVaccination(payload: {
+    patient_token: string;
+    patient_name: string;
+    age: number;
+    dose_number: number;
+    vaccine_brand?: string;
+    administered_date?: string;
+    school_or_center?: string;
+    status?: string;
+  }): Promise<{ status: string; vaccination: HpvVaccination }> {
+    return await request<{ status: string; vaccination: HpvVaccination }>("/api/prevention/vaccination", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getHpvVaccinations(status?: string): Promise<{ vaccinations: HpvVaccination[]; total: number }> {
+    const q = status ? `?status=${encodeURIComponent(status)}` : "";
+    return await request<{ vaccinations: HpvVaccination[]; total: number }>(`/api/prevention/vaccinations${q}`);
+  },
+
+  async triggerVaccineOutreach(vaccine_id: string): Promise<{ status: string; message: string; record: HpvVaccination }> {
+    return await request<{ status: string; message: string; record: HpvVaccination }>("/api/prevention/vaccination/outreach", {
+      method: "POST",
+      body: JSON.stringify({ vaccine_id }),
+    });
+  },
+
+  async recordScreening(payload: {
+    patient_token: string;
+    patient_name: string;
+    age: number;
+    invitation_date?: string;
+    test_type: string;
+    test_date?: string;
+    result: string;
+    notes?: string;
+  }): Promise<{ status: string; screening: ScreeningRecord; recommended_pathway: string }> {
+    return await request<{ status: string; screening: ScreeningRecord; recommended_pathway: string }>("/api/prevention/screening", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getScreenings(patient_token?: string): Promise<{ screenings: ScreeningRecord[]; total: number }> {
+    const q = patient_token ? `?patient_token=${encodeURIComponent(patient_token)}` : "";
+    return await request<{ screenings: ScreeningRecord[]; total: number }>(`/api/prevention/screenings${q}`);
+  },
+
+  async logPrecancerTreatment(payload: {
+    patient_token: string;
+    patient_name: string;
+    diagnosis: string;
+    treatment_type: string;
+    appointment_date: string;
+    completion_date?: string;
+    margins_clear?: number;
+    surveillance_interval_months?: number;
+    notes?: string;
+  }): Promise<{ status: string; precancer_episode: PrecancerEpisode }> {
+    return await request<{ status: string; precancer_episode: PrecancerEpisode }>("/api/prevention/precancer-treatment", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getPrecancerSurveillance(): Promise<{ surveillance_list: PrecancerEpisode[]; total: number }> {
+    return await request<{ surveillance_list: PrecancerEpisode[]; total: number }>("/api/prevention/precancer-surveillance");
+  },
+
+  // ==========================================
+  // Clinical Safety & Hospital APIs
+  // ==========================================
+  async logChemoClearance(payload: {
+    patient_token: string;
+    cycle_number: number;
+    status: string;
+    dose_mg?: number;
+    hb?: number;
+    anc?: number;
+    platelets?: number;
+    creatinine?: number;
+    egfr?: number;
+    doctor_id?: string;
+    clinical_notes?: string;
+    ebrt_must_continue?: number;
+  }): Promise<{ status: string; clearance: ChemoClearance; ebrt_must_continue: boolean }> {
+    return await request<{ status: string; clearance: ChemoClearance; ebrt_must_continue: boolean }>("/api/clinical/chemo-clearance", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getChemoClearanceHistory(patient_token: string): Promise<{ clearances: ChemoClearance[]; total: number }> {
+    return await request<{ clearances: ChemoClearance[]; total: number }>(`/api/clinical/chemo-clearance/${patient_token}`);
+  },
+
+  async toggleLinacDowntime(payload: {
+    facility_name?: string;
+    machine_id?: string;
+    reason?: string;
+  }): Promise<{ status: string; is_active: boolean; downtime_record?: Record<string, unknown> }> {
+    return await request<{ status: string; is_active: boolean; downtime_record?: Record<string, unknown> }>("/api/clinical/linac-downtime", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getLinacDowntimeStatus(facility_name = "Mirzapur Spoke Clinic"): Promise<LinacDowntimeStatus> {
+    return await request<LinacDowntimeStatus>(`/api/clinical/linac-downtime/status?facility_name=${encodeURIComponent(facility_name)}`);
+  },
+
+  async returnHubTransferDeficiency(patient_token: string, payload: {
+    requested_deficiencies: string[];
+    spoke_action_sla_hours?: number;
+    notes?: string;
+  }): Promise<{ status: string; patient_token: string; message: string; action_sla_hours: number }> {
+    return await request<{ status: string; patient_token: string; message: string; action_sla_hours: number }>(`/api/clinical/hub-transfer/${patient_token}/deficiency-return`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async dischargeSignoff(patient_token: string, payload: {
+    doctor_id: string;
+    total_ebrt_fractions?: number;
+    total_brachy_fractions?: number;
+    clinical_summary?: string;
+  }): Promise<{ status: string; patient_token: string; message: string; dpdp_compliance: string }> {
+    return await request<{ status: string; patient_token: string; message: string; dpdp_compliance: string }>(`/api/encounter/${patient_token}/discharge-signoff`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  // ==========================================
+  // Patient Portal & DPDP Security
+  // ==========================================
+  async reportPatientSymptom(token: string, payload: {
+    symptom_key: string;
+    severity_grade: number;
+    notes?: string;
+  }): Promise<{ status: string; symptom_logged: string; grade: number; alert_generated: boolean }> {
+    return await request<{ status: string; symptom_logged: string; grade: number; alert_generated: boolean }>(`/api/patient/${token}/symptoms`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async ackHydration(token: string, payload: {
+    glasses_count: number;
+    ors_taken: boolean;
+  }): Promise<{ status: string; glasses_logged: number; ors_taken: boolean }> {
+    return await request<{ status: string; glasses_logged: number; ors_taken: boolean }>(`/api/patient/${token}/hydration-ack`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async purgeAudioCache(token: string): Promise<{ status: string; message: string; token: string }> {
+    return await request<{ status: string; message: string; token: string }>(`/api/patient/${token}/purge-audio-cache`, {
+      method: "POST",
+    });
+  },
+
+  // ==========================================
+  // Audit Ledger & ASHA Field Tickets
+  // ==========================================
+  async verifyAuditChain(): Promise<ChainVerifyResult> {
+    return await request<ChainVerifyResult>("/api/logs/verify-chain");
+  },
+
+  async getAshaTickets(patient_token?: string): Promise<{ tickets: AshaFieldTicket[]; total: number }> {
+    const q = patient_token ? `?patient_token=${encodeURIComponent(patient_token)}` : "";
+    return await request<{ tickets: AshaFieldTicket[]; total: number }>(`/api/logs/asha/tickets${q}`);
+  },
+
+  async updateAshaTicketOutcome(payload: {
+    ticket_id: string;
+    outcome_status: string;
+    root_cause?: string;
+    notes?: string;
+  }): Promise<{ status: string; ticket: AshaFieldTicket; arrival_watch_active: boolean }> {
+    return await request<{ status: string; ticket: AshaFieldTicket; arrival_watch_active: boolean }>("/api/logs/asha/ticket-outcome", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
 };

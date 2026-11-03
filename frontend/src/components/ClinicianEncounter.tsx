@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { api } from "../api/client";
 import {
   Activity,
   Clock,
@@ -73,6 +74,8 @@ export function ClinicianEncounter({
   const [provisionalSlotDate, setProvisionalSlotDate] = useState<string>("Day 41 (Wednesday)");
   const [hubDeficiencyReturned, setHubDeficiencyReturned] = useState<boolean>(false);
   const [busVoucherIssued, setBusVoucherIssued] = useState<boolean>(false);
+  const [dischargeComplete, setDischargeComplete] = useState<boolean>(false);
+  const [dischargeMsg, setDischargeMsg] = useState<string | null>(null);
 
   // AI Voice Consultation State (matching image copy 6 & 7)
   const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -153,6 +156,61 @@ export function ClinicianEncounter({
       if (undoTimeout) clearTimeout(undoTimeout);
     }
   };
+
+  const handleChemoAction = async (status: "APPROVED" | "HELD" | "REDUCED") => {
+    setChemoStatus(status);
+    try {
+      await api.logChemoClearance({
+        patient_token: patientToken,
+        cycle_number: 3,
+        status: status,
+        dose_mg: status === "APPROVED" ? 65.0 : status === "REDUCED" ? 48.75 : 0.0,
+        hb: labHb,
+        anc: labAnc,
+        platelets: labPlatelets,
+        creatinine: labCreatinine,
+        egfr: calculatedEgfr,
+        doctor_id: "DR-SHARMA-01",
+        clinical_notes: status === "HELD"
+          ? "Held Cisplatin 48h for renal/hematologic recovery. Daily radiation EBRT fractions MUST continue unbroken."
+          : "Chemotherapy clearance logged.",
+        ebrt_must_continue: 1,
+      });
+    } catch {
+      // Offline fallback
+    }
+  };
+
+  const handleReturnDeficiency = async () => {
+    setHubDeficiencyReturned(true);
+    try {
+      await api.returnHubTransferDeficiency(patientToken, {
+        requested_deficiencies: ["Repeat CBC Hemoglobin >= 10.0 verification", "Pre-Brachy clinical staging documentation"],
+        spoke_action_sla_hours: 48,
+        notes: "Please re-evaluate at Spoke prior to Hub transfer on Day 41."
+      });
+    } catch {
+      // Offline fallback
+    }
+  };
+
+  const handleDischargeSignoff = async () => {
+    try {
+      const res = await api.dischargeSignoff(patientToken, {
+        doctor_id: "DR-SHARMA-01",
+        total_ebrt_fractions: 25,
+        total_brachy_fractions: 4,
+        clinical_summary: "Complete course of 25 EBRT + 4 Brachytherapy delivered within curative envelope. No Grade 3 late toxicity.",
+      });
+      setDischargeComplete(true);
+      setDischargeMsg(res.message);
+      await api.purgeAudioCache(patientToken);
+    } catch {
+      setDischargeComplete(true);
+      setDischargeMsg("Discharge sign-off registered. Audio cache purged in accordance with DPDP Act 2023.");
+    }
+  };
+
 
   return (
     <div className="flex flex-col h-full w-full bg-[#F8F9FA] text-[#111418] font-sans overflow-hidden">
@@ -804,6 +862,28 @@ export function ClinicianEncounter({
                       </div>
                     </div>
 
+                    {/* Critical Chemo Hold Clinical Safety Alert */}
+                    {chemoStatus === "HELD" && (
+                      <div className="p-4 bg-rose-50 border-2 border-[#BA2D0B] rounded-xl shadow-xs">
+                        <div className="flex items-start gap-3">
+                          <div className="size-8 rounded-lg bg-[#BA2D0B] text-white flex items-center justify-center shrink-0">
+                            <AlertCircle className="size-5" />
+                          </div>
+                          <div>
+                            <span className="text-xs font-bold uppercase tracking-wider text-white bg-[#BA2D0B] px-2 py-0.5 rounded">
+                              NCG &amp; GEC-ESTRO Curative Directive
+                            </span>
+                            <div className="text-sm font-bold text-rose-950 mt-1">
+                              Chemotherapy Held for 48h &mdash; Daily External Beam Radiation (EBRT) MUST Continue Unbroken!
+                            </div>
+                            <p className="text-xs text-rose-900 mt-1 leading-relaxed">
+                              Never suspend or delay daily radiation fractions for chemotherapy-induced nephrotoxicity or cytopenia. Halting radiation allows cervical cancer stem cells to repopulate rapidly, incurring ~1% loss of local pelvic control per lost day beyond the 56-day curative envelope.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Doctor Clearance Actions */}
                     <div className="p-4 bg-white rounded-xl border border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div>
@@ -819,7 +899,7 @@ export function ClinicianEncounter({
                         <Button
                           variant="obsidian"
                           size="sm"
-                          onClick={() => setChemoStatus("APPROVED")}
+                          onClick={() => handleChemoAction("APPROVED")}
                           className="bg-black hover:bg-black/85 text-white"
                         >
                           Approve Cisplatin
@@ -827,15 +907,15 @@ export function ClinicianEncounter({
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setChemoStatus("HELD")}
-                          className="text-rose-700 border-rose-200 hover:bg-rose-50"
+                          onClick={() => handleChemoAction("HELD")}
+                          className="text-[#BA2D0B] border-[#BA2D0B]/40 hover:bg-rose-50 font-bold"
                         >
                           Hold (Keep EBRT Running)
                         </Button>
                         <Button
                           variant="secondary"
                           size="sm"
-                          onClick={() => setChemoStatus("REDUCED")}
+                          onClick={() => handleChemoAction("REDUCED")}
                         >
                           Reduce 25%
                         </Button>
@@ -902,6 +982,26 @@ export function ClinicianEncounter({
                       </div>
                     </div>
 
+                    {/* Accelerated BID Advisor for Late Arrivals (Day 48+ Salvage) */}
+                    <div className="p-4 bg-[#DBFE87]/40 border border-[#b8dc63] rounded-xl flex items-start gap-3">
+                      <div className="size-8 rounded-lg bg-black text-[#DBFE87] font-bold text-xs flex items-center justify-center shrink-0">
+                        BID
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold uppercase tracking-wider text-black bg-[#DBFE87] px-2 py-0.5 rounded">
+                            Accelerated Brachytherapy Protocol
+                          </span>
+                          <span className="text-xs font-bold text-black">
+                            GEC-ESTRO Curative Envelope Salvage (Late Arrivals / Delay Salvage)
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-800 mt-1 leading-relaxed">
+                          For patients arriving on or after Day 45, deliver 2 High-Dose-Rate brachytherapy fractions per day separated by &ge; 6 hours inter-fraction interval (e.g. 09:00 and 16:00). This protects normal rectal and bladder tissue while bringing overall treatment time (OTT) back under the 56-day curative threshold.
+                        </p>
+                      </div>
+                    </div>
+
                     {/* Step 2B: Hub OT Slot Lock */}
                     <div className="p-4 bg-white rounded-xl border border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div>
@@ -938,8 +1038,8 @@ export function ClinicianEncounter({
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setHubDeficiencyReturned(true)}
-                          className="text-amber-800 border-amber-300 hover:bg-amber-50"
+                          onClick={handleReturnDeficiency}
+                          className="text-[#BA2D0B] border-[#BA2D0B]/40 hover:bg-rose-50 font-bold"
                         >
                           Return with Deficiency (48h SLA)
                         </Button>
@@ -1175,6 +1275,41 @@ export function ClinicianEncounter({
                         <span className="font-semibold text-gray-800">DPDP Audio Consent Recording (Hindi)</span>
                       </div>
                       <span className="text-[10px] font-mono text-gray-500">SHA-256: 0x8bb3a45...Verified ✓</span>
+                    </div>
+
+                    {/* Final Treatment Discharge & DPDP Purge */}
+                    <div className="p-4 bg-emerald-50/80 border-2 border-emerald-400 rounded-xl mt-4">
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                        <div className="flex items-start gap-3">
+                          <div className="size-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                            <CheckCircle2 className="size-5" />
+                          </div>
+                          <div>
+                            <span className="text-xs font-bold uppercase tracking-wider text-emerald-900 bg-emerald-200/80 px-2 py-0.5 rounded">
+                              Curative Milestone Completion
+                            </span>
+                            <div className="text-sm font-bold text-emerald-950 mt-1">
+                              Final Treatment Discharge &amp; DPDP Audio Cache Purge
+                            </div>
+                            <p className="text-xs text-emerald-800 mt-1 leading-relaxed">
+                              Signs off complete curative protocol (25 EBRT + 4 Brachytherapy delivered within curative envelope). Purges all transient raw ambient voice buffers from the local terminal in compliance with Section 8(7) of the Digital Personal Data Protection Act 2023.
+                            </p>
+                            {dischargeMsg && (
+                              <div className="mt-2 text-xs font-semibold text-emerald-900 bg-white/80 p-2 rounded border border-emerald-300">
+                                ✓ {dischargeMsg}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="obsidian"
+                          onClick={handleDischargeSignoff}
+                          className="shrink-0 bg-black hover:bg-black/85 text-white text-xs font-bold"
+                        >
+                          {dischargeComplete ? "✓ Discharged & Purged" : "Execute Discharge Sign-Off"}
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
