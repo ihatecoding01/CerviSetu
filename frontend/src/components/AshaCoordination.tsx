@@ -72,7 +72,7 @@ export function AshaCoordination({ cases }: Props) {
           const completionPct = Math.round((worker.completedVisits / worker.targetVisits) * 100);
 
           return (
-            <Card key={worker.id} className="bg-white border-gray-200 shadow-2xs hover:border-[#2B66E4] transition-all">
+            <Card key={worker.id} className="bg-white border-gray-200 shadow-2xs hover:border-black transition-all">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -118,7 +118,7 @@ export function AshaCoordination({ cases }: Props) {
                   </div>
                   <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden flex">
                     <div
-                      className="h-full bg-[#2B66E4] rounded-full"
+                      className="h-full bg-[#BA2D0B] rounded-full"
                       style={{ width: `${completionPct}%` }}
                     />
                     <div className="h-full bg-hatch flex-1" />

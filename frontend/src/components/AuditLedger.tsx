@@ -301,10 +301,10 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
         </Card>
 
         {/* SHA-256 Ledger Health Card */}
-        <Card className="border-l-4 border-l-[#2B66E4] bg-white shadow-2xs">
+        <Card className="border-l-4 border-l-[#BA2D0B] bg-white shadow-2xs">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#2B66E4] flex items-center gap-1.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#BA2D0B] flex items-center gap-1.5">
                 <ShieldCheck className="size-3.5" />
                 SHA-256 Block Chain
               </p>
@@ -312,7 +312,7 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
                 {summary?.chain_integrity?.total_blocks_verified || localLogs.length}
                 <CheckCircle2 className="size-4 text-emerald-600 inline" />
               </h3>
-              <p className="text-[11px] text-gray-500 mt-0.5">DPDP 2023 Tamper-Evident</p>
+              <p className="text-xs text-gray-500 mt-0.5">DPDP 2023 Tamper-Evident</p>
             </div>
             <Badge variant="primary" size="xs">
               100% Intact
@@ -325,7 +325,7 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
       <Card className="bg-gray-50/80 border border-gray-200 shadow-2xs">
         <CardContent className="p-3.5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Activity className="size-4 text-[#2B66E4]" />
+            <Activity className="size-4 text-[#BA2D0B]" />
             <span className="text-xs font-bold text-gray-800">Live 3-Role Event Simulator:</span>
             <span className="text-xs text-gray-500 hidden sm:inline">
               Dispatch role-attributed actions and verify SHA-256 cryptographic block chaining
@@ -393,8 +393,8 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-base font-bold text-[#111418] flex items-center gap-2">
-                  <KeyRound className="size-4 text-[#2B66E4]" />
+                <CardTitle className="text-base font-bold text-black flex items-center gap-2">
+                  <KeyRound className="size-4 text-[#BA2D0B]" />
                   PII Vault Decryption Gate
                 </CardTitle>
                 <CardDescription className="text-xs text-gray-500">Authorized medical officer role validation</CardDescription>
@@ -416,7 +416,7 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
                   onClick={handleVaultInspect}
                   disabled={vaultLoading || !vaultToken.trim()}
                   size="sm"
-                  className="bg-[#111418] hover:bg-black text-white shrink-0 text-xs font-medium"
+                  className="bg-black hover:bg-black/85 text-white shrink-0 text-xs font-medium"
                 >
                   <Unlock className="size-3.5 mr-1" />
                   Unmask
@@ -432,12 +432,12 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
             )}
 
             {vaultResult && (
-              <div className="p-3.5 rounded-xl bg-blue-50/50 border border-blue-200 flex flex-col gap-2">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-[#2B66E4]">
+              <div className="p-3.5 rounded-xl bg-[#BA2D0B]/10 border border-[#BA2D0B]/20 flex flex-col gap-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-[#BA2D0B]">
                   <ShieldCheck className="size-4" />
                   <span>[STATUTORY ACCESS AUTHORIZED - LOGGED]</span>
                 </div>
-                <pre className="text-[11px] font-mono text-gray-800 bg-white p-2.5 rounded-lg border border-gray-200 overflow-x-auto">
+                <pre className="text-xs font-mono text-gray-800 bg-white p-2.5 rounded-lg border border-gray-200 overflow-x-auto">
                   {JSON.stringify(vaultResult, null, 2)}
                 </pre>
               </div>
@@ -451,7 +451,7 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <CardTitle className="text-base font-bold text-[#111418] flex items-center gap-2">
-                  <Lock className="size-4 text-[#4A91A7]" />
+                  <Lock className="size-4 text-[#90C3CB]" />
                   Tamper-Evident Multi-Role Audit Ledger
                 </CardTitle>
                 <CardDescription className="text-xs text-gray-500">
@@ -588,7 +588,7 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
                           </TableCell>
 
                           {/* Patient Token */}
-                          <TableCell className="font-mono text-xs text-[#2B66E4] font-semibold">
+                          <TableCell className="font-mono text-xs text-[#BA2D0B] font-semibold">
                             {log.patient_token || "SYSTEM"}
                           </TableCell>
 

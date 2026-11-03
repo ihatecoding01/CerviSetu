@@ -105,15 +105,15 @@ export function EscalationHeatmap({ cases, lastSim, onSimulate }: Props) {
             <Card
               key={t.tier}
               size="sm"
-              className="bg-white border-gray-200 shadow-2xs hover:border-[#2B66E4] transition-all"
+              className="bg-white border-gray-200 shadow-2xs hover:border-black transition-all"
             >
               <CardHeader className="pb-1.5">
                 <div className="flex items-center justify-between">
                   <div className={`size-7 rounded-lg flex items-center justify-center ${
-                    idx === 4 ? "bg-rose-50 text-rose-700" :
-                    idx === 3 ? "bg-amber-50 text-amber-700" :
-                    idx === 2 ? "bg-sky-50 text-[#4A91A7]" :
-                    idx === 1 ? "bg-blue-50 text-[#2B66E4]" :
+                    idx === 4 ? "bg-[#BA2D0B]/10 text-[#BA2D0B]" :
+                    idx === 3 ? "bg-[#F19941]/20 text-[#BA2D0B]" :
+                    idx === 2 ? "bg-[#90C3CB]/20 text-slate-800" :
+                    idx === 1 ? "bg-[#DBFE87]/40 text-black" :
                     "bg-gray-100 text-gray-600"
                   }`}>
                     <Icon className="size-3.5" />
@@ -122,28 +122,28 @@ export function EscalationHeatmap({ cases, lastSim, onSimulate }: Props) {
                     Day {t.days}
                   </Badge>
                 </div>
-                <CardTitle className="text-sm font-bold text-[#111418] mt-1.5">{t.tier}</CardTitle>
+                <CardTitle className="text-sm font-bold text-black mt-1.5">{t.tier}</CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="text-xl font-bold text-[#111418] mb-1">{count} Cases</div>
-                <p className="text-[11px] text-gray-500 leading-tight">{t.desc}</p>
+                <div className="text-xl font-bold text-black mb-1">{count} Cases</div>
+                <p className="text-xs text-gray-500 leading-tight">{t.desc}</p>
               </CardContent>
             </Card>
           );
         })}
       </div>
 
-      {/* Timeline Matrix Grid (modeled on components3.png Shift Planner) */}
+      {/* Timeline Matrix Grid */}
       <Card className="bg-white border-gray-200 shadow-2xs">
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-base font-bold text-[#111418]">Follow-Up Surveillance Matrix</CardTitle>
+            <CardTitle className="text-base font-bold text-black">Follow-Up Surveillance Matrix</CardTitle>
             <CardDescription className="text-xs text-gray-500">Cross-strata risk distribution across overdue timelines</CardDescription>
           </div>
-          <div className="flex items-center gap-3 text-[11px] text-gray-600">
-            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-emerald-500"></span> On Schedule</span>
-            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#D8CA21]"></span> In Transit</span>
-            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#2B66E4]"></span> Overdue Directive</span>
+          <div className="flex items-center gap-3 text-xs text-gray-600">
+            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#DBFE87] border border-[#c4e872]"></span> On Schedule</span>
+            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#F19941]"></span> In Transit</span>
+            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#BA2D0B]"></span> Overdue Directive</span>
           </div>
         </CardHeader>
         <CardContent>
@@ -210,7 +210,7 @@ export function EscalationHeatmap({ cases, lastSim, onSimulate }: Props) {
                 <select
                   value={cancerType}
                   onChange={(e) => setCancerType(e.target.value)}
-                  className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-900 outline-none focus:border-[#2B66E4]"
+                  className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-900 outline-none focus:border-black"
                 >
                   <option value="ORAL">Oral Squamous</option>
                   <option value="CERVICAL">Cervical (VIA+)</option>
@@ -222,7 +222,7 @@ export function EscalationHeatmap({ cases, lastSim, onSimulate }: Props) {
                 <select
                   value={stage}
                   onChange={(e) => setStage(e.target.value)}
-                  className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-900 outline-none focus:border-[#2B66E4]"
+                  className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-xs text-gray-900 outline-none focus:border-black"
                 >
                   <option value="Stage III">Stage III (Severe)</option>
                   <option value="Stage IV">Stage IV (Critical)</option>
@@ -249,9 +249,9 @@ export function EscalationHeatmap({ cases, lastSim, onSimulate }: Props) {
                 step="1"
                 value={days}
                 onChange={(e) => setDays(parseInt(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#2B66E4]"
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#BA2D0B]"
               />
-              <div className="flex justify-between text-[10px] text-gray-500 font-mono">
+              <div className="flex justify-between text-xs text-gray-500 font-mono">
                 <span>Day 0 (Routine)</span>
                 <span>Day 1-2 (SMS)</span>
                 <span>Day 3-5 (IVR)</span>
@@ -263,7 +263,7 @@ export function EscalationHeatmap({ cases, lastSim, onSimulate }: Props) {
             <Button
               onClick={handleSimulate}
               disabled={loading}
-              className="w-full bg-[#2B66E4] hover:bg-[#2052C0] text-white shadow-xs font-semibold h-10 gap-2"
+              className="w-full bg-[#BA2D0B] hover:bg-[#a02609] text-white shadow-xs font-semibold h-10 gap-2"
             >
               <Send className="size-4" />
               <span>{loading ? "Evaluating Escalation Protocols..." : "Simulate Escalation Engine"}</span>
@@ -276,8 +276,8 @@ export function EscalationHeatmap({ cases, lastSim, onSimulate }: Props) {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-base font-bold text-[#111418] flex items-center gap-2">
-                  <ShieldAlert className="size-4 text-[#2B66E4]" />
+                <CardTitle className="text-base font-bold text-black flex items-center gap-2">
+                  <ShieldAlert className="size-4 text-[#BA2D0B]" />
                   Dispatched Directives &amp; Dossiers
                 </CardTitle>
                 <CardDescription className="text-xs text-gray-500">Generated channel payload and district alert logs</CardDescription>

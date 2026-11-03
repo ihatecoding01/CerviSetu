@@ -35,7 +35,7 @@ export function ImageQualityTriage() {
     if (presetType === "clear_xray") {
       ctx.fillStyle = "#111418";
       ctx.fillRect(0, 0, 300, 300);
-      ctx.strokeStyle = "#4A91A7";
+      ctx.strokeStyle = "#90C3CB";
       ctx.lineWidth = 3;
       for (let i = 0; i < 6; i++) {
         ctx.beginPath();
@@ -97,9 +97,9 @@ export function ImageQualityTriage() {
         ],
       });
     } else {
-      ctx.fillStyle = "#2B66E4";
+      ctx.fillStyle = "#BA2D0B";
       ctx.fillRect(0, 0, 300, 150);
-      ctx.fillStyle = "#10B981";
+      ctx.fillStyle = "#DBFE87";
       ctx.fillRect(0, 150, 300, 150);
 
       setMetrics({
@@ -139,8 +139,8 @@ export function ImageQualityTriage() {
         {/* Left: Interactive Canvas & Presets */}
         <Card className="bg-white border-gray-200 shadow-2xs">
           <CardHeader>
-            <CardTitle className="text-base font-bold text-[#111418] flex items-center gap-2">
-              <Microscope className="size-4 text-[#2B66E4]" />
+            <CardTitle className="text-base font-bold text-black flex items-center gap-2">
+              <Microscope className="size-4 text-[#BA2D0B]" />
               Image Quality Inspector
             </CardTitle>
             <CardDescription className="text-xs text-gray-500">
@@ -174,7 +174,7 @@ export function ImageQualityTriage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-base font-bold text-[#111418]">Triage Metrics &amp; Clinician Advice</CardTitle>
+                <CardTitle className="text-base font-bold text-black">Triage Metrics &amp; Clinician Advice</CardTitle>
                 <CardDescription className="text-xs text-gray-500">Automated diagnostic pre-filter</CardDescription>
               </div>
               <Badge variant={metrics.badgeVariant} size="sm">
@@ -185,30 +185,30 @@ export function ImageQualityTriage() {
           <CardContent className="flex-1 flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200">
-                <span className="text-[10px] uppercase font-semibold text-gray-500 block">Blur Variance (Laplacian)</span>
-                <span className="text-2xl font-mono font-bold text-[#111418] block mt-1">{metrics.blur}</span>
-                <span className="text-[10px] text-gray-500 block mt-0.5">Threshold: ≥ 85.0</span>
+                <span className="text-xs uppercase font-semibold text-gray-500 block">Blur Variance (Laplacian)</span>
+                <span className="text-2xl font-mono font-bold text-black block mt-1">{metrics.blur}</span>
+                <span className="text-xs text-gray-500 block mt-0.5">Threshold: ≥ 85.0</span>
               </div>
               <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200">
-                <span className="text-[10px] uppercase font-semibold text-gray-500 block">RMS Dynamic Contrast</span>
-                <span className="text-2xl font-mono font-bold text-[#111418] block mt-1">{metrics.contrast}</span>
-                <span className="text-[10px] text-gray-500 block mt-0.5">Threshold: ≥ 18.0</span>
+                <span className="text-xs uppercase font-semibold text-gray-500 block">RMS Dynamic Contrast</span>
+                <span className="text-2xl font-mono font-bold text-black block mt-1">{metrics.contrast}</span>
+                <span className="text-xs text-gray-500 block mt-0.5">Threshold: ≥ 18.0</span>
               </div>
               <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200">
-                <span className="text-[10px] uppercase font-semibold text-gray-500 block">Detected Modality</span>
-                <span className="text-sm font-semibold text-[#2B66E4] block mt-1">{metrics.modality}</span>
-                <span className="text-[10px] text-gray-500 block mt-0.5">Domain Verification</span>
+                <span className="text-xs uppercase font-semibold text-gray-500 block">Detected Modality</span>
+                <span className="text-sm font-semibold text-[#BA2D0B] block mt-1">{metrics.modality}</span>
+                <span className="text-xs text-gray-500 block mt-0.5">Domain Verification</span>
               </div>
               <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200">
-                <span className="text-[10px] uppercase font-semibold text-gray-500 block">Resolution</span>
+                <span className="text-xs uppercase font-semibold text-gray-500 block">Resolution</span>
                 <span className="text-sm font-mono font-semibold text-gray-800 block mt-1">{metrics.resolution}</span>
-                <span className="text-[10px] text-gray-500 block mt-0.5">Sensor Format</span>
+                <span className="text-xs text-gray-500 block mt-0.5">Sensor Format</span>
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-100 flex flex-col gap-2">
-              <span className="text-xs font-bold text-[#111418] flex items-center gap-1.5">
-                <Info className="size-3.5 text-[#2B66E4]" />
+            <div className="p-4 rounded-xl bg-[#90C3CB]/15 border border-[#90C3CB]/30 flex flex-col gap-2">
+              <span className="text-xs font-bold text-black flex items-center gap-1.5">
+                <Info className="size-3.5 text-[#BA2D0B]" />
                 Corrective Clinician Guidance:
               </span>
               <ul className="text-xs text-gray-700 space-y-1.5 list-disc list-inside">

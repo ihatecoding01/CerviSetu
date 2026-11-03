@@ -152,16 +152,16 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
             <div className="flex items-center gap-2">
               <span className={`size-6 rounded-full flex items-center justify-center font-bold text-[11px] ${
                 s.status === "Completed"
-                  ? "bg-emerald-600 text-white"
+                  ? "bg-[#DBFE87] text-black"
                   : s.status === "Active"
-                  ? "bg-[#2B66E4] text-white"
+                  ? "bg-black text-white"
                   : "bg-gray-100 text-gray-400"
               }`}>
-                {s.status === "Completed" ? <Check className="size-3" /> : s.step}
+                {s.status === "Completed" ? <Check className="size-3 text-black" /> : s.step}
               </span>
               <div>
                 <div className="font-semibold text-gray-900 leading-tight">{s.name}</div>
-                <div className="text-[10px] text-gray-500">{s.status}</div>
+                <div className="text-xs text-gray-500">{s.status}</div>
               </div>
             </div>
             {idx < 3 && <div className="w-8 h-px bg-gray-200 hidden md:block" />}
@@ -176,8 +176,8 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-base font-bold text-[#111418] flex items-center gap-2">
-                  <FileText className="size-4 text-[#2B66E4]" />
+                <CardTitle className="text-base font-bold text-black flex items-center gap-2">
+                  <FileText className="size-4 text-[#BA2D0B]" />
                   Patient Clinical Registration
                 </CardTitle>
                 <CardDescription className="text-xs text-gray-500">
@@ -250,13 +250,13 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
                 <label className="text-xs font-semibold text-gray-700">Medical Scan or Pathology Slide (Optional)</label>
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-gray-200 hover:border-[#2B66E4] bg-gray-50/60 hover:bg-blue-50/20 rounded-xl p-4 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-colors text-center"
+                  className="border-2 border-dashed border-gray-200 hover:border-black bg-gray-50/60 hover:bg-slate-50 rounded-xl p-4 flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-colors text-center"
                 >
                   <UploadCloud className="size-6 text-gray-400" />
                   <div className="text-xs font-medium text-gray-800">
                     {imageFile ? imageFile.name : "Click to attach histopathology slide or dermoscopy scan"}
                   </div>
-                  <div className="text-[10px] text-gray-500">Supports PNG, JPG, or DICOM exports up to 25MB</div>
+                  <div className="text-xs text-gray-500">Supports PNG, JPG, or DICOM exports up to 25MB</div>
                   <input
                     type="file"
                     ref={fileInputRef}
@@ -283,7 +283,7 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#2B66E4] hover:bg-[#2052C0] text-white shadow-xs font-semibold gap-2 h-11"
+                className="w-full bg-[#BA2D0B] hover:bg-[#a02609] text-white shadow-xs font-semibold gap-2 h-11"
               >
                 {loading ? (
                   "Synthesizing Diagnostic Graph..."
@@ -303,8 +303,8 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-base font-bold text-[#111418] flex items-center gap-2">
-                  <Microscope className="size-4 text-[#4A91A7]" />
+                <CardTitle className="text-base font-bold text-black flex items-center gap-2">
+                  <Microscope className="size-4 text-[#BA2D0B]" />
                   Diagnostic Synthesis &amp; Triage Dossier
                 </CardTitle>
                 <CardDescription className="text-xs text-gray-500">
@@ -334,9 +334,9 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
                 {/* De-identified Token Header */}
                 <div className="flex items-center justify-between p-3.5 rounded-xl bg-gray-50 border border-gray-200">
                   <div className="flex items-center gap-2.5">
-                    <ShieldCheck className="size-4 text-emerald-600" />
+                    <ShieldCheck className="size-4 text-black" />
                     <span className="text-xs text-gray-600 font-medium">De-Identified ID:</span>
-                    <span className="font-mono text-xs font-bold text-[#2B66E4] bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+                    <span className="font-mono text-xs font-bold text-[#BA2D0B] bg-[#BA2D0B]/10 px-2 py-0.5 rounded border border-[#BA2D0B]/20">
                       {result.patient_token}
                     </span>
                   </div>
@@ -353,8 +353,8 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
                 </div>
 
                 {/* Primary Clinical Impression */}
-                <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-100">
-                  <span className="text-[10px] font-bold text-[#2B66E4] uppercase tracking-wider block mb-1">
+                <div className="p-4 rounded-xl bg-[#DBFE87]/15 border border-[#DBFE87]/40">
+                  <span className="text-xs font-bold text-[#BA2D0B] uppercase tracking-wider block mb-1">
                     Primary Clinical Impression
                   </span>
                   <h3 className="text-base font-bold text-[#111418]">

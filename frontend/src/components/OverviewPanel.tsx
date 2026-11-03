@@ -15,10 +15,10 @@ import {
   ArrowDownRight,
   Check,
   ChevronRight,
-  Eye,
   Calendar,
   AlertOctagon,
   PhoneCall,
+  Stethoscope,
 } from "lucide-react";
 
 interface Props {
@@ -32,7 +32,7 @@ interface Props {
 // 12-column x 5-row Dot Matrix Sparkline component modeled directly on components2.png
 function DotMatrix({
   pattern,
-  colorClass = "bg-[#2B66E4]",
+  colorClass = "bg-[#BA2D0B]",
 }: {
   pattern: number[]; // Array of 12 heights (1 to 5)
   colorClass?: string;
@@ -148,21 +148,21 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
           <CardHeader className="pb-1">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <div className="size-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-[#2B66E4]">
+                <div className="size-8 rounded-lg bg-[#BA2D0B]/10 border border-[#BA2D0B]/20 flex items-center justify-center text-[#BA2D0B]">
                   <Activity className="size-4" />
                 </div>
                 <div>
                   <div className="text-xs font-semibold text-gray-600">Screening Adherence</div>
-                  <div className="text-[11px] font-medium text-gray-500">42 in active triage</div>
+                  <div className="text-xs font-medium text-gray-500">42 in active triage</div>
                 </div>
               </div>
-              <div className="text-2xl font-bold text-[#111418] tracking-tight">87%</div>
+              <div className="text-2xl font-bold text-black tracking-tight">87%</div>
             </div>
           </CardHeader>
           <CardContent className="pt-2">
             <DotMatrix
               pattern={[2, 1, 2, 3, 2, 4, 3, 2, 3, 4, 3, 2]}
-              colorClass="bg-[#2B66E4]"
+              colorClass="bg-[#BA2D0B]"
             />
           </CardContent>
         </Card>
@@ -172,23 +172,23 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
           <CardHeader className="pb-1">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <div className="size-8 rounded-lg bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-700">
+                <div className="size-8 rounded-lg bg-[#F19941]/15 border border-[#F19941]/30 flex items-center justify-center text-[#BA2D0B]">
                   <Clock className="size-4" />
                 </div>
                 <div>
                   <div className="text-xs font-semibold text-gray-600">Avg. Turnaround</div>
-                  <div className="text-[11px] font-medium text-amber-700 flex items-center gap-0.5">
-                    <ArrowDownRight className="size-3" /> 12% vs target
+                  <div className="text-xs font-medium text-slate-700 flex items-center gap-0.5">
+                    <ArrowDownRight className="size-3 text-[#BA2D0B]" /> 12% vs target
                   </div>
                 </div>
               </div>
-              <div className="text-2xl font-bold text-[#111418] tracking-tight">24 min</div>
+              <div className="text-2xl font-bold text-black tracking-tight">24 min</div>
             </div>
           </CardHeader>
           <CardContent className="pt-2">
             <DotMatrix
               pattern={[1, 2, 1, 3, 2, 2, 3, 2, 1, 4, 5, 3]}
-              colorClass="bg-[#D8CA21]"
+              colorClass="bg-[#F19941]"
             />
           </CardContent>
         </Card>
@@ -198,29 +198,29 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
           <CardHeader className="pb-1">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <div className="size-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[#2B66E4]">
-                  <AlertTriangle className="size-4" />
+                <div className="size-8 rounded-lg bg-[#90C3CB]/20 border border-[#90C3CB]/40 flex items-center justify-center text-slate-800">
+                  <AlertTriangle className="size-4 text-[#BA2D0B]" />
                 </div>
                 <div>
                   <div className="text-xs font-semibold text-gray-600">Urgent Follow-Up</div>
-                  <div className="text-[11px] font-medium text-indigo-700 flex items-center gap-0.5">
-                    <ArrowUpRight className="size-3" /> {overdue} cases pending
+                  <div className="text-xs font-medium text-slate-700 flex items-center gap-0.5">
+                    <ArrowUpRight className="size-3 text-[#BA2D0B]" /> {overdue} cases pending
                   </div>
                 </div>
               </div>
-              <div className="text-2xl font-bold text-[#111418] tracking-tight">{critical}</div>
+              <div className="text-2xl font-bold text-black tracking-tight">{critical}</div>
             </div>
           </CardHeader>
           <CardContent className="pt-2">
             <DotMatrix
               pattern={[1, 2, 2, 3, 4, 3, 2, 4, 5, 4, 3, 2]}
-              colorClass="bg-[#2B66E4]"
+              colorClass="bg-[#90C3CB]"
             />
           </CardContent>
         </Card>
       </div>
 
-      {/* CerviSetu AI Clinical Engine Banner (modeled directly on homepage.png) */}
+      {/* CerviSetu AI Clinical Engine Banner */}
       <Card className="bg-white border-gray-200 shadow-xs overflow-hidden">
         <CardContent className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           {/* Engine Title and Metrics */}
@@ -229,7 +229,7 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
               <div className="text-xs font-semibold uppercase tracking-wider text-gray-500">
                 Multi-Agent Framework
               </div>
-              <div className="text-lg font-bold text-[#111418] tracking-tight mt-0.5">
+              <div className="text-lg font-bold text-black tracking-tight mt-0.5">
                 CerviSetu Diagnostic &amp; Tracking Engine
               </div>
             </div>
@@ -240,8 +240,8 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
                 <span></span><span></span><span></span><span></span><span></span>
               </div>
               <div>
-                <div className="text-xl font-bold text-[#111418] leading-none">87%</div>
-                <div className="text-[11px] text-gray-500 mt-0.5">Triage Precision · 42 Checked</div>
+                <div className="text-xl font-bold text-black leading-none">87%</div>
+                <div className="text-xs text-gray-500 mt-0.5">Triage Precision · 42 Checked</div>
               </div>
             </div>
 
@@ -251,20 +251,20 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
                 <span></span><span></span><span></span><span></span><span></span>
               </div>
               <div>
-                <div className="text-xl font-bold text-[#111418] leading-none">24m</div>
-                <div className="text-[11px] text-gray-500 mt-0.5">Avg Turnaround Time</div>
+                <div className="text-xl font-bold text-black leading-none">24m</div>
+                <div className="text-xs text-gray-500 mt-0.5">Avg Turnaround Time</div>
               </div>
             </div>
           </div>
 
           {/* AI Recommendation Pill + Action */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 border border-blue-100 rounded-xl p-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3">
             <div className="flex items-center gap-2.5">
-              <div className="size-7 rounded-lg bg-[#2B66E4] text-white flex items-center justify-center shrink-0">
+              <div className="size-7 rounded-lg bg-[#BA2D0B] text-white flex items-center justify-center shrink-0">
                 <Activity className="size-4" />
               </div>
               <div className="text-xs text-gray-800">
-                <span className="font-semibold text-gray-900">AI Clinical Insight: </span>
+                <span className="font-semibold text-black">AI Clinical Insight: </span>
                 {recommendationApplied
                   ? "Directive issued: Dispatch order assigned to Sector 4 ASHA lead."
                   : "PT-RURAL-7891 is 8 days overdue. Tier 4 District Authority dossier prepared."}
@@ -318,7 +318,7 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
                 </div>
                 <div className="w-full h-2.5 rounded-full bg-gray-100 overflow-hidden flex">
                   <div
-                    className="h-full bg-[#2B66E4] rounded-full transition-all"
+                    className="h-full bg-[#BA2D0B] rounded-full transition-all"
                     style={{ width: `${item.val}%` }}
                   />
                   <div
@@ -335,30 +335,30 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
                 <span>520 Cases Targeted</span>
               </div>
               <div className="w-full h-3 rounded-lg overflow-hidden flex bg-gray-100">
-                <div style={{ width: "57%" }} className="bg-[#111418] text-[9px] text-white flex items-center justify-center font-bold">57%</div>
-                <div style={{ width: "18%" }} className="bg-[#2B66E4] text-[9px] text-white flex items-center justify-center font-bold">18%</div>
-                <div style={{ width: "15%" }} className="bg-[#4A91A7] text-[9px] text-white flex items-center justify-center font-bold">15%</div>
+                <div style={{ width: "57%" }} className="bg-black text-xs text-white flex items-center justify-center font-bold">57%</div>
+                <div style={{ width: "18%" }} className="bg-[#BA2D0B] text-xs text-white flex items-center justify-center font-bold">18%</div>
+                <div style={{ width: "15%" }} className="bg-[#90C3CB] text-xs text-black flex items-center justify-center font-bold">15%</div>
                 <div style={{ width: "10%" }} className="bg-hatch" />
               </div>
-              <div className="flex items-center gap-4 text-[11px] text-gray-500 pt-1">
-                <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#111418]"></span> Active Checkups</span>
-                <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#2B66E4]"></span> Overdue Alerts</span>
-                <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#4A91A7]"></span> ASHA Dispatched</span>
+              <div className="flex items-center gap-4 text-xs text-gray-500 pt-1">
+                <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-black"></span> Active Checkups</span>
+                <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#BA2D0B]"></span> Overdue Alerts</span>
+                <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#90C3CB]"></span> ASHA Dispatched</span>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Right Column: Critical Follow-up Alerts (modeled on components3.png pastel cards) */}
+        {/* Right Column: Critical Follow-up Alerts */}
         <Card className="bg-white border-gray-200 shadow-2xs">
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <div>
-              <CardTitle className="text-base font-bold text-[#111418]">Critical Escalation Alerts</CardTitle>
+              <CardTitle className="text-base font-bold text-black">Critical Escalation Alerts</CardTitle>
               <CardDescription className="text-xs text-gray-500">Tier-gated patient non-responder triggers</CardDescription>
             </div>
             <button
               onClick={() => onSelectCase && onSelectCase("PT-RURAL-7891")}
-              className="text-xs font-medium text-[#2B66E4] hover:underline flex items-center gap-0.5 cursor-pointer"
+              className="text-xs font-medium text-[#BA2D0B] hover:underline flex items-center gap-0.5 cursor-pointer"
             >
               View Matrix <ChevronRight className="size-3" />
             </button>
@@ -472,16 +472,18 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
         </Card>
       </div>
 
-      {/* Patient Cases Registry Table (modeled on componets.png Patient Queue) */}
+      {/* Patient Cases Registry Table (modeled on Section 6.1 Clinician Ward Board) */}
       <Card className="bg-white border-gray-200 shadow-2xs">
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <div>
-            <CardTitle className="text-base font-bold text-[#111418]">Monitored Patient Registry</CardTitle>
+            <CardTitle className="text-base font-bold text-[#111418]">
+              Curative Cervical Cancer Cohort (GEC-ESTRO &le; 49d Target · NCG &le; 56d Limit)
+            </CardTitle>
             <CardDescription className="text-xs text-gray-500">
-              De-identified active surveillance cohort with progressive escalation triggers
+              Active treatment surveillance roster with biological clock projections and 4-tier safety triggers
             </CardDescription>
           </div>
-          <Badge variant="neutral" size="sm">{cases.length} Tracked Cases</Badge>
+          <Badge variant="neutral" size="sm">{cases.length} Tracked Patients</Badge>
         </CardHeader>
         <CardContent>
           {cases.length === 0 ? (
@@ -493,56 +495,83 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Patient Token</TableHead>
-                  <TableHead>Tracking Status</TableHead>
-                  <TableHead>Cancer Severity Score</TableHead>
-                  <TableHead>Overdue Window</TableHead>
-                  <TableHead>Active Escalation Tier</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
+                  <TableHead>Patient &amp; Diagnosis</TableHead>
+                  <TableHead>Biological Clock (OTT)</TableHead>
+                  <TableHead>Adherence &amp; Care Status</TableHead>
+                  <TableHead>Severity</TableHead>
+                  <TableHead className="text-right">Clinical Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {cases.map((c) => (
-                  <TableRow key={c.patient_token}>
-                    <TableCell className="font-mono text-xs font-semibold text-[#2B66E4]">
-                      {c.patient_token}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="neutral" size="xs">
-                        {c.status || "ACTIVE"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-gray-800">
-                          {c.cancer_severity_score ? `${(c.cancer_severity_score * 100).toFixed(0)}%` : "0%"}
-                        </span>
-                        {c.cancer_severity_score && c.cancer_severity_score >= 0.8 && (
-                          <Badge variant="destructive" size="xs">High Risk</Badge>
+                {cases.map((c, index) => {
+                  const demoNames = [
+                    { name: "Shanti Devi", age: "48F", diag: "Cervix Stage IIB (CCRT)", spoke: "Mirzapur", ott: "🟢 Proj: Day 44 (<=49d)", ottSub: "GEC-ESTRO On-Track", adh: "🟢 Attending Daily", adhSub: "Fraction 14 Done · Step 15 Due" },
+                    { name: "Geeta Kushwaha", age: "52F", diag: "Cervix Stage IIIA", spoke: "Chunar", ott: "🟡 Proj: Day 52 (<=56d)", ottSub: "NCG Warning Margin", adh: "🟡 Missed Day +1", adhSub: "Tier 1 WhatsApp/SMS Nudge Sent" },
+                    { name: "Kamla Bind", age: "45F", diag: "Cervix Stage IIIC1", spoke: "Robertsganj", ott: "🔴 Proj: Day 58 (>56d)", ottSub: "HARD CLOCK BREACH", adh: "🔴 Overdue Day +3", adhSub: "Tier 3 ASHA Home Visit Dispatched" },
+                    { name: "Meera Singh", age: "41F", diag: "Cervix Stage IB3", spoke: "Varanasi", ott: "🟢 Proj: Day 42 (<=49d)", ottSub: "GEC-ESTRO On-Track", adh: "🟢 Attending Daily", adhSub: "Fraction 6 Done · Step 7 Due" },
+                  ];
+                  const demo = demoNames[index % demoNames.length];
+
+                  return (
+                    <TableRow key={c.patient_token} className="hover:bg-gray-50/80 transition-colors">
+                      <TableCell>
+                        <div className="flex items-center gap-2.5">
+                          <div className="size-8 rounded-lg bg-[#DBFE87]/30 text-black font-bold text-xs flex items-center justify-center border border-[#DBFE87]">
+                            {demo.name[0]}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold text-black">{demo.name}</span>
+                              <span className="text-xs text-gray-500">{demo.age}</span>
+                            </div>
+                            <div className="text-xs text-gray-500 flex items-center gap-1">
+                              <span className="font-mono text-xs text-[#BA2D0B] bg-[#BA2D0B]/10 px-1.5 rounded">{c.patient_token}</span>
+                              <span>• {demo.diag}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="text-xs font-semibold text-gray-900">{demo.ott}</div>
+                          <div className="text-xs text-gray-500">{demo.ottSub}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="text-xs font-semibold text-gray-900">{demo.adh}</div>
+                          <div className="text-xs text-gray-500">{demo.adhSub}</div>
+                          <div className="mt-1">{getTierBadge(c.current_escalation_tier)}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-semibold text-gray-800">
+                            {c.cancer_severity_score ? `${(c.cancer_severity_score * 100).toFixed(0)}%` : "78%"}
+                          </span>
+                          {(c.cancer_severity_score || 0) >= 0.7 && (
+                            <Badge variant="destructive" size="xs">High Risk</Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {onSelectCase && (
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Button
+                              variant="obsidian"
+                              size="xs"
+                              onClick={() => onSelectCase(c.patient_token)}
+                              className="text-xs font-semibold bg-black hover:bg-black/85 text-white gap-1"
+                            >
+                              <Stethoscope className="size-3" />
+                              Open Encounter
+                            </Button>
+                          </div>
                         )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className={(c.days_overdue || 0) > 0 ? "text-amber-800 font-semibold text-xs" : "text-gray-500 text-xs"}>
-                        {c.days_overdue ?? 0} days
-                      </span>
-                    </TableCell>
-                    <TableCell>{getTierBadge(c.current_escalation_tier)}</TableCell>
-                    <TableCell className="text-right">
-                      {onSelectCase && (
-                        <Button
-                          variant="ghost"
-                          size="xs"
-                          onClick={() => onSelectCase(c.patient_token)}
-                          className="text-xs font-medium text-[#2B66E4] hover:bg-blue-50"
-                        >
-                          <Eye className="size-3 mr-1" />
-                          Inspect
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
