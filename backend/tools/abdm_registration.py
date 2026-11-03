@@ -17,6 +17,7 @@ import hmac
 import json
 import re
 import secrets
+import sqlite3
 import time
 from typing import Any, Dict, Optional
 
@@ -98,9 +99,14 @@ def _init_table():
                 sends INTEGER DEFAULT 1,
                 status TEXT DEFAULT 'PENDING',
                 link_token TEXT,
-                pending_json TEXT
+                pending_json TEXT,
+                claimed_until REAL
             )
         """)
+        try:  # older sandbox DBs predate the verify lease
+            conn.execute("ALTER TABLE abdm_otp_sessions ADD COLUMN claimed_until REAL")
+        except sqlite3.OperationalError:
+            pass
         # Every identifier is a keyed hash: Aadhaar/VID, synthetic ABHA number and address
         conn.execute("""
             CREATE TABLE IF NOT EXISTS synthetic_abha_ids (
@@ -298,8 +304,141 @@ def _check_otp(txn_id: str, otp: str) -> Dict[str, Any]:
         if left <= 0:
             _set_status(txn_id, "LOCKED")
         raise RegistrationError("OTP_INVALID", f"Incorrect OTP. {max(left, 0)} attempt(s) left.", 401)
-    _set_status(txn_id, "VERIFIED")
+    # Not consumed here: _consume_otp runs only after registration is persisted, so a failed save can retry
     return s
+
+
+def _consume_otp(txn_id: str, lease: Dict[str, float]):
+    """Mark the OTP used exactly once, and only by the current lease holder (a stale holder cannot)."""
+    with global_db._get_conn() as conn:
+        cur = conn.execute("""UPDATE abdm_otp_sessions SET status = 'VERIFIED'
+                              WHERE txn_id = ? AND status = 'PENDING' AND claimed_until = ?""",
+                           (txn_id, lease["until"]))
+        conn.commit()
+    if cur.rowcount != 1:
+        raise RegistrationError("TRANSACTION_CLOSED", "This transaction is no longer active.", 409)
+
+
+ABHA_ID_MAX_ATTEMPTS = 20
+VERIFY_LEASE_SECONDS = 30
+
+
+def _claim(txn_id: str) -> Dict[str, float]:
+    """Single-writer lease on a transaction: concurrent verifies of the same OTP cannot both proceed.
+
+    The compare-and-set runs in one SQLite statement, so exactly one caller wins. The returned value is a
+    fencing token: _renew extends it before each write phase and _consume_otp requires it, so a holder that
+    stalled past its lease (and was taken over) fails at its next step instead of writing or consuming.
+    A crashed holder's lease simply expires, after which the same valid OTP can be retried.
+    """
+    now = time.time()
+    with global_db._get_conn() as conn:
+        cur = conn.execute("""UPDATE abdm_otp_sessions SET claimed_until = ?
+                              WHERE txn_id = ? AND status = 'PENDING' AND COALESCE(claimed_until, 0) < ?""",
+                           (now + VERIFY_LEASE_SECONDS, txn_id, now))
+        conn.commit()
+    if cur.rowcount != 1:
+        if _session(txn_id)["status"] != "PENDING":
+            raise RegistrationError("TRANSACTION_CLOSED", "This transaction is no longer active.", 409)
+        raise RegistrationError("VERIFY_IN_PROGRESS", "This OTP is already being verified; retry in a moment.", 409)
+    return {"until": now + VERIFY_LEASE_SECONDS}
+
+
+def _renew(txn_id: str, lease: Dict[str, float]):
+    """Extend our lease; if another verify took it over after ours lapsed, stop before writing anything else."""
+    until = time.time() + VERIFY_LEASE_SECONDS
+    with global_db._get_conn() as conn:
+        cur = conn.execute("""UPDATE abdm_otp_sessions SET claimed_until = ?
+                              WHERE txn_id = ? AND status = 'PENDING' AND claimed_until = ?""",
+                           (until, txn_id, lease["until"]))
+        conn.commit()
+    if cur.rowcount != 1:
+        raise RegistrationError("VERIFY_IN_PROGRESS", "This OTP is already being verified; retry in a moment.", 409)
+    lease["until"] = until
+
+
+def _release(txn_id: str, lease: Dict[str, float]):
+    with global_db._get_conn() as conn:
+        conn.execute("""UPDATE abdm_otp_sessions SET claimed_until = NULL
+                        WHERE txn_id = ? AND status = 'PENDING' AND claimed_until = ?""", (txn_id, lease["until"]))
+        conn.commit()
+
+
+def _assign_token(txn_id: str, pending_json: Optional[str], token: str) -> str:
+    """Record the token this transaction will create (compare-and-set); returns whichever token won."""
+    pending = json.loads(pending_json or "{}")
+    with global_db._get_conn() as conn:
+        cur = conn.execute("UPDATE abdm_otp_sessions SET pending_json = ? WHERE txn_id = ? AND pending_json IS ?",
+                           (json.dumps({**pending, "assigned_token": token}), txn_id, pending_json))
+        conn.commit()
+    if cur.rowcount == 1:
+        return token
+    return json.loads(_session(txn_id)["pending_json"] or "{}").get("assigned_token") or token
+
+
+def _new_patient_token() -> str:
+    for _ in range(ABHA_ID_MAX_ATTEMPTS):
+        token = f"PT-ABHA-{secrets.token_hex(3).upper()}"
+        if not _find_abha("patient_token", token) and not global_db.get_treatment_plan(token):
+            return token
+    raise RegistrationError("ABHA_ID_UNAVAILABLE", "Could not allocate a Synthetic ABHA right now; please retry.", 503)
+
+
+def _staged_key(txn_id: str) -> str:
+    return f"{txn_id}::ABHA_STAGED"
+
+
+def _promote_profile(txn_id: str, token: str):
+    """Publish this transaction's staged profile under the patient token, once its ABHA row is ours.
+
+    The staged key is private to the transaction, so a losing/aborted transaction can never write to (or
+    read) another patient's {token}::ABHA profile. Ownership is proven by the row's address hash matching
+    the staged address before anything is published.
+    """
+    try:
+        staged = global_vault.retrieve_pii(_staged_key(txn_id))
+    except Exception:
+        return  # already promoted and cleaned up by an earlier attempt
+    row = _find_abha("patient_token", token)
+    if not row or row["abha_address_hash"] != _keyed_hash(staged["abha_address"]):
+        raise RegistrationError("ABHA_ID_UNAVAILABLE", "Could not allocate a unique Synthetic ABHA right now; please retry.", 503)
+    global_vault.store_pii(f"{token}::ABHA", staged)
+    global_vault.delete_pii(_staged_key(txn_id))
+
+
+def _create_abha_record(txn_id: str, token: str, identity_hash: Optional[str], pii: Dict[str, Any]):
+    """Insert a unique synthetic ABHA number + address, retrying (bounded) only on number/address collisions."""
+    handle = re.sub(r"[^a-z0-9]", "", pii["name"].lower())[:16] or "beneficiary"
+    for attempt in range(ABHA_ID_MAX_ATTEMPTS):
+        digits = f"91{secrets.randbelow(10**12):012d}"
+        abha_number = f"{digits[:2]}-{digits[2:6]}-{digits[6:10]}-{digits[10:]}"
+        # Existing handle.NNNN@sbx format; widen the suffix once the 4-digit space looks crowded for this name
+        suffix = f"{secrets.randbelow(10000):04d}" if attempt < ABHA_ID_MAX_ATTEMPTS // 2 else f"{secrets.randbelow(10**6):06d}"
+        abha_address = f"{handle}.{suffix}@sbx"
+        number_hash, address_hash = _keyed_hash(digits), _keyed_hash(abha_address)
+        if _find_abha("abha_number_hash", number_hash) or _find_abha("abha_address_hash", address_hash):
+            continue
+        # Stage first (txn-private key): if the insert below lands, its profile already exists (resume-safe)
+        global_vault.store_pii(_staged_key(txn_id), {"name": pii["name"], "mobile": pii.get("mobile"),
+                                                  "abha_number": abha_number, "abha_address": abha_address})
+        try:
+            with global_db._get_conn() as conn:
+                conn.execute("""INSERT INTO synthetic_abha_ids (patient_token, identity_hash, abha_number_hash, abha_address_hash)
+                                VALUES (?, ?, ?, ?)""", (token, identity_hash, number_hash, address_hash))
+                conn.commit()
+            return
+        except sqlite3.IntegrityError as e:
+            msg = str(e)
+            if "patient_token" in msg and _find_abha("patient_token", token):
+                return  # row exists; _promote_profile checks it is really ours before publishing anything
+            if "abha_number_hash" in msg or "abha_address_hash" in msg:
+                continue  # lost a race for the same value: try another
+            if "identity_hash" in msg:
+                raise RegistrationError("ALREADY_REGISTERED",
+                                        "This identity already has a Synthetic ABHA. Log in with Mobile OTP or Link existing ABHA.", 409)
+            raise
+    global_audit.record_event("ABDM_ABHA_ID_EXHAUSTED", "SYSTEM", token, {"attempts": ABHA_ID_MAX_ATTEMPTS})
+    raise RegistrationError("ABHA_ID_UNAVAILABLE", "Could not allocate a unique Synthetic ABHA right now; please retry.", 503)
 
 
 def _find_abha(column: str, value_hash: str) -> Optional[Dict[str, Any]]:
@@ -339,9 +478,36 @@ def _link_mobile(mobile: Optional[str], token: str):
 
 
 def verify_otp(txn_id: str, otp: str) -> Dict[str, Any]:
-    s = _check_otp(txn_id, otp)
+    """Verify an OTP and complete login / registration.
+
+    Persistence spans independent stores (separate SQLite commits plus the file-backed vault), so this is
+    NOT atomic. Instead every step is idempotent and the OTP is consumed last:
+      lease -> assigned token (CAS) -> staged vault profile (txn-private key) -> ABHA row -> promote profile
+      -> mobile link -> synthetic journey -> consents -> audit (idempotency key) -> consume OTP (fenced).
+    A failure or crash anywhere before consumption leaves the OTP PENDING; retrying the same OTP resumes
+    on the same token and converges. Known limitations (accepted for the sandbox):
+      * The audit log is an append-only file, not a DB table: ABDM_ABHA_VERIFIED carries an idempotency key
+        and is skipped if already present, which holds only while one writer holds the lease.
+      * A transaction that fails and is never retried leaves its staged profile under its own
+        {txn_id}::ABHA_STAGED key. It is never published to a patient token or exposed, but nothing
+        sweeps it yet (cleanup gap).
+      * The lease is renewed before each write phase. A holder stalled longer than VERIFY_LEASE_SECONDS
+        inside one phase can be taken over; it then fails at its next renew/consume (fencing), but a
+        write already in flight in that phase still lands. All phase writes are idempotent, so the new
+        holder converges on the same token.
+    """
+    _check_otp(txn_id, otp)
+    lease = _claim(txn_id)
+    try:
+        return _verify_claimed(txn_id, _session(txn_id), lease)  # re-read: an earlier attempt may have assigned a token
+    finally:
+        _release(txn_id, lease)  # no-op once consumed; frees the lease after a failure so the same OTP can retry
+
+
+def _verify_claimed(txn_id: str, s: Dict[str, Any], lease: Dict[str, float]) -> Dict[str, Any]:
     if s["mode"] == "MOBILE_LOGIN":
         token = s["link_token"]
+        _consume_otp(txn_id, lease)
         global_audit.record_event("PATIENT_LOGIN_VERIFIED", "PATIENT", token, {"txn_id": txn_id, "simulated": True})
         abha = _find_abha("patient_token", token)
         return {"verified": True, "patient_token": token, "abha_created": False, "returning": True,
@@ -353,7 +519,13 @@ def verify_otp(txn_id: str, otp: str) -> Dict[str, Any]:
     pending = json.loads(s["pending_json"] or "{}")
     verified_via = f"{s['id_type']} ending {s['identifier_last4']} (simulated)"
 
-    if s["mode"] == "GENERATE":
+    # A retry after a partial success resumes the record this transaction already created (no duplicate patient)
+    assigned = pending.get("assigned_token")
+    resumed = _find_abha("patient_token", assigned) if assigned else None
+
+    if resumed:
+        existing = None
+    elif s["mode"] == "GENERATE":
         if _find_abha("identity_hash", s["identifier_hash"]):
             # Aadhaar is never a login credential: point to mobile OTP / ABHA-number login instead
             raise RegistrationError("ALREADY_REGISTERED",
@@ -369,24 +541,21 @@ def verify_otp(txn_id: str, otp: str) -> Dict[str, Any]:
         token, created = existing["patient_token"], False
         _link_mobile(pii.get("mobile"), token)
     else:
-        token = s["link_token"] or f"PT-ABHA-{secrets.token_hex(3).upper()}"
-        digits = f"91{secrets.randbelow(10**12):012d}"
-        abha_number = f"{digits[:2]}-{digits[2:6]}-{digits[6:10]}-{digits[10:]}"
-        handle = re.sub(r"[^a-z0-9]", "", pii["name"].lower())[:16] or "beneficiary"
-        abha_address = f"{handle}.{secrets.randbelow(10000):04d}@sbx"
-        with global_db._get_conn() as conn:
-            conn.execute("""INSERT INTO synthetic_abha_ids (patient_token, identity_hash, abha_number_hash, abha_address_hash)
-                            VALUES (?, ?, ?, ?)""",
-                         (token, s["identifier_hash"] if s["mode"] == "GENERATE" else None,
-                          _keyed_hash(digits), _keyed_hash(abha_address)))
-            conn.commit()
-        global_vault.store_pii(f"{token}::ABHA", {"name": pii["name"], "mobile": pii.get("mobile"),
-                                                  "abha_number": abha_number, "abha_address": abha_address})
+        if resumed:
+            token = assigned
+        else:
+            token = assigned or _assign_token(txn_id, s["pending_json"], s["link_token"] or _new_patient_token())
+            _renew(txn_id, lease)
+            _create_abha_record(txn_id, token, s["identifier_hash"] if s["mode"] == "GENERATE" else None, pii)
+        _promote_profile(txn_id, token)
         _link_mobile(pii.get("mobile"), token)
         if not s["link_token"]:
             # New demo patient: deterministic SYNTHETIC journey, isolated from real clinical queues
+            _renew(txn_id, lease)
             ensure_synthetic_journey(token)
         created = True
+
+    _renew(txn_id, lease)
 
     for key in CONSENT_ITEMS:
         global_db.record_dpdp_consent(
@@ -394,9 +563,15 @@ def verify_otp(txn_id: str, otp: str) -> Dict[str, Any]:
             granted_by="PATIENT_VIA_HEALTH_WORKER", language="ENGLISH",
             sha256_hash=hashlib.sha256(f"{txn_id}|{key}|{CONSENT_ITEMS[key]}".encode()).hexdigest(),
         )
-    global_audit.record_event("ABDM_ABHA_VERIFIED", pending.get("requested_by", "CARE_ADMIN"), token,
-                              {"txn_id": txn_id, "mode": s["mode"], "created": created, "simulated": True,
-                               "consents": list(CONSENT_ITEMS)})
+    # Idempotency key: a retry after a crash between this event and consumption does not log it twice
+    # (the lease makes the check-then-append single-writer)
+    audit_key = f"ABDM_ABHA_VERIFIED:{txn_id}"
+    if not any(e.get("details", {}).get("idempotency_key") == audit_key
+               for e in global_audit.get_events(patient_token=token, limit=10_000)):
+        global_audit.record_event("ABDM_ABHA_VERIFIED", pending.get("requested_by", "CARE_ADMIN"), token,
+                                  {"txn_id": txn_id, "mode": s["mode"], "created": created, "simulated": True,
+                                   "consents": list(CONSENT_ITEMS), "idempotency_key": audit_key})
+    _consume_otp(txn_id, lease)
     return {
         "verified": True,
         "patient_token": token,

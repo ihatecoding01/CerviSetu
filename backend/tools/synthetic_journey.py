@@ -50,11 +50,26 @@ def journey_spec(token: str, registered_on: date) -> Dict[str, Any]:
     }
 
 
+def _resume_sessions(token: str, plan: Dict[str, Any]):
+    """Backfill sessions missing after a partial write; the registration date is recovered from start_date."""
+    start = date.fromisoformat(plan["start_date"])
+    spec = journey_spec(token, start + timedelta(days=5 + _seed(token)[0] % 26))
+    have = {s["session_date"] for s in global_db.get_treatment_sessions(plan["plan_id"]) if s["status"] == "COMPLETED"}
+    for n, d in enumerate(spec["completed_dates"], start=1):
+        if d.isoformat() not in have:
+            global_db.record_treatment_session(plan["plan_id"], token, n, d.isoformat(), "COMPLETED",
+                                               GENERATOR_ID, "SYNTHETIC-LINAC", 2.0)
+
+
 def ensure_synthetic_journey(token: str, registered_on: date = None) -> Dict[str, Any]:
     """Create the synthetic case + plan + session history once. Idempotent per token."""
     plan = global_db.get_treatment_plan(token)
     if plan:
+        if plan["approved_by"] == GENERATOR_ID:
+            _resume_sessions(token, plan)
         return {"created": False, "plan_id": plan["plan_id"]}
+    # Each write below is its own commit (no cross-call transaction). Patient/case use INSERT OR REPLACE,
+    # and a crash after the plan exists is healed by _resume_sessions, so a retry always converges.
     spec = journey_spec(token, registered_on or clinic_today())
 
     global_db.save_patient(token, spec["age"], "F", SYNTHETIC_REGION)

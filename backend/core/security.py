@@ -108,6 +108,11 @@ class TokenVault:
         self._memory_vault[token_id] = encrypted_blob
         self._persist_vault()
 
+    def delete_pii(self, token_id: str) -> None:
+        """Remove a vault entry (no-op if absent)."""
+        if self._memory_vault.pop(token_id, None) is not None:
+            self._persist_vault()
+
     def retrieve_pii(self, token_id: str) -> Dict[str, Any]:
         """Decrypt and retrieve patient PII for token_id."""
         if token_id not in self._memory_vault:

@@ -1,4 +1,5 @@
 """ABDM/ABHA sandbox registration: consent gating, OTP security, Aadhaar never stored."""
+import json
 import time
 
 from fastapi.testclient import TestClient
@@ -154,3 +155,360 @@ def test_link_abha_to_existing_cervisetu_patient():
     data = _request(mode="LINK", identifier="91123456789012", link_token="PT-RURAL-7891").json()
     v = client.post("/api/abdm/otp/verify", json={"txn_id": data["txn_id"], "otp": data["sandbox_otp"]}).json()
     assert v["patient_token"] == "PT-RURAL-7891"
+
+
+# --- unique ABHA allocation + OTP consumed only after persistence ---
+
+import random
+
+_rng = random.Random(20261103)
+
+
+def _random_aadhaar():
+    while True:
+        a = _aadhaar(str(_rng.randint(2, 9)) + "".join(str(_rng.randint(0, 9)) for _ in range(10)))
+        if a:
+            return a
+
+
+def _status(txn_id):
+    with global_db._get_conn() as conn:
+        return conn.execute("SELECT status FROM abdm_otp_sessions WHERE txn_id = ?", (txn_id,)).fetchone()[0]
+
+
+def _verify(data, c=client):
+    return c.post("/api/abdm/otp/verify", json={"txn_id": data["txn_id"], "otp": data["sandbox_otp"]})
+
+
+def _sequence(monkeypatch, values):
+    """Force secrets.randbelow inside verify to return the given values, in order."""
+    queue, real = list(values), random.SystemRandom().randrange
+    monkeypatch.setattr(abdm.secrets, "randbelow", lambda n: queue.pop(0) % n if queue else real(n))
+
+
+def test_same_name_registered_hundreds_of_times_without_500():
+    addresses = set()
+    for _ in range(300):
+        data = _request(identifier=_random_aadhaar(), beneficiary_name="Repeat Name", mobile=None).json()
+        res = _verify(data)
+        assert res.status_code == 200, res.text
+        addresses.add(res.json()["abha_card"]["abha_address"])
+    assert len(addresses) == 300 and all(a.startswith("repeatname.") for a in addresses)
+
+
+def test_forced_collision_retries_to_a_unique_value(monkeypatch):
+    first = _request(identifier=_random_aadhaar(), beneficiary_name="Collide Case", mobile=None).json()
+    _sequence(monkeypatch, [111, 4242])
+    taken = _verify(first).json()["abha_card"]
+    assert taken["abha_address"] == "collidecase.4242@sbx"
+
+    second = _request(identifier=_random_aadhaar(), beneficiary_name="Collide Case", mobile=None).json()
+    # same number + address first, then a fresh pair
+    _sequence(monkeypatch, [111, 4242, 222, 4343])
+    card = _verify(second).json()["abha_card"]
+    assert card["abha_address"] == "collidecase.4343@sbx" and card["abha_number"] != taken["abha_number"]
+
+
+def test_insert_race_on_unique_constraint_is_retried(monkeypatch):
+    first = _request(identifier=_random_aadhaar(), beneficiary_name="Race Case", mobile=None).json()
+    _sequence(monkeypatch, [333, 1111])
+    assert _verify(first).status_code == 200
+    # pre-check blind (another writer won between check and insert): the UNIQUE constraint must be retried
+    real_find = abdm._find_abha
+    monkeypatch.setattr(abdm, "_find_abha",
+                        lambda col, v: None if col in ("abha_number_hash", "abha_address_hash") else real_find(col, v))
+    second = _request(identifier=_random_aadhaar(), beneficiary_name="Race Case", mobile=None).json()
+    _sequence(monkeypatch, [333, 1111, 444, 2222])
+    res = _verify(second)
+    assert res.status_code == 200, res.text
+    assert res.json()["abha_card"]["abha_address"] == "racecase.2222@sbx"
+
+
+def test_retry_exhaustion_is_controlled_and_keeps_otp(monkeypatch):
+    first = _request(identifier=_random_aadhaar(), beneficiary_name="Exhaust Case", mobile=None).json()
+    _sequence(monkeypatch, [555, 7777])
+    assert _verify(first).status_code == 200
+
+    second = _request(identifier=_random_aadhaar(), beneficiary_name="Exhaust Case", mobile=None).json()
+    monkeypatch.setattr(abdm.secrets, "randbelow", lambda n: 555 if n == 10**12 else 7777)
+    res = _verify(second)
+    assert res.status_code == 503 and res.json()["detail"]["code"] == "ABHA_ID_UNAVAILABLE"
+    assert _status(second["txn_id"]) == "PENDING"
+    monkeypatch.undo()
+    assert _verify(second).status_code == 200
+
+
+def test_failed_save_keeps_otp_and_retry_creates_no_duplicate(monkeypatch):
+    lenient = TestClient(app, raise_server_exceptions=False)
+    aadhaar = _random_aadhaar()
+    data = _request(identifier=aadhaar, beneficiary_name="Partial Save", mobile=None).json()
+    calls = []
+
+    def flaky_journey(token, registered_on=None):
+        calls.append(token)
+        raise RuntimeError("simulated failure after the ABHA row was written")
+
+    monkeypatch.setattr(abdm, "ensure_synthetic_journey", flaky_journey)
+    assert _verify(data, lenient).status_code == 500
+    assert _status(data["txn_id"]) == "PENDING"  # not consumed by a failed registration
+    monkeypatch.undo()
+
+    ok = _verify(data)  # same valid OTP
+    assert ok.status_code == 200, ok.text
+    token = ok.json()["patient_token"]
+    assert token == calls[0] and ok.json()["abha_created"]
+    assert global_db.get_treatment_plan(token) is not None
+    with global_db._get_conn() as conn:
+        n = conn.execute("SELECT COUNT(*) FROM synthetic_abha_ids WHERE identity_hash = ?",
+                         (abdm._keyed_hash(aadhaar),)).fetchone()[0]
+        consents = conn.execute("SELECT COUNT(*) FROM dpdp_consents WHERE patient_token = ?", (token,)).fetchone()[0]
+    assert n == 1 and consents == len(abdm.CONSENT_ITEMS)
+    assert _status(data["txn_id"]) == "VERIFIED"
+
+
+def test_success_consumes_otp_exactly_once():
+    data = _request(identifier=_random_aadhaar(), beneficiary_name="Once Only", mobile=None).json()
+    assert _verify(data).status_code == 200
+    assert _status(data["txn_id"]) == "VERIFIED"
+    again = _verify(data)
+    assert again.status_code == 409 and again.json()["detail"]["code"] == "TRANSACTION_CLOSED"
+
+
+# --- concurrency + failure at every persistence boundary ---
+
+import threading
+from datetime import date, timedelta
+
+import pytest
+
+from backend.core.security import global_audit, global_vault
+from backend.tools import synthetic_journey as sj
+
+
+def _fresh(name="Boundary Case"):
+    mobile = "7" + "".join(str(_rng.randint(0, 9)) for _ in range(9))
+    data = _request(identifier=_random_aadhaar(), beneficiary_name=name, mobile=mobile).json()
+    return data, mobile
+
+
+def _rows_for(txn_id):
+    with global_db._get_conn() as conn:
+        ident = conn.execute("SELECT identifier_hash FROM abdm_otp_sessions WHERE txn_id = ?", (txn_id,)).fetchone()[0]
+        return [dict(r) for r in conn.execute("SELECT * FROM synthetic_abha_ids WHERE identity_hash = ?", (ident,))]
+
+
+def _assert_consistent(data, mobile, token):
+    rows = _rows_for(data["txn_id"])
+    assert len(rows) == 1 and rows[0]["patient_token"] == token
+    plan = global_db.get_treatment_plan(token)
+    start = date.fromisoformat(plan["start_date"])
+    spec = sj.journey_spec(token, start + timedelta(days=5 + sj._seed(token)[0] % 26))
+    assert len(global_db.get_treatment_sessions(plan["plan_id"])) == len(spec["completed_dates"])
+    with global_db._get_conn() as conn:
+        consents = conn.execute("SELECT COUNT(*) FROM dpdp_consents WHERE patient_token = ?", (token,)).fetchone()[0]
+        linked = conn.execute("SELECT patient_token FROM patient_mobile_links WHERE mobile_hash = ?",
+                              (abdm._keyed_hash(mobile),)).fetchone()[0]
+        plans = conn.execute("SELECT COUNT(*) FROM treatment_plans WHERE patient_token = ?", (token,)).fetchone()[0]
+    assert consents == len(abdm.CONSENT_ITEMS) and linked == token and plans == 1
+    assert global_vault.retrieve_pii(f"{token}::ABHA")["abha_address"].endswith("@sbx")
+    assert _status(data["txn_id"]) == "VERIFIED"
+    key = f"ABDM_ABHA_VERIFIED:{data['txn_id']}"
+    audits = [e for e in global_audit.get_events(patient_token=token, limit=10_000)
+              if e.get("details", {}).get("idempotency_key") == key]
+    assert len(audits) == 1
+    assert _staged_gone(data["txn_id"])
+
+
+def _staged_gone(txn_id):
+    try:
+        global_vault.retrieve_pii(abdm._staged_key(txn_id))
+        return False
+    except Exception:
+        return True
+
+
+def test_second_verify_while_first_is_in_flight_is_rejected(monkeypatch):
+    data, mobile = _fresh("Overlap Case")
+    inside, release = threading.Event(), threading.Event()
+    real = abdm.ensure_synthetic_journey
+
+    def slow_journey(token, registered_on=None):
+        inside.set()
+        assert release.wait(5)
+        return real(token, registered_on)
+
+    monkeypatch.setattr(abdm, "ensure_synthetic_journey", slow_journey)
+    result = {}
+    t = threading.Thread(target=lambda: result.setdefault("a", abdm.verify_otp(data["txn_id"], data["sandbox_otp"])))
+    t.start()
+    assert inside.wait(5)
+    with pytest.raises(abdm.RegistrationError) as busy:
+        abdm.verify_otp(data["txn_id"], data["sandbox_otp"])
+    assert busy.value.code == "VERIFY_IN_PROGRESS"
+    release.set()
+    t.join(5)
+    _assert_consistent(data, mobile, result["a"]["patient_token"])
+    with pytest.raises(abdm.RegistrationError) as closed:
+        abdm.verify_otp(data["txn_id"], data["sandbox_otp"])
+    assert closed.value.code == "TRANSACTION_CLOSED"
+
+
+def test_many_simultaneous_verifies_yield_exactly_one_success():
+    data, mobile = _fresh("Stampede Case")
+    barrier, wins, codes = threading.Barrier(8), [], []
+
+    def go():
+        barrier.wait()
+        try:
+            wins.append(abdm.verify_otp(data["txn_id"], data["sandbox_otp"]))
+        except abdm.RegistrationError as e:
+            codes.append(e.code)
+
+    threads = [threading.Thread(target=go) for _ in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(10)
+    assert len(wins) == 1 and len(codes) == 7
+    assert set(codes) <= {"VERIFY_IN_PROGRESS", "TRANSACTION_CLOSED"}
+    _assert_consistent(data, mobile, wins[0]["patient_token"])
+
+
+def test_simultaneous_mobile_login_consumes_once():
+    data = client.post("/api/abdm/login/mobile/request", json={"mobile": "9876543210"}).json()
+    lease = abdm._claim(data["txn_id"])  # another verify holds the lease
+    with pytest.raises(abdm.RegistrationError) as busy:
+        abdm.verify_otp(data["txn_id"], data["sandbox_otp"])
+    assert busy.value.code == "VERIFY_IN_PROGRESS" and _status(data["txn_id"]) == "PENDING"
+    abdm._release(data["txn_id"], lease)
+    assert abdm.verify_otp(data["txn_id"], data["sandbox_otp"])["patient_token"] == "PT-RURAL-7891"
+
+
+def test_crashed_lease_holder_expires_and_same_otp_retries(monkeypatch):
+    data, mobile = _fresh("Crash Case")
+    abdm._claim(data["txn_id"])  # holder dies without releasing
+    with pytest.raises(abdm.RegistrationError):
+        abdm.verify_otp(data["txn_id"], data["sandbox_otp"])
+    real = time.time
+    monkeypatch.setattr(abdm.time, "time", lambda: real() + abdm.VERIFY_LEASE_SECONDS + 1)
+    token = abdm.verify_otp(data["txn_id"], data["sandbox_otp"])["patient_token"]
+    _assert_consistent(data, mobile, token)
+
+
+def _fail_once(monkeypatch, owner, name, after_calls=0, after_write=False):
+    """Crash on call number after_calls+1 of owner.name; after_write=True lets that call land first."""
+    real, calls = getattr(owner, name), []
+
+    def wrapper(*a, **kw):
+        calls.append(1)
+        if len(calls) == after_calls + 1:
+            if after_write:
+                real(*a, **kw)
+            raise RuntimeError(f"simulated crash in {name}")
+        return real(*a, **kw)
+
+    monkeypatch.setattr(owner, name, wrapper)
+
+
+BOUNDARIES = [
+    ("token assigned, before vault", lambda: (global_vault, "store_pii", 0)),
+    ("vault written, before ABHA row", lambda: (global_vault, "store_pii", 0, True)),
+    ("ABHA row written, before mobile link", lambda: (abdm, "_link_mobile", 0)),
+    ("mobile linked, before journey", lambda: (abdm, "_link_mobile", 0, True)),
+    ("before synthetic journey", lambda: (sj.global_db, "save_patient", 0)),
+    ("mid journey, plan written", lambda: (sj.global_db, "record_treatment_session", 3)),
+    ("mid consents", lambda: (abdm.global_db, "record_dpdp_consent", 2)),
+    ("before audit", lambda: (global_audit, "record_event", 0)),
+    ("audit written, before consume", lambda: (global_audit, "record_event", 0, True)),
+    ("everything written, before consume", lambda: (abdm, "_consume_otp", 0)),
+]
+
+
+@pytest.mark.parametrize("label,target", BOUNDARIES, ids=[b[0] for b in BOUNDARIES])
+def test_failure_at_each_boundary_keeps_otp_and_retry_converges(monkeypatch, label, target):
+    data, mobile = _fresh()
+    _fail_once(monkeypatch, *target())
+    with pytest.raises(RuntimeError):
+        abdm.verify_otp(data["txn_id"], data["sandbox_otp"])
+    assert _status(data["txn_id"]) == "PENDING"
+    assert len(_rows_for(data["txn_id"])) <= 1
+    monkeypatch.undo()
+    token = abdm.verify_otp(data["txn_id"], data["sandbox_otp"])["patient_token"]  # same OTP, lease was released
+    _assert_consistent(data, mobile, token)
+
+
+def test_exhaustion_retry_reuses_the_assigned_token(monkeypatch):
+    seed = _request(identifier=_random_aadhaar(), beneficiary_name="Reuse Case", mobile=None).json()
+    _sequence(monkeypatch, [777, 8888])
+    assert _verify(seed).status_code == 200
+    data = _request(identifier=_random_aadhaar(), beneficiary_name="Reuse Case", mobile=None).json()
+    monkeypatch.setattr(abdm.secrets, "randbelow", lambda n: 777 if n == 10**12 else 8888)
+    assert _verify(data).status_code == 503
+    assigned = json.loads(abdm._session(data["txn_id"])["pending_json"])["assigned_token"]
+    monkeypatch.undo()
+    res = _verify(data).json()
+    # the orphan vault profile written during the failed attempts is overwritten, not duplicated
+    assert res["patient_token"] == assigned and res["abha_card"]["abha_address"] != "reusecase.8888@sbx"
+
+
+# --- lease takeover fencing + vault isolation between transactions ---
+
+def test_stalled_holder_is_fenced_after_takeover(monkeypatch):
+    data, mobile = _fresh("Stall Case")
+    inside, release = threading.Event(), threading.Event()
+    real_journey, real_time, offset = abdm.ensure_synthetic_journey, time.time, [0.0]
+    monkeypatch.setattr(abdm.time, "time", lambda: real_time() + offset[0])
+
+    def stalled(token, registered_on=None):
+        inside.set()
+        assert release.wait(5)
+        return real_journey(token, registered_on)
+
+    monkeypatch.setattr(abdm, "ensure_synthetic_journey", stalled)
+    outcome = {}
+
+    def holder():
+        try:
+            outcome["a"] = abdm.verify_otp(data["txn_id"], data["sandbox_otp"])
+        except abdm.RegistrationError as e:
+            outcome["a_err"] = e.code
+
+    t = threading.Thread(target=holder)
+    t.start()
+    assert inside.wait(5)
+    offset[0] = abdm.VERIFY_LEASE_SECONDS + 1          # holder A stalls past its lease
+    monkeypatch.setattr(abdm, "ensure_synthetic_journey", real_journey)
+    b = abdm.verify_otp(data["txn_id"], data["sandbox_otp"])  # B takes over and finishes
+    release.set()
+    t.join(5)
+    assert "a" not in outcome and outcome["a_err"] in ("VERIFY_IN_PROGRESS", "TRANSACTION_CLOSED")
+    _assert_consistent(data, mobile, b["patient_token"])
+
+
+def test_losing_aadhaar_transaction_cannot_touch_winner_profile(monkeypatch):
+    aadhaar = _random_aadhaar()
+    a = _request(identifier=aadhaar, beneficiary_name="Winner Name", mobile=None).json()
+    b = _request(identifier=aadhaar, beneficiary_name="Loser Name", mobile=None).json()
+    winner = _verify(a).json()["patient_token"]
+    before = global_vault.retrieve_pii(f"{winner}::ABHA")
+    # B raced past the identity pre-check: the UNIQUE constraint must stop it
+    real_find = abdm._find_abha
+    monkeypatch.setattr(abdm, "_find_abha", lambda col, v: None if col == "identity_hash" else real_find(col, v))
+    res = _verify(b)
+    assert res.status_code == 409 and res.json()["detail"]["code"] == "ALREADY_REGISTERED"
+    assert global_vault.retrieve_pii(f"{winner}::ABHA") == before
+    loser_token = json.loads(abdm._session(b["txn_id"])["pending_json"])["assigned_token"]
+    assert loser_token != winner and f"{loser_token}::ABHA" not in global_vault.list_tokens()
+    assert not _staged_gone(b["txn_id"])  # orphan stays under B's private key only (documented gap)
+
+
+def test_token_clash_with_another_patient_never_overwrites_profile(monkeypatch):
+    first = _request(identifier=_random_aadhaar(), beneficiary_name="Owner Name", mobile=None).json()
+    owner = _verify(first).json()["patient_token"]
+    before = global_vault.retrieve_pii(f"{owner}::ABHA")
+    data = _request(identifier=_random_aadhaar(), beneficiary_name="Intruder Name", mobile=None).json()
+    monkeypatch.setattr(abdm, "_new_patient_token", lambda: owner)  # simulate two txns drawing one token
+    res = _verify(data)
+    assert res.status_code == 503 and res.json()["detail"]["code"] == "ABHA_ID_UNAVAILABLE"
+    assert global_vault.retrieve_pii(f"{owner}::ABHA") == before
+    assert _status(data["txn_id"]) == "PENDING"
