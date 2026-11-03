@@ -1,4 +1,4 @@
-﻿"""Tests for patient tracking, progressive multi-channel reminders, and authority escalation."""
+"""Tests for patient tracking, progressive multi-channel reminders, and authority escalation."""
 from backend.tools.tracker_tools import (
     CancerRiskScorerTool,
     TrackerTriageEngine,
@@ -54,8 +54,21 @@ def test_progressive_escalation_tiers():
     assert "SMS" in notifs1[0].channel
     assert dossier1 is None
 
-    # Day 4: Tier 2 IVR
+    # Day 2: Tier 2 IVR
     tier2, notifs2, dossier2 = TrackerTriageEngine.evaluate_and_escalate(
+        patient_token=token,
+        cancer_type="ORAL",
+        stage="Stage III",
+        biopsy_status="POSITIVE",
+        symptoms=["ulcer"],
+        days_overdue=2,
+        vault=vault
+    )
+    assert tier2 == "TIER_2_IVR"
+    assert len(notifs2) == 2  # SMS + IVR
+
+    # Day 4: Tier 3 ASHA
+    tier3, notifs3, dossier3 = TrackerTriageEngine.evaluate_and_escalate(
         patient_token=token,
         cancer_type="ORAL",
         stage="Stage III",
@@ -64,30 +77,17 @@ def test_progressive_escalation_tiers():
         days_overdue=4,
         vault=vault
     )
-    assert tier2 == "TIER_2_IVR"
-    assert len(notifs2) == 2  # SMS + IVR
-
-    # Day 7: Tier 3 ASHA
-    tier3, notifs3, dossier3 = TrackerTriageEngine.evaluate_and_escalate(
-        patient_token=token,
-        cancer_type="ORAL",
-        stage="Stage III",
-        biopsy_status="POSITIVE",
-        symptoms=["ulcer"],
-        days_overdue=7,
-        vault=vault
-    )
     assert tier3 == "TIER_3_ASHA"
     assert any("ASHA" in n.tier for n in notifs3)
 
-    # Day 9: Tier 4 Authority Unmasking
+    # Day 6: Tier 4 Authority Unmasking
     tier4, notifs4, dossier4 = TrackerTriageEngine.evaluate_and_escalate(
         patient_token=token,
         cancer_type="ORAL",
         stage="Stage III",
         biopsy_status="POSITIVE",
         symptoms=["ulcer"],
-        days_overdue=9,
+        days_overdue=6,
         vault=vault
     )
     assert tier4 == "TIER_4_AUTHORITY_ESCALATION"

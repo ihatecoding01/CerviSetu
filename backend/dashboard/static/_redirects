@@ -1,0 +1,3 @@
+# Cloudflare Pages SPA Routing Rules
+# Redirect all frontend paths to index.html with HTTP 200 (SPA client-side navigation)
+/*    /index.html   200
