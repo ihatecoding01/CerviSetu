@@ -12,6 +12,7 @@ import {
   SolarShieldCheck,
 } from "./icons/SolarIcons";
 import { CerviSetuLogo } from "./icons/CerviSetuLogo";
+import { LogIn } from "lucide-react";
 import { VoiceStudio } from "./showcase/VoiceStudio";
 import { VisionOcrStudio } from "./showcase/VisionOcrStudio";
 import { AgentReasoningCanvas } from "./showcase/AgentReasoningCanvas";
@@ -272,10 +273,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div className={`hidden sm:flex items-center gap-3 shrink-0 ${navInline ? "xl:pl-5 2xl:pl-6 xl:border-l" : ""} lg:border-[#E5E7EB]`}>
             <LanguageSwitch />
             <button
-              onClick={onLaunchWorkstation}
-              className="h-10 px-4 inline-flex items-center whitespace-nowrap text-sm font-semibold text-[#000000] bg-white hover:bg-[#F4F5F7] border border-[#D1D5DB] rounded-lg transition-colors duration-200 cursor-pointer active:scale-98"
+              onClick={(onOpenGateway ?? onLaunchWorkstation)}
+              data-testid="header-login"
+              className="h-10 px-4 inline-flex items-center gap-2 whitespace-nowrap text-sm font-semibold text-white bg-black hover:bg-black/85 border border-black rounded-lg transition-colors duration-200 cursor-pointer active:scale-98"
             >
-              Staff Workstation
+              <LogIn className="size-4" />
+              Log in / Book
             </button>
             <a
               href="#pilot-intake"
@@ -284,6 +287,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               Deploy Spoke Pilot
             </a>
           </div>
+
+          {/* Mobile: direct Log in button next to the menu */}
+          <button
+            onClick={(onOpenGateway ?? onLaunchWorkstation)}
+            className="sm:hidden shrink-0 h-10 px-3 inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-black rounded-lg cursor-pointer"
+          >
+            <LogIn className="size-4" />
+            Log in
+          </button>
 
           {/* Mobile Menu Button */}
           <button
@@ -347,6 +359,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </a>
 
             <div className="flex flex-col gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  (onOpenGateway ?? onLaunchWorkstation)();
+                }}
+                className="w-full py-3 text-sm font-semibold text-white bg-black rounded-lg text-center"
+              >
+                Log in / Book Appointment
+              </button>
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);

@@ -1435,5 +1435,8 @@
  "Too many wrong attempts. Please wait a few minutes and try again.": "बहुत सारे गलत प्रयास। कृपया कुछ मिनट रुककर फिर कोशिश करें।",
  "Cannot reach the server. Use a demo sign-in button instead.": "सर्वर से संपर्क नहीं हो पा रहा। इसके बजाय डेमो साइन-इन बटन का उपयोग करें।",
  "Sign-in failed. Please try again.": "साइन-इन विफल रहा। कृपया फिर कोशिश करें।",
- "offline": "ऑफ़लाइन"
+ "offline": "ऑफ़लाइन",
+ "Log in / Book": "लॉग इन / बुक करें",
+ "Log in": "लॉग इन",
+ "Log in / Book Appointment": "लॉग इन / अपॉइंटमेंट बुक करें"
 }

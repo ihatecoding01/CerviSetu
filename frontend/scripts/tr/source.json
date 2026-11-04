@@ -1567,5 +1567,8 @@
   "Too many wrong attempts. Please wait a few minutes and try again.",
   "Cannot reach the server. Use a demo sign-in button instead.",
   "Sign-in failed. Please try again.",
-  "offline"
+  "offline",
+  "Log in / Book",
+  "Log in",
+  "Log in / Book Appointment"
 ]
