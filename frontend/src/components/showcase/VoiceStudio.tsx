@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { api, type VoiceScriptResult } from "../../api/client";
+import { SITE_LANGS, useSiteLang } from "../../i18n/site";
 import {
   SolarVolume,
   SolarPlay,
@@ -18,7 +19,13 @@ const DIALECTS = [
 ];
 
 export const VoiceStudio: React.FC = () => {
-  const [activeDialect, setActiveDialect] = useState<string>("HINDI");
+  // The dialect follows the site language, and picking a dialect switches the whole site to it
+  const [siteLang, setSiteLang] = useSiteLang();
+  const activeDialect = SITE_LANGS.find((l) => l.code === siteLang)?.dialect || "HINDI";
+  const setActiveDialect = (key: string) => {
+    const l = SITE_LANGS.find((x) => x.dialect === key);
+    if (l) setSiteLang(l.code);
+  };
   const [scriptData, setScriptData] = useState<VoiceScriptResult | null>(null);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isSynthesizing, setIsSynthesizing] = useState<boolean>(false);

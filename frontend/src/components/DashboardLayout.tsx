@@ -1,4 +1,5 @@
 import { CerviSetuLogo } from "./icons/CerviSetuLogo";
+import { LanguageSwitch } from "./LanguageSwitch";
 import { useState, type ReactNode } from "react";
 import {
   LayoutDashboard,
@@ -399,6 +400,7 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, chi
 
           {/* Right Action Controls: Pill Buttons matching Image 1 */}
           <div className="flex items-center gap-3">
+            <LanguageSwitch />
             {/* Ask Genie / AI Pill Button with Secondary Orange Dot */}
             <div className="hidden sm:flex items-center gap-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-800 transition-colors cursor-pointer">
               <span className="size-2 rounded-full bg-[#F19941]" />

@@ -17,6 +17,8 @@ import { VisionOcrStudio } from "./showcase/VisionOcrStudio";
 import { AgentReasoningCanvas } from "./showcase/AgentReasoningCanvas";
 import { DistrictImpactCalculator } from "./showcase/DistrictImpactCalculator";
 import { DeveloperApiStudio } from "./showcase/DeveloperApiStudio";
+import { LanguageSwitch } from "./LanguageSwitch";
+import { useTranslatedText } from "../i18n/pageTranslator";
 
 interface LandingPageProps {
   onLaunchWorkstation: () => void;
@@ -33,6 +35,53 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 }) => {
   // Mobile drawer state
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Header compaction: translated labels vary a lot in width, so measure instead of
+  // relying on breakpoints. 0 = full nav, 1 = nav in menu, 2 = also hide pilot CTA.
+  const [headerRowEl, setHeaderRowEl] = useState<HTMLDivElement | null>(null);
+  const [headerLevel, setHeaderLevel] = useState(0);
+  const headerNeeded = useRef<number[]>([]);
+  useEffect(() => {
+    const el = headerRowEl;
+    if (!el) return;
+    const check = () => {
+      setHeaderLevel((level) => {
+        if (el.scrollWidth > el.clientWidth && level < 2) {
+          headerNeeded.current[level] = el.scrollWidth;
+          return level + 1;
+        }
+        if (level > 0 && el.clientWidth >= (headerNeeded.current[level - 1] ?? Infinity)) return level - 1;
+        return level;
+      });
+    };
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    const onResize = () => check();
+    window.addEventListener("resize", onResize);
+    check();
+    // Text changes (language switch) invalidate stored widths: re-measure from full.
+    let timer = 0;
+    const mo = new MutationObserver(() => {
+      headerNeeded.current = [];
+      setHeaderLevel(0);
+      window.clearTimeout(timer);
+      timer = window.setTimeout(check, 60);
+    });
+    mo.observe(el, { subtree: true, childList: true, characterData: true });
+    return () => {
+      ro.disconnect();
+      mo.disconnect();
+      window.removeEventListener("resize", onResize);
+      window.clearTimeout(timer);
+    };
+  }, [headerRowEl]);
+  useEffect(() => {
+    const el = headerRowEl;
+    if (el && el.scrollWidth > el.clientWidth && headerLevel < 2) {
+      headerNeeded.current[headerLevel] = el.scrollWidth;
+      setHeaderLevel(headerLevel + 1);
+    }
+  }, [headerLevel, headerRowEl]);
+  const navInline = headerLevel === 0;
 
   // Interactive Hero Studio State
   const [activeStudioTab, setActiveStudioTab] = useState<"ivr" | "vault" | "timeline">("ivr");
@@ -54,7 +103,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const taglineRef = useRef<HTMLDivElement>(null);
   const [revealedWordCount, setRevealedWordCount] = useState<number>(0);
 
-  const taglineText = "Every rural cancer patient deserves curative treatment completed within fifty six days without losing their identity or their dignity.";
+  const taglineText = useTranslatedText("Every rural cancer patient deserves curative treatment completed within fifty six days without losing their identity or their dignity.");
   const tagWords = taglineText.split(" ");
 
   useEffect(() => {
@@ -154,7 +203,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* ARCHITECTURAL HEADER WITH EMBLEM & PRIMARY/SECONDARY BORDERS              */}
       {/* ========================================================================= */}
       <header className="sticky top-0 z-40 w-full bg-[#FFFFFF]/95 backdrop-blur-md border-b-2 border-[#BA2D0B]/25">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 py-4 flex items-center justify-between gap-6">
+        <div ref={setHeaderRowEl} className="max-w-[1760px] mx-auto px-6 sm:px-8 py-4 flex items-center justify-between gap-4">
           {/* Brand Logo with CerviSetu Caring Hands SVG Emblem */}
           <div className="flex items-center gap-3 shrink-0">
             <div className="size-10 rounded-xl bg-white border border-[#0F766E]/30 flex items-center justify-center text-[#000000] shadow-xs p-1 transition-transform hover:scale-105">
@@ -167,14 +216,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   Sovereign Health
                 </span>
               </div>
-              <span className="text-[11px] text-[#4B5563] tracking-normal">
+              <span className="text-[11px] text-[#4B5563] tracking-normal whitespace-nowrap">
                 Rural Oncology Radiation Network
               </span>
             </div>
           </div>
 
           {/* Desktop Navigation Links — Spacious & Distinct */}
-          <nav aria-label="Desktop Navigation" className="hidden xl:flex flex-1 items-center justify-center gap-5 2xl:gap-8">
+          <nav aria-label="Desktop Navigation" className={`hidden ${navInline ? "xl:flex" : ""} flex-1 items-center justify-center gap-4 2xl:gap-7`}>
             <a
               href="#protocol"
               className="text-sm font-medium whitespace-nowrap text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
@@ -220,7 +269,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </nav>
 
           {/* Header Action Buttons — Primary & Secondary Borders */}
-          <div className="hidden sm:flex items-center gap-3 shrink-0 xl:pl-5 2xl:pl-6 xl:border-l lg:border-[#E5E7EB]">
+          <div className={`hidden sm:flex items-center gap-3 shrink-0 ${navInline ? "xl:pl-5 2xl:pl-6 xl:border-l" : ""} lg:border-[#E5E7EB]`}>
+            <LanguageSwitch />
             <button
               onClick={onLaunchWorkstation}
               className="h-10 px-4 inline-flex items-center whitespace-nowrap text-sm font-semibold text-[#000000] bg-white hover:bg-[#F4F5F7] border border-[#D1D5DB] rounded-lg transition-colors duration-200 cursor-pointer active:scale-98"
@@ -229,7 +279,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </button>
             <a
               href="#pilot-intake"
-              className="h-10 px-4 inline-flex items-center whitespace-nowrap text-sm font-semibold text-[#FFFFFF] bg-[#BA2D0B] hover:bg-[#9E2407] border border-[#BA2D0B] rounded-lg transition-colors duration-200 cursor-pointer active:scale-98"
+              className={`h-10 px-4 ${headerLevel >= 2 ? "hidden" : "hidden md:inline-flex"} items-center whitespace-nowrap text-sm font-semibold text-[#FFFFFF] bg-[#BA2D0B] hover:bg-[#9E2407] border border-[#BA2D0B] rounded-lg transition-colors duration-200 cursor-pointer active:scale-98`}
             >
               Deploy Spoke Pilot
             </a>
@@ -238,7 +288,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="xl:hidden p-2 text-[#000000] hover:bg-[#F4F5F7] rounded-lg border-2 border-[#F19941]"
+            className={`${navInline ? "xl:hidden" : ""} shrink-0 p-2 text-[#000000] hover:bg-[#F4F5F7] rounded-lg border-2 border-[#F19941]`}
             aria-label="Toggle mobile menu"
           >
             <div className="w-5 flex flex-col gap-1.5 items-end">
@@ -252,7 +302,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-30 bg-[#FFFFFF]/98 backdrop-blur-xl flex flex-col justify-center px-8 py-16 xl:hidden border-b-2 border-[#BA2D0B]">
+        <div className={`fixed inset-0 z-30 bg-[#FFFFFF]/98 backdrop-blur-xl flex flex-col justify-center px-8 py-16 ${navInline ? "xl:hidden" : ""} border-b-2 border-[#BA2D0B]`}>
           <div className="flex flex-col gap-6 max-w-sm mx-auto w-full">
             <div className="flex items-center gap-3 pb-4 border-b border-[#F19941]/30">
               <div className="size-9 rounded-lg bg-white border border-[#0F766E]/30 flex items-center justify-center p-1.5">

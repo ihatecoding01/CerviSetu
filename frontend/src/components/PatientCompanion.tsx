@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useSiteLang } from "../i18n/site";
+import { LanguageSwitch } from "./LanguageSwitch";
 import {
   Heart,
   Volume2,
@@ -318,25 +320,9 @@ export const PatientCompanion: React.FC<Props> = ({
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<SectionTab>("all");
 
-  // Synchronized language state with localStorage
-  const [language, setLanguage] = useState<"hi" | "en">(() => {
-    try {
-      const saved = localStorage.getItem("cervisetu_patient_lang");
-      if (saved === "hi" || saved === "en") return saved;
-    } catch {
-      // Ignore
-    }
-    return "hi";
-  });
-
-  const handleLanguageChange = (newLang: "hi" | "en") => {
-    setLanguage(newLang);
-    try {
-      localStorage.setItem("cervisetu_patient_lang", newLang);
-    } catch {
-      // Ignore
-    }
-  };
+  // Follows the site-wide language: Hindi uses the hand-written copy, other languages translate the English copy
+  const [siteLang] = useSiteLang();
+  const language: "hi" | "en" = siteLang === "hi" ? "hi" : "en";
 
   const t = TRANSLATIONS[language];
 
@@ -692,31 +678,7 @@ export const PatientCompanion: React.FC<Props> = ({
 
           {/* Action Toolbar */}
           <div className="flex items-center flex-wrap gap-3 self-end md:self-center">
-            {/* Bilingual Toggle */}
-            <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
-              <button
-                type="button"
-                onClick={() => handleLanguageChange("hi")}
-                className={`px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                  language === "hi"
-                    ? "bg-white text-black shadow-xs font-bold"
-                    : "text-slate-600 hover:text-black"
-                }`}
-              >
-                हिंदी
-              </button>
-              <button
-                type="button"
-                onClick={() => handleLanguageChange("en")}
-                className={`px-3.5 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                  language === "en"
-                    ? "bg-white text-black shadow-xs font-bold"
-                    : "text-slate-600 hover:text-black"
-                }`}
-              >
-                English
-              </button>
-            </div>
+            <LanguageSwitch />
 
             <a
               href="tel:1075"
