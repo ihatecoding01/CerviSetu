@@ -19,13 +19,15 @@
 <br>
 
 <div align="center">
-  <!-- Replace # with the implementation video link -->
+  <!-- Replace # with the implementation video link. A scene-by-scene script is in docs/VIDEO_DEMO_WALKTHROUGH.md -->
   <a href="#"><img alt="Watch the implementation video" src="https://img.shields.io/badge/▶%20WATCH%20THE%20IMPLEMENTATION%20VIDEO-018C7F?style=for-the-badge"></a>
 </div>
 
 <br>
 
 **CerviSetu** is a privacy-first clinical multi-agent platform for cervical cancer care across India's hub and spoke healthcare infrastructure. Combining **LangGraph**, **Sarvam AI Indic Speech & Vision**, and **Groq LPU** inference, CerviSetu bridges rural district daycare spokes with regional tertiary cancer centres to enforce the strict **56 Day Radiobiological Curative Window** and prevent treatment dropouts.
+
+The entire interface (landing page, care gateway, staff workstation, patient portal and demos) can be switched between **English, Hindi, Bhojpuri, Bengali, Marathi, Tamil and Telugu**, with wording written for each language's context rather than literal translation.
 
 ---
 
@@ -36,6 +38,7 @@
 - [Core Capabilities](#core-capabilities)
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
+- [Deploying the Frontend (Cloudflare Pages)](#deploying-the-frontend-cloudflare-pages)
 - [Running the Test Suite](#running-the-test-suite)
 - [API Endpoints Reference](#api-endpoints-reference)
 - [Security & Privacy](#security--privacy)
@@ -62,11 +65,11 @@ Screenshots of the running application. All patients shown are synthetic demo da
   <tr>
     <td width="50%" align="center">
       <img src="./docs/screenshots/09_abha_gateway.png" alt="Care gateway with staff and patient login" width="100%">
-      <br><strong>Care gateway</strong><br><sub>Facility search, staff login, and patient login by ABHA or mobile OTP.</sub>
+      <br><strong>Care gateway</strong><br><sub>Facility search and three login cards: doctor/staff, ASHA worker, and patient (ABHA or mobile OTP).</sub>
     </td>
     <td width="50%" align="center">
       <img src="./docs/screenshots/06_patient_portal.png" alt="Patient portal in Hindi" width="100%">
-      <br><strong>Patient portal (Hindi)</strong><br><sub>Session-protected progress, next session and treatment journey, in English or Hindi.</sub>
+      <br><strong>Patient portal (Hindi)</strong><br><sub>Session-protected progress, next session and treatment journey, in any of 7 languages.</sub>
     </td>
   </tr>
   <tr>
@@ -108,7 +111,7 @@ flowchart TD
         P -->|Registered mobile| MOTP[Mobile OTP Login]
         ABHA --> Session[Signed HttpOnly Patient Session]
         MOTP --> Session
-        Session --> Portal[Patient Portal · English / Hindi]
+        Session --> Portal[Patient Portal · 7 Languages]
         ABHA -->|New sandbox patient| Synthetic[Deterministic Synthetic Journey]
     end
 
@@ -189,8 +192,9 @@ flowchart TD
 - **ABHA Registration (Sandbox)**: Create a synthetic ABHA number and address from Aadhaar/Virtual ID, or link an existing ABHA. Every DPDP consent item must be granted, and each one is recorded.
 - **OTP Security**: OTPs are stored hashed, expire after 10 minutes, lock after 5 wrong attempts, and limit resends. Aadhaar is never stored in plaintext, only as a keyed hash.
 - **Collision-Safe & Resumable**: ABHA numbers and addresses are allocated with bounded retries. The OTP is consumed only after registration is saved, so a failed attempt can be retried with the same OTP without creating a duplicate patient. Concurrent verifies of the same OTP are serialized by a database lease.
-- **Mobile OTP Login**: Returning patients log in with their registered mobile number.
-- **Session-Protected Patient Portal**: A signed, HttpOnly, SameSite-strict session cookie (30 minutes) scopes every portal request to the logged-in patient. Patients see their progress, next session, treatment journey and session history, in **English or Hindi**.
+- **Mobile OTP Login**: Returning patients log in with their registered mobile number. When the backend is unreachable (for example on static hosting), the gateway falls back to an offline sandbox so the demo patient login and portal still work.
+- **Three Login Paths**: The care gateway offers separate cards for doctors/staff, ASHA workers (opens the ASHA network view) and patients.
+- **Session-Protected Patient Portal**: A signed, HttpOnly, SameSite-strict session cookie (30 minutes) scopes every portal request to the logged-in patient. Patients see their progress, next session, treatment journey and session history, in any of the **7 supported languages**.
 - **Synthetic Demo Journeys**: New sandbox patients get a deterministic, clearly labelled synthetic treatment journey. These patients are excluded from the real case queue, ward board and escalations, and their FHIR export is tagged `SYNTHETIC_DEMO`.
 
 ### 5. Laplacian Blur Variance & Image Quality Guard
@@ -206,8 +210,22 @@ flowchart TD
 
 ### 7. Prevention, Clinical Encounter & ASHA Coordination
 - **Prevention Continuum**: HPV vaccination records and outreach, screening, precancer treatment and surveillance.
-- **Clinical Encounter**: Chemo clearance, LINAC downtime reporting, hub deficiency returns and discharge sign-off.
+- **Clinical Encounter Workspace**: A full-width EMR-style encounter view with a patient roster on the left, so the clinician can switch patients without leaving the encounter. Tabs cover:
+  - **Overview & Vitals**: today's vitals, weekly CBC/RFT labs with automatic flags (neutropenic, thrombocytopenic, elevated creatinine, low haemoglobin).
+  - **Consultation & AI Voice**: an ambient microphone that drafts chief complaints and the clinical narrative, plus an editable prescription list.
+  - **CCRT Protocol & Vault**: weekly cisplatin clearance (approve, reduce or hold) while daily EBRT continues.
+  - **Radiation Planning & CT Sim**, **Pre-Brachy Hub Bridge** (hub OT slot locking) and **ABHA & DPDP Consent**.
+- **Encounter Actions**: Mark today as a no-show, report and clear LINAC downtime, return hub referrals with deficiencies, and execute discharge sign-off, which purges cached ambient audio under the DPDP Act.
+- **Reports Rail**: A collapsible side rail with the encounter details and attached reports (biopsy histopathology, CT simulation, PAC clearance, CBC/RFT panels).
 - **ASHA Network**: Field tickets for home visits, with recorded outcomes.
+
+### 8. Full-Site Multilingual Interface (7 Languages)
+- **Every Screen Translates**: Landing page, care gateway, staff workstation (all tabs), clinical encounter, patient portal, patient companion and the dual-screen demo switch together between **English, हिंदी Hindi, भोजपुरी Bhojpuri, বাংলা Bengali, मराठी Marathi, தமிழ் Tamil and తెలుగు Telugu**.
+- **One Switcher, Everywhere**: A globe language picker sits in the landing header, gateway, staff header, patient portal and patient companion. The choice is remembered on the device (`cervisetu_site_lang`) and sets the page `lang` attribute.
+- **Voice and Text Stay in Sync**: Picking a dialect chip in the Sarvam Voice Studio switches the whole site to that language.
+- **Context, Not Literal Translation**: Patient-facing text uses everyday local wording (for example "आशा दीदी", respectful "रउआ" in Bhojpuri, Bengali numerals, reassuring tone in Tamil and Telugu). Staff and clinical screens keep standard medical terms and acronyms (EBRT, FIGO, CBC, PAC). Patient names, IDs and code samples are never translated.
+- **No Translation API at Runtime**: Translations are static dictionaries (`frontend/src/i18n/site/<lang>.json`, about 1,400 strings each) loaded on demand. A lightweight page translator swaps text, placeholders, titles and ARIA labels, and restores English losslessly.
+- **Layout-Aware Header**: The landing header measures itself and moves the section links into the menu when a language's labels do not fit, so no button is ever pushed off screen.
 
 ---
 
@@ -234,7 +252,7 @@ flowchart TD
 |---|---|
 | **Frontend** | React 19, TypeScript 6, Vite 8, Tailwind CSS v4, CareUI Design System |
 | **Icons & Branding** | Solar Icons, Lucide, CerviSetu teal ribbon emblem (`#018C7F`) |
-| **Localization** | English and Hindi patient UI (`frontend/src/i18n`) |
+| **Localization** | Full-site UI in 7 languages: English, Hindi, Bhojpuri, Bengali, Marathi, Tamil, Telugu (`frontend/src/i18n`) |
 | **Backend Framework** | FastAPI (Python 3.14+), Uvicorn, Pydantic v2 |
 | **Agent Orchestration** | LangGraph, LangChain Core |
 | **Voice AI (TTS & ASR)** | Sarvam AI API (`bulbul:v4-flash`), Indic SSML Engine |
@@ -317,12 +335,42 @@ Open **`http://localhost:8000`** in your browser to access the complete applicat
 | Path | View |
 |---|---|
 | `/` | Landing page |
-| `/gateway` | Care gateway: staff login, ABHA registration, patient mobile OTP login |
+| `/gateway` | Care gateway: doctor/staff login, ASHA worker login, ABHA registration, patient mobile OTP login |
 | `/staff/overview` | Staff workstation (also `/staff/prevention`, `/staff/encounter`, `/staff/intake`, `/staff/tracker`, `/staff/asha`, `/staff/audit`) |
 | `/patient/{token}` | Patient portal (requires a patient session) |
 | `/demo` | Dual-screen clinic tablet and patient phone demo |
 
 **Demo login:** in the gateway, use patient mobile OTP login with `9876543210`. The sandbox OTP is shown on screen.
+
+**Change language:** use the globe picker in any header. To run only the frontend during development:
+```bash
+cd frontend
+npm run dev
+```
+
+### Updating Translations
+English source strings live in `frontend/scripts/tr/source.json`, and each language's translations in `frontend/scripts/tr/<lang>.*.txt` (`index|translation` lines). After editing them, rebuild the dictionaries:
+```bash
+cd frontend
+node scripts/build-translations.mjs
+```
+`node scripts/extract-strings.mjs` appends any new UI strings to the source list (indices are append-only).
+
+---
+
+## Deploying the Frontend (Cloudflare Pages)
+
+The frontend can be hosted on Cloudflare Pages while the FastAPI backend runs elsewhere (for example on a laptop exposed through a Cloudflare tunnel).
+
+1. Start the backend and open a tunnel to it:
+   ```bash
+   uv run python main.py --serve --port 8000
+   npm run tunnel
+   ```
+2. In Cloudflare Pages, set the environment variable `BACKEND_TUNNEL_URL` to the tunnel URL.
+3. The Pages Function in `functions/api/[[path]].ts` proxies every `/api/*` request to that URL. The backend already allows `*.pages.dev` and `*.trycloudflare.com` origins.
+
+If the tunnel is not configured, `/api` returns `503 TUNNEL_NOT_CONFIGURED` and the patient login uses the offline sandbox fallback.
 
 ---
 
@@ -337,6 +385,8 @@ uv run pytest -q
 ```
 
 Tests run offline: LLM calls, Sarvam, OCR and the scheduler are disabled, and data goes to a temporary directory.
+
+> **Windows note:** if the `tzdata` package is missing, the backend falls back to a fixed IST (UTC+05:30) offset for `Asia/Kolkata`, so the treatment clock still works.
 
 ---
 
@@ -408,7 +458,7 @@ health_hackathon/
 ├── pyproject.toml              # UV / Python dependencies
 ├── .env.example                # Sample environment keys
 ├── README.md                   # System documentation
-├── docs/                       # Architecture, flows and screenshots
+├── docs/                       # Architecture, flows, screenshots and the video demo walkthrough
 ├── frontend/                   # CerviSetu Web Application (React 19 + Tailwind v4)
 │   ├── public/
 │   │   └── cervisetu-logo.png  # Brand emblem and favicon
@@ -421,12 +471,17 @@ health_hackathon/
 │   │   │   ├── AbhaRegistration.tsx # Stepped ABHA registration with consent
 │   │   │   ├── MobileOtpLogin.tsx   # Patient mobile OTP login
 │   │   │   ├── PatientPortal.tsx    # Session-protected patient portal
+│   │   │   ├── ClinicianEncounter.tsx # Full-width clinical encounter workspace
 │   │   │   ├── LandingPage.tsx # Master public portal & showcase
+│   │   │   ├── LanguageSwitch.tsx   # Global 7-language picker
 │   │   │   └── OverviewPanel.tsx
-│   │   ├── i18n/               # English / Hindi patient strings
+│   │   ├── i18n/               # Site language state, page translator, patient strings
+│   │   │   └── site/           # Per-language dictionaries (hi, bho, bn, mr, ta, te)
 │   │   ├── api/                # Typed API clients (client, abdm, portal)
 │   │   └── App.tsx
+│   ├── scripts/                # Translation source, per-language files and build scripts
 │   └── vite.config.ts
+├── functions/api/              # Cloudflare Pages Function proxying /api to the backend tunnel
 ├── backend/                    # Core Engine & Services
 │   ├── config.py               # Settings, keys, image thresholds
 │   ├── core/
