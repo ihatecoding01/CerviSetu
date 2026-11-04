@@ -77,14 +77,20 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginAsha, onLogi
     <div className="min-h-screen w-full bg-[#FAFAFA] flex items-center justify-center p-6 sm:p-8 md:p-12 font-sans antialiased text-black">
       {/* Main Care Gateway Card */}
       <div className="w-full max-w-4xl bg-white rounded-3xl shadow-xs border border-slate-200/90 p-8 sm:p-12 transition-all relative">
-        {onOpenLanding && (
-          <button
-            onClick={onOpenLanding}
-            className="sm:absolute sm:top-8 sm:left-8 mb-4 sm:mb-0 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-black bg-slate-100 hover:bg-slate-200 px-3.5 py-1.5 rounded-full border border-slate-200 transition-colors cursor-pointer"
-          >
-            ← System Overview
-          </button>
-        )}
+        {/* Top bar: back link + language picker (in normal flow so long translations never overlap) */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 sm:mb-4">
+          {onOpenLanding ? (
+            <button
+              onClick={onOpenLanding}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-black bg-slate-100 hover:bg-slate-200 px-3.5 py-1.5 rounded-full border border-slate-200 transition-colors cursor-pointer"
+            >
+              ← System Overview
+            </button>
+          ) : (
+            <span />
+          )}
+          <LanguageSwitch className="ml-auto" />
+        </div>
 
         {/* Top Branding */}
         <div className="flex flex-col items-center justify-center mb-10">
