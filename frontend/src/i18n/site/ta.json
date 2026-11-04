@@ -1200,6 +1200,8 @@
  "Log in / Book": "உள்நுழை / முன்பதிவு",
  "Log in": "உள்நுழை",
  "Log in / Book Appointment": "உள்நுழை / சந்திப்பு முன்பதிவு",
+ "Choose your role. Each role only sees and does what it is allowed to.": "உங்கள் பங்கைத் தேர்ந்தெடுக்கவும். ஒவ்வொரு பங்கும் அனுமதிக்கப்பட்டதை மட்டுமே பார்க்கும், செய்யும்.",
+ "Cannot reach the server. Please try again shortly.": "சேவையகத்தை அணுக முடியவில்லை. சிறிது நேரத்தில் மீண்டும் முயலவும்.",
  "Play Speech": "குரலைக் கேளுங்கள்",
  "Hindi (Devanagari)": "இந்தி (தேவநாகரி)",
  "Click Play to Listen via Sarvam bulbul 4 flash": "Sarvam bulbul 4 flash வழியாகக் கேட்க ப்ளே அழுத்துங்கள்",

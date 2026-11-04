@@ -1438,5 +1438,7 @@
  "offline": "ऑफ़लाइन",
  "Log in / Book": "लॉग इन / बुक करें",
  "Log in": "लॉग इन",
- "Log in / Book Appointment": "लॉग इन / अपॉइंटमेंट बुक करें"
+ "Log in / Book Appointment": "लॉग इन / अपॉइंटमेंट बुक करें",
+ "Choose your role. Each role only sees and does what it is allowed to.": "अपनी भूमिका चुनें। हर भूमिका केवल वही देखती और करती है जिसकी उसे अनुमति है।",
+ "Cannot reach the server. Please try again shortly.": "सर्वर से संपर्क नहीं हो पा रहा। कृपया थोड़ी देर में फिर कोशिश करें।"
 }

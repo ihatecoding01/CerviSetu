@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ArrowLeft, HeartHandshake, KeyRound, Loader2, ShieldCheck, Stethoscope, User, UserCog } from "lucide-react";
 import { CerviSetuLogo } from "./icons/CerviSetuLogo";
 import { LanguageSwitch } from "./LanguageSwitch";
-import { staffApi, StaffLoginError, type StaffProfile, type StaffRole } from "../api/staff";
+import { staffApi, StaffLoginError, DEMO_STAFF, PRELOADED_PIN, type StaffProfile, type StaffRole } from "../api/staff";
 
 interface Props {
   /** Role to highlight first (e.g. ASHA when coming from the ASHA login card). */
@@ -19,8 +19,17 @@ const DEMO_ROLES: { role: StaffRole; label: string; hint: string; icon: typeof U
 ];
 
 export function StaffSignIn({ preferredRole, onSignedIn, onBack }: Props) {
-  const [staffId, setStaffId] = useState("");
-  const [pin, setPin] = useState("");
+  const firstRole: StaffRole = preferredRole ?? "DOCTOR";
+  const [selectedRole, setSelectedRole] = useState<StaffRole>(firstRole);
+  const [staffId, setStaffId] = useState(DEMO_STAFF[firstRole].staff_id);
+  const [pin, setPin] = useState(PRELOADED_PIN);
+
+  const chooseRole = (role: StaffRole) => {
+    setSelectedRole(role);
+    setStaffId(DEMO_STAFF[role].staff_id);
+    setPin(PRELOADED_PIN);
+    setError(null);
+  };
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,24 +68,26 @@ export function StaffSignIn({ preferredRole, onSignedIn, onBack }: Props) {
           <section className="rounded-2xl border border-slate-200 bg-white p-6">
             <h1 className="text-lg font-bold">Staff sign-in</h1>
             <p className="text-xs text-slate-500 mt-1 mb-5">
-              Demo sign-in: pick a role and you are signed in straight away. Each role only sees and does what it is allowed to.
+              Choose your role. Each role only sees and does what it is allowed to.
             </p>
             <div className="flex flex-col gap-2.5">
               {roles.map(({ role, label, hint, icon: Icon, color }) => (
                 <button
                   key={role}
-                  onClick={() => run(role, () => staffApi.demoLogin(role))}
+                  type="button"
+                  onClick={() => chooseRole(role)}
                   disabled={busy !== null}
-                  data-testid={`demo-signin-${role.toLowerCase()}`}
+                  aria-pressed={role === selectedRole}
+                  data-testid={`role-${role.toLowerCase()}`}
                   className={`flex items-center gap-3 w-full rounded-xl border px-4 py-3 text-left transition-colors cursor-pointer disabled:opacity-60 ${
-                    role === preferredRole ? "border-black bg-slate-50" : "border-slate-200 hover:border-black"
+                    role === selectedRole ? "border-black bg-slate-50 ring-1 ring-black" : "border-slate-200 hover:border-black"
                   }`}
                 >
                   <span className="size-9 rounded-full flex items-center justify-center text-white shrink-0" style={{ background: color }}>
-                    {busy === role ? <Loader2 className="size-4 animate-spin" /> : <Icon className="size-4" />}
+                    <Icon className="size-4" />
                   </span>
                   <span className="flex-1 min-w-0">
-                    <span className="block text-sm font-semibold">{`Demo sign-in as ${label}`}</span>
+                    <span className="block text-sm font-semibold">{label}</span>
                     <span className="block text-xs text-slate-500 truncate">{hint}</span>
                   </span>
                 </button>
@@ -90,6 +101,10 @@ export function StaffSignIn({ preferredRole, onSignedIn, onBack }: Props) {
               <KeyRound className="size-4" />
               <h2 className="text-sm font-bold">Sign in with Staff ID and PIN</h2>
             </div>
+            <p className="mt-1 text-xs text-slate-500">
+              {DEMO_STAFF[selectedRole].name} · {DEMO_STAFF[selectedRole].facility}
+            </p>
+
             <form
               className="mt-5 flex flex-col gap-3"
               onSubmit={(e) => {
@@ -129,7 +144,7 @@ export function StaffSignIn({ preferredRole, onSignedIn, onBack }: Props) {
                 className="mt-1 w-full py-2.5 rounded-full bg-black text-white text-xs font-semibold hover:bg-black/85 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
               >
                 {busy === "pin" && <Loader2 className="size-3.5 animate-spin" />}
-                Sign in
+                Log in
               </button>
             </form>
             <div className="mt-5 flex items-start gap-2 text-[11px] text-slate-500 leading-relaxed">

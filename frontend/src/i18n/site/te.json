@@ -1200,6 +1200,8 @@
  "Log in / Book": "లాగిన్ / బుక్",
  "Log in": "లాగిన్",
  "Log in / Book Appointment": "లాగిన్ / అపాయింట్‌మెంట్ బుక్",
+ "Choose your role. Each role only sees and does what it is allowed to.": "మీ పాత్రను ఎంచుకోండి. ప్రతి పాత్ర అనుమతించినవి మాత్రమే చూడగలదు, చేయగలదు.",
+ "Cannot reach the server. Please try again shortly.": "సర్వర్‌ను చేరుకోలేకపోతున్నాం. కొద్దిసేపటి తర్వాత మళ్ళీ ప్రయత్నించండి.",
  "Play Speech": "వాయిస్ వినండి",
  "Hindi (Devanagari)": "హిందీ (దేవనాగరి)",
  "Click Play to Listen via Sarvam bulbul 4 flash": "Sarvam bulbul 4 flash ద్వారా వినడానికి ప్లే నొక్కండి",

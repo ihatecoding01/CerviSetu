@@ -21,6 +21,9 @@ export const DEMO_STAFF: Record<StaffRole, StaffProfile> = {
   ADMIN: { staff_id: "AD-4001", name: "District Programme Officer", role: "ADMIN", role_label: "Administrator", facility: "Mirzapur District Health Society" },
 };
 
+// Credentials pre-filled on the sign-in screen (matches CERVISETU_STAFF_DEMO_PIN in .env.example).
+export const PRELOADED_PIN = "246810";
+
 export class StaffLoginError extends Error {
   code: string;
   constructor(code: string, message: string) {
@@ -82,8 +85,16 @@ export const staffApi = {
     let res: Response;
     try {
       res = await call("login", { staff_id: staffId, pin });
+      if (res.status >= 500 || res.status === 404) throw new Error("unreachable");
     } catch {
-      throw new StaffLoginError("OFFLINE", "Cannot reach the server. Use a demo sign-in button instead.");
+      // Server unreachable: allow the pre-filled roster accounts so the app still opens (sample data).
+      const match = Object.values(DEMO_STAFF).find((p) => p.staff_id === staffId.trim().toUpperCase());
+      if (match && pin === PRELOADED_PIN) {
+        const profile = { ...match, offline: true };
+        writeOffline(profile);
+        return profile;
+      }
+      throw new StaffLoginError("OFFLINE", "Cannot reach the server. Please try again shortly.");
     }
     return signedIn(res);
   },

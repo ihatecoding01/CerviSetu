@@ -1,6 +1,6 @@
 import { CerviSetuLogo } from "./icons/CerviSetuLogo";
 import React, { useEffect, useState } from "react";
-import { Search, User, Users, CheckCircle2, MapPin, ShieldCheck, ArrowRight, Sparkles, QrCode, Phone, HeartHandshake } from "lucide-react";
+import { Search, User, Users, CheckCircle2, MapPin, ShieldCheck, QrCode, Phone, HeartHandshake } from "lucide-react";
 import { api, type Facility } from "../api/client";
 import { AbhaRegistration } from "./AbhaRegistration";
 import { MobileOtpLogin } from "./MobileOtpLogin";
@@ -17,7 +17,7 @@ interface Props {
   onOpenLanding?: () => void;
 }
 
-export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginAsha, onLoginPatient, onOpenDualView, onOpenLanding }) => {
+export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginAsha, onLoginPatient, onOpenLanding }) => {
   const [districtQuery, setDistrictQuery] = useState("Mirzapur");
   const [facilities, setFacilities] = useState<Facility[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
@@ -269,21 +269,6 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginAsha, onLogi
           </div>
         </div>
 
-        {/* Hackathon Live Demo Shortcut Bar */}
-        {onOpenDualView && (
-          <div className="mt-10 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-            <div className="flex items-center gap-1.5">
-              <Sparkles className="size-3.5 text-[#F19941]" />
-              <span>Hackathon Evaluation Shortcut:</span>
-            </div>
-            <button
-              onClick={onOpenDualView}
-              className="text-xs font-semibold text-black bg-slate-100 hover:bg-slate-200 px-4 py-1.5 rounded-full border border-slate-200 transition-colors flex items-center gap-1.5 cursor-pointer"
-            >
-              Open Live Demo: Clinic Tablet | Patient Web Portal <ArrowRight className="size-3" />
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Patient login modal: ABHA sandbox, mobile OTP (both issue a patient session) */}

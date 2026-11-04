@@ -149,8 +149,17 @@ export default function App() {
   if (currentRoute.view === "gateway") {
     return (
       <CareGateway
-        onLoginStaff={() => navigate({ view: "staff", tab: "overview-tab" })}
-        onLoginAsha={() => navigate({ view: "staff", tab: "asha-tab" })}
+        onLoginStaff={async () => {
+          // Always show the sign-in screen from the gateway, even if a session is still open.
+          await staffApi.logout();
+          setStaff(null);
+          navigate({ view: "staff", tab: "overview-tab" });
+        }}
+        onLoginAsha={async () => {
+          await staffApi.logout();
+          setStaff(null);
+          navigate({ view: "staff", tab: "asha-tab" });
+        }}
         onLoginPatient={(token) => {
           if (token) navigate(`/patient/${token}`);
         }}
