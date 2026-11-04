@@ -10,6 +10,8 @@ os.environ["CERVISETU_DISABLE_LLM"] = "1"
 os.environ["SARVAM_API_KEY"] = ""
 os.environ["CERVISETU_OCR_ENABLED"] = "0"
 os.environ.setdefault("CERVISETU_DISABLE_SCHEDULER", "1")
+# Existing API tests exercise staff routes directly; staff sign-in has its own tests that turn this on.
+os.environ.setdefault("CERVISETU_STAFF_AUTH", "0")
 # Never write test patients into the demo database, vault or audit ledger
 os.environ.setdefault("CERVISETU_DATA_DIR", tempfile.mkdtemp(prefix="cervisetu-test-"))
 

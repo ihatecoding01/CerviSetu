@@ -3,7 +3,8 @@ import asyncio
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -17,7 +18,9 @@ from backend.dashboard.routers import (
     showcase_router,
     abdm_router,
     portal_router,
+    staff_router,
 )
+from backend.core import staff_session
 from backend.dashboard.routers.clinical import IntakeRequest, SimulationRequest
 from backend.tools.escalation_scheduler import escalation_loop
 from backend.dashboard.routers.logs import (
@@ -55,6 +58,28 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+@app.middleware("http")
+async def staff_role_guard(request: Request, call_next):
+    """Staff-only API routes need a signed staff session whose role is allowed (see staff_session.ROLE_RULES).
+
+    Registered before CORS so CORS stays the outer layer and 401/403 replies still carry CORS headers.
+    """
+    path = request.url.path
+    if request.method != "OPTIONS" and path.startswith("/api/") and staff_session.auth_enforced():
+        roles = staff_session.required_roles(request.method, path)
+        if roles:
+            staff = staff_session.verify_session(request.cookies.get(staff_session.COOKIE_NAME))
+            if not staff:
+                return JSONResponse({"detail": {"code": "STAFF_SIGN_IN_REQUIRED",
+                                                "message": "Please sign in as staff."}}, status_code=401)
+            if staff["role"] not in roles:
+                return JSONResponse({"detail": {"code": "ROLE_NOT_ALLOWED",
+                                                "message": f"{staff['role_label']} accounts cannot do this."}},
+                                    status_code=403)
+            request.state.staff = staff
+    return await call_next(request)
+
+
 # Configure Cross-Origin Resource Sharing (CORS)
 app.add_middleware(
     CORSMiddleware,
@@ -80,6 +105,7 @@ app.include_router(prevention_router)
 app.include_router(showcase_router)
 app.include_router(abdm_router)
 app.include_router(portal_router)
+app.include_router(staff_router)
 
 # Static & Frontend Assets Directory
 STATIC_DIR = Path(__file__).resolve().parent / "static"

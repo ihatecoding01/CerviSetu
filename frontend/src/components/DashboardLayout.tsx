@@ -1,6 +1,7 @@
 import { CerviSetuLogo } from "./icons/CerviSetuLogo";
 import { LanguageSwitch } from "./LanguageSwitch";
 import { useState, type ReactNode } from "react";
+import type { StaffProfile } from "../api/staff";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -36,6 +37,8 @@ interface Props {
   activeTab: Tab;
   onTabChange: (tab: Tab) => void;
   onLogoutToGateway?: () => void;
+  staff?: StaffProfile | null;
+  onSignOut?: () => void;
   children: ReactNode;
 }
 
@@ -58,7 +61,10 @@ const NAV_ITEMS: NavItem[] = [
   { id: "privacy-tab", label: "Security & Audit", icon: ShieldCheck, category: "coordination" },
 ];
 
-export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, children }: Props) {
+export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, staff, onSignOut, children }: Props) {
+  const initials = staff
+    ? staff.name.replace(/^(Dr|Sister)\.?\s+/i, "").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase()
+    : "DM";
   const [collapsed, setCollapsed] = useState(false);
   const currentNav = NAV_ITEMS.find((item) => item.id === activeTab) || NAV_ITEMS[0];
 
@@ -188,10 +194,26 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, chi
             </button>
           )}
 
+          {onSignOut && (
+            <button
+              onClick={onSignOut}
+              className="p-2 rounded-xl text-slate-400 hover:text-[#BA2D0B] hover:bg-slate-100 transition-colors cursor-pointer"
+              title="Sign out"
+              aria-label="Sign out"
+              data-testid="staff-sign-out"
+            >
+              <LogOut className="size-4.5" />
+            </button>
+          )}
+
           {/* User Initial Avatar with Lime Active Dot */}
-          <div className="relative cursor-pointer" title="Logged in as Clinician (Dr. Morgan)">
+          <div
+            className="relative cursor-default"
+            title={staff ? `${staff.name} · ${staff.role_label} · ${staff.facility}` : "Signed in"}
+            data-testid="staff-avatar"
+          >
             <div className="size-8 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center">
-              DM
+              {initials}
             </div>
             <span className="absolute bottom-0 right-0 size-2.5 rounded-full bg-[#DBFE87] border-2 border-white" />
           </div>
@@ -400,6 +422,19 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, chi
 
           {/* Right Action Controls: Pill Buttons matching Image 1 */}
           <div className="flex items-center gap-3">
+            {staff && (
+              <div
+                className="hidden md:flex items-center gap-2 border border-slate-200 rounded-full pl-1 pr-3 py-1 text-xs"
+                data-testid="staff-chip"
+              >
+                <span className="size-6 rounded-full bg-slate-900 text-white text-[10px] font-bold flex items-center justify-center">
+                  {initials}
+                </span>
+                <span className="font-semibold text-slate-800 max-w-40 truncate">{staff.name}</span>
+                <span className="text-slate-500">{staff.role_label}</span>
+                {staff.offline && <span className="text-[10px] text-[#F19941] font-semibold">offline</span>}
+              </div>
+            )}
             <LanguageSwitch />
             {/* Ask Genie / AI Pill Button with Secondary Orange Dot */}
             <div className="hidden sm:flex items-center gap-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-800 transition-colors cursor-pointer">

@@ -15,6 +15,8 @@ import { ClinicianEncounter } from "./components/ClinicianEncounter";
 import { PreventionScreening } from "./components/PreventionScreening";
 import { LandingPage } from "./components/LandingPage";
 import { useRouter } from "./lib/router";
+import { StaffSignIn } from "./components/StaffSignIn";
+import { staffApi, type StaffProfile } from "./api/staff";
 
 export default function App() {
   const { currentRoute, navigate } = useRouter();
@@ -105,10 +107,24 @@ export default function App() {
     }
   };
 
+  // Staff session: undefined = still checking, null = signed out.
+  const [staff, setStaff] = useState<StaffProfile | null | undefined>(undefined);
+
   useEffect(() => {
+    staffApi.session().then((s) => setStaff(s));
+  }, []);
+
+  useEffect(() => {
+    if (!staff) return;
     fetchCases();
     fetchAuditLogs();
-  }, []);
+  }, [staff?.staff_id]);
+
+  const signOutStaff = async () => {
+    await staffApi.logout();
+    setStaff(null);
+    navigate("/gateway");
+  };
 
   const handleCaseSubmitted = (newCase?: any) => {
     if (newCase && newCase.patient_token) {
@@ -177,14 +193,32 @@ export default function App() {
     );
   }
 
-  // 4. Staff Workstation View (URL: /staff or /staff/:tab)
+  // 4. Staff Workstation View (URL: /staff or /staff/:tab), only after staff sign-in
   const currentTab: Tab = currentRoute.tab || "overview-tab";
+
+  if (staff === undefined) {
+    return <div className="min-h-screen bg-[#FAFAFA]" />;
+  }
+  if (!staff) {
+    return (
+      <StaffSignIn
+        preferredRole={currentTab === "asha-tab" ? "ASHA" : undefined}
+        onSignedIn={(s) => {
+          setStaff(s);
+          if (s.role === "ASHA" && currentTab !== "asha-tab") navigate({ view: "staff", tab: "asha-tab" });
+        }}
+        onBack={() => navigate("/gateway")}
+      />
+    );
+  }
 
   return (
     <DashboardLayout
       activeTab={currentTab}
       onTabChange={(newTab) => navigate({ view: "staff", tab: newTab })}
       onLogoutToGateway={() => navigate("/")}
+      staff={staff}
+      onSignOut={signOutStaff}
     >
       {currentTab === "overview-tab" && (
         <OverviewPanel

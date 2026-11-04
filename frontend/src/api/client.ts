@@ -5,6 +5,9 @@
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 
+// Send the staff session cookie with every API call (needed when the API is on another origin).
+const fetch: typeof window.fetch = (input, init) => window.fetch(input, { credentials: "include", ...init });
+
 export interface PatientCase {
   patient_token: string;
   session_id?: string;
