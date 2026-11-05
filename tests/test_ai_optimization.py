@@ -174,6 +174,7 @@ def test_summary_endpoint_generates_draft_when_requested(monkeypatch):
 
 def _enable_client(monkeypatch):
     monkeypatch.setattr(llm_client, "LLM_DISABLED", False)
+    monkeypatch.setattr(llm_client, "GROQ_API_KEY", "")
     return llm_client.SarvamLLMClient(api_key="test-key-not-real")
 
 
