@@ -1671,5 +1671,6 @@
   "SAMPLE RECORD",
   "ABHA Card (Sandbox)",
   "Sandbox ABHA Card",
-  "Your session has ended. Please log in again to continue."
+  "Your session has ended. Please log in again to continue.",
+  "You stay signed in while you work. After 12 hours with no activity you are signed out. Five wrong PINs lock the account for 5 minutes. Every sign-in and sign-out is written to the audit ledger."
 ]

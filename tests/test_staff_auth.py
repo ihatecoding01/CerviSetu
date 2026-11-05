@@ -87,3 +87,32 @@ def test_demo_sign_in_can_be_disabled(client, monkeypatch):
 
 def test_unknown_role(client):
     assert client.post("/api/staff/demo-login", json={"role": "JANITOR"}).status_code == 400
+
+
+def test_active_session_is_renewed_and_logout_still_ends_it(monkeypatch):
+    from backend.core import staff_session as ss
+    cookie = ss.issue_session("DR-1001")
+    assert ss.renewed_cookie(cookie) is None  # Not due yet
+    real = ss.time.time
+    # Worked for most of the idle limit: renewed, and valid beyond the original expiry
+    monkeypatch.setattr(ss.time, "time", lambda: real() + ss.SESSION_TTL_SECONDS - 60)
+    fresh = ss.renewed_cookie(cookie)
+    assert fresh and ss.verify_session(fresh)
+    monkeypatch.setattr(ss.time, "time", lambda: real() + ss.SESSION_TTL_SECONDS + 60)
+    assert ss.verify_session(cookie) is None and ss.verify_session(fresh)
+    ss.revoke_session(fresh)
+    assert ss.verify_session(fresh) is None
+
+
+def test_api_use_sends_a_renewed_cookie(monkeypatch):
+    from fastapi.testclient import TestClient
+    from backend.core import staff_session as ss
+    from backend.dashboard.app import app
+    monkeypatch.setattr(ss, "auth_enforced", lambda: True)
+    cookie = ss.issue_session("DR-1001")
+    real = ss.time.time
+    monkeypatch.setattr(ss.time, "time", lambda: real() + 3600)
+    client = TestClient(app)
+    client.cookies.set(ss.COOKIE_NAME, cookie, path="/api")
+    r = client.get("/api/cases")
+    assert r.status_code == 200 and ss.COOKIE_NAME in r.headers.get("set-cookie", "")

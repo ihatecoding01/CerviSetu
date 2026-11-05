@@ -155,7 +155,7 @@ export function StaffSignIn({ preferredRole, sessionEnded, onSignedIn, onBack }:
             </form>
             <div className="mt-5 flex items-start gap-2 text-[11px] text-slate-500 leading-relaxed">
               <ShieldCheck className="size-3.5 mt-0.5 shrink-0 text-[#0F766E]" />
-              <span>Sessions expire after 30 minutes. Five wrong PINs lock the account for 5 minutes. Every sign-in and sign-out is written to the audit ledger.</span>
+              <span>You stay signed in while you work. After 12 hours with no activity you are signed out. Five wrong PINs lock the account for 5 minutes. Every sign-in and sign-out is written to the audit ledger.</span>
             </div>
           </section>
         </div>

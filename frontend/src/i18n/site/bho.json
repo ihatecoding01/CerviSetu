@@ -399,6 +399,7 @@
  "ABHA Card (Sandbox)": "ABHA कार्ड (सैंडबॉक्स)",
  "Sandbox ABHA Card": "सैंडबॉक्स ABHA कार्ड",
  "Your session has ended. Please log in again to continue.": "रउरा सत्र खतम हो गइल बा। आगे बढ़े खातिर फेर से लॉग इन करीं।",
+ "You stay signed in while you work. After 12 hours with no activity you are signed out. Five wrong PINs lock the account for 5 minutes. Every sign-in and sign-out is written to the audit ledger.": "काम करत घरी रउरा लॉग इन रहेनी। 12 घंटा ले कवनो गतिविधि ना भइला पर रउरा लॉग आउट हो जाएब। पाँच बेर गलत PIN से खाता 5 मिनट खातिर बंद हो जाला। हर लॉग इन आ लॉग आउट ऑडिट लेजर में दर्ज होला।",
  "Day 4 Overdue · Tier 2 IVR": "दिन 4 देर · टियर 2 IVR",
  "Day 41 (Wednesday)": "दिन 41 (बुध)",
  "Day 41 OT Slot, Bus Voucher & Dharamshala Approved": "दिन 41 OT स्लॉट, बस वाउचर आ धर्मशाला मंजूर",

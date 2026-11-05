@@ -82,6 +82,11 @@ async def staff_role_guard(request: Request, call_next):
                                                 "message": f"{staff['role_label']} accounts cannot do this."}},
                                     status_code=403)
             request.state.staff = staff
+            response = await call_next(request)
+            renewed = staff_session.renewed_cookie(request.cookies.get(staff_session.COOKIE_NAME))
+            if renewed:
+                staff_session.write_cookie(response, request, renewed)
+            return response
     return await call_next(request)
 
 

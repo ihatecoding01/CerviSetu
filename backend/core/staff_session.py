@@ -25,7 +25,8 @@ from backend.config import APP_ENV, VAULT_SECRET_KEY
 from backend.core.database import global_db
 
 COOKIE_NAME = "cervisetu_staff_session"
-SESSION_TTL_SECONDS = int(os.getenv("CERVISETU_STAFF_SESSION_MINUTES", "30")) * 60
+SESSION_TTL_SECONDS = int(os.getenv("CERVISETU_STAFF_SESSION_MINUTES", "720")) * 60  # Idle limit: use renews it
+RENEW_AFTER_SECONDS = 5 * 60
 MAX_FAILED_ATTEMPTS = 5
 LOCKOUT_SECONDS = 5 * 60
 _KEY = hmac.new(VAULT_SECRET_KEY.encode(), b"cervisetu-staff-session-v1", hashlib.sha256).digest()
@@ -214,6 +215,25 @@ def verify_session(cookie: Optional[str]) -> Optional[Dict[str, str]]:
     return public_profile(staff_id)
 
 
+def renewed_cookie(cookie: Optional[str]) -> Optional[str]:
+    """A later-expiring cookie for this valid session, so staff who are working are never signed out.
+
+    Keeps the same session id, so requests in flight stay valid and logout still ends it. None if not due yet.
+    """
+    if not verify_session(cookie):
+        return None
+    data = json.loads(_unb64(cookie.rsplit(".", 1)[0]))
+    expires = time.time() + SESSION_TTL_SECONDS
+    if expires - float(data["exp"]) < RENEW_AFTER_SECONDS:
+        return None
+    with global_db._get_conn() as conn:
+        conn.execute("UPDATE staff_sessions SET expires_at = ? WHERE sid_hash = ?",
+                     (expires, hashlib.sha256(data["sid"].encode()).hexdigest()))
+        conn.commit()
+    payload = _b64(json.dumps({**data, "exp": int(expires)}).encode())
+    return f"{payload}.{_sign(payload)}"
+
+
 def revoke_session(cookie: Optional[str]) -> None:
     if not cookie or "." not in cookie:
         return
@@ -228,6 +248,10 @@ def revoke_session(cookie: Optional[str]) -> None:
 
 
 def set_session_cookie(response, request, staff_id: str) -> None:
+    write_cookie(response, request, issue_session(staff_id))
+
+
+def write_cookie(response, request, value: str) -> None:
     secure = request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https"
-    response.set_cookie(COOKIE_NAME, issue_session(staff_id), max_age=SESSION_TTL_SECONDS,
+    response.set_cookie(COOKIE_NAME, value, max_age=SESSION_TTL_SECONDS,
                         httponly=True, samesite="strict", secure=secure, path="/api")
