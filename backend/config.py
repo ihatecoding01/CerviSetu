@@ -81,7 +81,7 @@ DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "gpt-4o-mini")
 
 # Groq Oncology Inference Settings
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 
 # Sarvam AI Indic Speech & Vision Settings
 SARVAM_API_KEY = os.getenv("SARVAM_API_KEY", "")

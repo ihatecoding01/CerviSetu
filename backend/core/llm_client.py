@@ -12,7 +12,7 @@ from typing import Any, Dict, Optional
 
 import httpx
 
-from backend.config import LLM_DISABLED, SARVAM_API_KEY, SARVAM_BASE_URL, SARVAM_LLM_MODEL
+from backend.config import GROQ_API_KEY, GROQ_MODEL, LLM_DISABLED, SARVAM_API_KEY, SARVAM_BASE_URL, SARVAM_LLM_MODEL
 from backend.core.ai_usage import record_usage
 
 logger = logging.getLogger(__name__)
@@ -38,12 +38,45 @@ class SarvamLLMClient:
         self.api_key = api_key if api_key is not None else SARVAM_API_KEY
         self.model = model or SARVAM_LLM_MODEL
         self.timeout = timeout
+        self.groq_key = GROQ_API_KEY
 
     @property
     def enabled(self) -> bool:
         return bool(self.api_key) and not LLM_DISABLED
 
     def structured(
+        self, system: str, user: str, schema: Dict[str, Any], name: str,
+        strict: bool = False, max_tokens: int = 800,
+    ) -> Optional[Dict[str, Any]]:
+        """Sarvam first; Groq (when GROQ_API_KEY is set) if Sarvam is unavailable or returns nothing usable."""
+        result = self._structured_sarvam(system, user, schema, name, strict, max_tokens)
+        return result if result is not None else self._structured_groq(system, user, schema, name, max_tokens)
+
+    def _structured_groq(self, system: str, user: str, schema: Dict[str, Any], name: str, max_tokens: int) -> Optional[Dict[str, Any]]:
+        if not self.groq_key or LLM_DISABLED:
+            return None
+        started = time.monotonic()
+        try:
+            resp = httpx.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={"Authorization": f"Bearer {self.groq_key}"},
+                json={"model": GROQ_MODEL, "temperature": 0.1, "max_tokens": max_tokens, "response_format": {"type": "json_object"},
+                      "messages": [{"role": "system", "content": f"{system}\nReply with JSON only, matching this JSON schema: {json.dumps(schema)}"},
+                                   {"role": "user", "content": user}]},
+                timeout=self.timeout,
+            )
+            resp.raise_for_status()
+            result = json.loads(resp.json()["choices"][0]["message"]["content"])
+            if not isinstance(result, dict):
+                raise ValueError("INVALID_JSON")
+            record_usage(name, "groq/chat", GROQ_MODEL, True, duration_ms=int((time.monotonic() - started) * 1000))
+            return result
+        except Exception as e:
+            record_usage(name, "groq/chat", GROQ_MODEL, False, duration_ms=int((time.monotonic() - started) * 1000), error_category=_error_category(e))
+            logger.warning("Groq fallback failed (%s)", _error_category(e))
+            return None
+
+    def _structured_sarvam(
         self, system: str, user: str, schema: Dict[str, Any], name: str,
         strict: bool = False, max_tokens: int = 800,
     ) -> Optional[Dict[str, Any]]:

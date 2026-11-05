@@ -387,7 +387,7 @@ export const PatientPortal: React.FC<Props> = ({ token, onRequireLogin, onOpenOw
           {status}
         </div>
       </div>
-      <VoiceSymptomReporter patientToken={token} clockDay={1} />
+      <VoiceSymptomReporter patientToken={token} clockDay={c.treatment_day_today ?? 1} />
       {journey}
       {info}
     </>,

@@ -62,3 +62,22 @@ def test_answer_needs_support_in_document(monkeypatch):
 
 def test_rejects_non_document():
     assert client.post("/api/documents/extract", files={"file": ("a.txt", b"hello", "text/plain")}).status_code == 422
+
+
+def test_groq_used_only_when_sarvam_fails(monkeypatch):
+    client_obj = llm_client.SarvamClient(api_key="k") if hasattr(llm_client, "SarvamClient") else None
+    if client_obj is None:
+        client_obj = type(llm_client.global_llm)(api_key="k")
+    client_obj.groq_key = "g"
+    monkeypatch.setattr(llm_client, "LLM_DISABLED", False)
+    monkeypatch.setattr(client_obj, "_structured_sarvam", lambda *a, **k: None)
+    called = {}
+
+    def fake_post(url, **kw):
+        called["url"] = url
+        return httpx.Response(200, json={"choices": [{"message": {"content": '{"ok": 1}'}}]}, request=httpx.Request("POST", url))
+    monkeypatch.setattr(llm_client.httpx, "post", fake_post)
+    assert client_obj.structured("s", "u", {}, "n") == {"ok": 1} and "groq" in called["url"]
+    monkeypatch.setattr(client_obj, "_structured_sarvam", lambda *a, **k: {"first": 1})
+    called.clear()
+    assert client_obj.structured("s", "u", {}, "n") == {"first": 1} and not called

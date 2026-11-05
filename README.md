@@ -159,20 +159,20 @@ flowchart TD
 ### 1. Handwritten Clinical Slip Spatial OCR Studio
 - **High Precision Clinical Slip Digitization**: Parses handwritten and printed oncologist prescription slips, pathology reports, and staging summaries.
 - **Real Document OCR (opt-in)**: Uploaded slips and reports can be read by Sarvam Vision when `CERVISETU_OCR_ENABLED=1` and a provider is configured, with page, size, timeout and blur-rejection limits.
-- **In Place Bounding Highlights**: Clinical entities (`Cancer Site`, `FIGO Staging`, `Biopsy Histopathology`, `EBRT Teletherapy Order`, `Hub Brachytherapy Referral`, `56 Day Curative Limit`) are highlighted in non colliding, readable bounding capsules with confidence indicators (`96% to 99%`).
-- **Two Way Synchronized Hover Tracing**: Hovering an entity on the prescription slip illuminates the bounding capsule and simultaneously highlights its corresponding row in the Structured Clinical Entity Key Values table.
+- **Document Workspace (Clinical Intake)**: Upload a photo or PDF and see every block Sarvam Vision read marked on the document at its real position. Click a value, lab or line to see where it came from, correct it, then use it in the intake notes.
+- **Automatic Lab Flags**: Haemoglobin, ANC, platelets and creatinine are read from the document and flagged against CCRT safety limits.
+- **Ask This Document**: Ask a question and get an answer with the supporting quote. If the words are not in the document, it says so rather than guessing.
+- **Sample Studio (Landing Page)**: In-place highlights on sample slips for illustration, clearly labelled as samples.
+- **Two Way Synchronized Hover Tracing**: In the sample studio, hovering an entity illuminates its capsule and the matching row of the key values table.
 - **Zero Knowledge DPDP Token Vault**: One click toggle between unmasked clinical views and anonymized workstation views (`PT ANON 7B93`) compliant with the Digital Personal Data Protection (DPDP) Act 2023.
-- **Dual Visual Modes**: Toggle between the authentic Clinical Prescription Sheet and the 2D Geometric Spatial Wireframe showing normalized coordinates (`top`, `left`, `width`, `height`) and IoU alignment precision.
+- **Dual Visual Modes**: The sample studio toggles between the prescription sheet and a 2D layout wireframe.
 - **Animated Sweeping Laser Scan Beam**: Real time visual feedback during OCR extraction.
 
 ### 2. Sarvam AI Indic Voice Intelligence (`bulbul:v4-flash`)
-- **Native Indic Text to Speech**: Integrates Sarvam AI `bulbul:v4-flash` to synthesize clinical adherence reminders in 6 major regional languages and dialects:
-  - **Hindi (Devanagari)** (`ritu_hi_medical`)
-  - **Bhojpuri (Purvanchal)** (`ritu_hi_medical`)
-  - **Bengali (Bangla)** (`roopa_bn_conversational`)
-  - **Marathi** (`sneha_mr_conversational`)
-  - **Tamil** (`kavitha_ta_conversational`)
-  - **Telugu** (`ananya_te_conversational`)
+- **Native Indic Text to Speech**: Integrates Sarvam AI `bulbul:v4-flash` (using the model's default voice for each language) to synthesize clinical adherence reminders in 6 major regional languages and dialects: Hindi, Bhojpuri, Bengali, Marathi, Tamil and Telugu.
+- **Voice Consultation**: In the Clinical Encounter, record a consultation of up to 3 minutes in any supported language, or type notes. Sarvam speech-to-text and AI return an editable draft with chief complaints, history, working impression, estimated toxicity grade, differentials, red flags, next steps and prescribed medicines.
+- **Voice Commands**: Say "hold chemo", "reduce the dose", "approve chemo" or "log the fraction" and the action appears as a button to confirm. Nothing runs without the clinician's click.
+- **Speak Your Symptoms**: Patients can describe symptoms by voice in the portal; a nurse reviews every report.
 - **Vernacular Script & SSML**: Generates SSML prompts with conversational cadence, Devanagari/regional scripts, and Latin transliteration.
 - **Direct In Browser Audio**: Instant streaming and playback of generated 24kHz WAV audio directly from the dashboard.
 - **Credit-Aware AI Usage**: Generated audio is cached and AI calls are tracked (`/api/dev/ai-usage`), so repeated demos do not spend Sarvam credits again.
@@ -182,10 +182,11 @@ flowchart TD
 - **Real Date-Driven Clock**: The overall treatment time (OTT) clock is computed from real calendar dates against the GEC-ESTRO 49 day target and 56 day limit. It accounts for treatment weekdays, planned rest days, facility downtime and clinician-approved pauses.
 - **29 Fraction Tracking**: Coordinates 25 local teletherapy fractions (50 Gy EBRT) at district daycare spokes and triggers automated handoff passes for 4 high dose rate (HDR) intracavitary brachytherapy fractions at regional tertiary hubs.
 - **Progressive Multi Tier Escalation**:
-  - **Tier 1 (24 Hours Missed)**: Multilingual SMS and WhatsApp reminders.
-  - **Tier 2 (48 Hours Missed)**: Automated Sarvam voice IVR outreach to patient and caregiver.
-  - **Tier 3 (72 Hours Missed)**: Village ASHA worker dispatch ticket with GPS sector coordinates.
-  - **Tier 4 (120 Hours Missed)**: Emergency unmasking and statutory District Chief Medical Officer escalation dossier.
+  - **Tier 1 (24 Hours Missed)**: SMS reminder.
+  - **Tier 2 (48 Hours Missed)**: Automated voice call to the patient.
+  - **Tier 3 (72 Hours Missed)**: ASHA home-visit ticket with the village sector, plus a stigma-safe alert to the worker that names no diagnosis.
+  - **Tier 4 (120 Hours Missed)**: District case raised for clinician review. Identity stays in the vault until a doctor or administrator approves, then a printable, audited dossier is handed to the District Chief Medical Officer's office.
+- **Real Messaging, Safely**: SMS, WhatsApp and voice go through Twilio when configured, and only to approved test numbers; otherwise they run in simulation mode and say so. The Rural Tracker shows the true status of every message, and same-day duplicates are prevented. The simulator can never message a person.
 - **Scheduled Escalation Cycle**: A background scheduler runs the escalation cycle on an interval (`CERVISETU_ESCALATION_INTERVAL_HOURS`, default 24).
 
 ### 4. ABDM / ABHA Registration & Patient Portal
@@ -193,7 +194,8 @@ flowchart TD
 - **OTP Security**: OTPs are stored hashed, expire after 10 minutes, lock after 5 wrong attempts, and limit resends. Aadhaar is never stored in plaintext, only as a keyed hash.
 - **Collision-Safe & Resumable**: ABHA numbers and addresses are allocated with bounded retries. The OTP is consumed only after registration is saved, so a failed attempt can be retried with the same OTP without creating a duplicate patient. Concurrent verifies of the same OTP are serialized by a database lease.
 - **Mobile OTP Login**: Returning patients log in with their registered mobile number. When the backend is unreachable (for example on static hosting), the gateway falls back to an offline sandbox so the demo patient login and portal still work.
-- **Three Login Paths**: The care gateway offers separate cards for doctors/staff, ASHA workers (opens the ASHA network view) and patients.
+- **Three Login Paths**: The care gateway offers separate cards for doctors/staff, ASHA workers and patients. Staff choose a role and sign in with a staff ID and PIN, which are pre-filled for the sample roster.
+- **Role-Based Staff Access**: Doctor, Nurse, ASHA Worker and Administrator roles are enforced on the server, with 30-minute sessions, PIN lockout and audited sign-ins.
 - **Session-Protected Patient Portal**: A signed, HttpOnly, SameSite-strict session cookie (30 minutes) scopes every portal request to the logged-in patient. Patients see their progress, next session, treatment journey and session history, in any of the **7 supported languages**.
 - **Synthetic Demo Journeys**: New sandbox patients get a deterministic, clearly labelled synthetic treatment journey. These patients are excluded from the real case queue, ward board and escalations, and their FHIR export is tagged `SYNTHETIC_DEMO`.
 
@@ -203,7 +205,7 @@ flowchart TD
 - **Dynamic Contrast & Exposure**: Inspects glare, shadows, and low RMS contrast before clinical inference.
 
 ### 6. Multi Agent Reasoning Canvas & District Impact Modeling
-- **Live LangGraph Trace**: Visualizes execution DAG latency across `ocr_intake`, `pii_token_vault`, `image_triage`, `radiotherapy_clock`, and `rural_tracker` nodes.
+- **Live LangGraph Trace**: Every case run records the real timing and outcome of the `intake`, `diagnostic` and `tracker` agents, shown with the result in Clinical Intake and on the landing page canvas alongside the real newest audit block. The slider previews which tier a number of missed days would reach.
 - **District Impact Calculator**: Computes annual lives saved, travel kilometers avoided, and financial savings based on district population and spoke clinic network size.
 - **Developer API Studio**: Interactive cURL snippets and live testing console for EHR integration.
 - **FHIR Export**: Patient data can be exported as a FHIR bundle (`/api/fhir/patient/{token}`).
@@ -212,10 +214,10 @@ flowchart TD
 - **Prevention Continuum**: HPV vaccination records and outreach, screening, precancer treatment and surveillance.
 - **Clinical Encounter Workspace**: A full-width EMR-style encounter view with a patient roster on the left, so the clinician can switch patients without leaving the encounter. Tabs cover:
   - **Overview & Vitals**: today's vitals, weekly CBC/RFT labs with automatic flags (neutropenic, thrombocytopenic, elevated creatinine, low haemoglobin).
-  - **Consultation & AI Voice**: an ambient microphone that drafts chief complaints and the clinical narrative, plus an editable prescription list.
+  - **Consultation & AI Voice**: a real ambient microphone or typed notes that draft the consultation for review, with confirmable voice commands and replay of the recording.
   - **CCRT Protocol & Vault**: weekly cisplatin clearance (approve, reduce or hold) while daily EBRT continues.
   - **Radiation Planning & CT Sim**, **Pre-Brachy Hub Bridge** (hub OT slot locking) and **ABHA & DPDP Consent**.
-- **Encounter Actions**: Mark today as a no-show, report and clear LINAC downtime, return hub referrals with deficiencies, and execute discharge sign-off, which purges cached ambient audio under the DPDP Act.
+- **Encounter Actions**: Mark today as a no-show, report and clear LINAC downtime, return hub referrals with deficiencies, and execute discharge sign-off, which deletes the patient's stored recordings under the DPDP Act. Recordings are encrypted and also expire automatically.
 - **Reports Rail**: A collapsible side rail with the encounter details and attached reports (biopsy histopathology, CT simulation, PAC clearance, CBC/RFT panels).
 - **ASHA Network**: Field tickets for home visits, with recorded outcomes.
 
@@ -255,9 +257,9 @@ flowchart TD
 | **Localization** | Full-site UI in 7 languages: English, Hindi, Bhojpuri, Bengali, Marathi, Tamil, Telugu (`frontend/src/i18n`) |
 | **Backend Framework** | FastAPI (Python 3.14+), Uvicorn, Pydantic v2 |
 | **Agent Orchestration** | LangGraph, LangChain Core |
-| **Voice AI (TTS & ASR)** | Sarvam AI API (`bulbul:v4-flash`), Indic SSML Engine |
+| **Voice AI (TTS & ASR)** | Sarvam AI API (`bulbul:v4-flash`, `saaras:v4`), Indic SSML Engine |
 | **Document OCR** | Sarvam Vision (opt-in), OpenCV blur gate |
-| **High Speed LLM** | Groq LPU (`llama-3.3-70b-versatile`), OpenAI / Anthropic / Google Fallbacks |
+| **LLM** | Sarvam AI (`sarvam-105b`), with Groq LPU (`llama-3.3-70b-versatile`) as a fallback when `GROQ_API_KEY` is set |
 | **Computer Vision** | OpenCV Headless, NumPy, Pillow, Laplacian Spatial Kernel |
 | **Health Interoperability** | ABDM / ABHA sandbox flow, FHIR patient bundle export |
 | **Security & Privacy** | AES-256-GCM Token Vault, HMAC-SHA256 keyed hashes, signed patient sessions, SHA-256 Block Chained Audit Ledger |
@@ -299,7 +301,8 @@ VAULT_SECRET_KEY=your_32_byte_base64_key_here
 
 # Optional
 CERVISETU_ABDM_MODE=sandbox_simulated   # ABHA flow is simulated; refused when CERVISETU_ENV=production
-CERVISETU_OCR_ENABLED=0                 # set to 1 with CERVISETU_OCR_PROVIDER=sarvam_vision for real OCR
+CERVISETU_OCR_ENABLED=1                 # real document reading (0 turns it off)
+CERVISETU_OCR_PROVIDER=sarvam_vision
 ```
 
 Generate a vault key with:
@@ -340,7 +343,7 @@ Open **`http://localhost:8000`** in your browser to access the complete applicat
 | `/patient/{token}` | Patient portal (requires a patient session) |
 | `/demo` | Dual-screen clinic tablet and patient phone demo |
 
-**Demo login:** in the gateway, use patient mobile OTP login with `9876543210`. The sandbox OTP is shown on screen.
+**Sign in:** staff choose a role on the sign-in screen, where the credentials are pre-filled. Patients use mobile OTP login with `9876543210`; the sandbox OTP is shown on screen.
 
 **Change language:** use the globe picker in any header. To run only the frontend during development:
 ```bash
@@ -392,11 +395,19 @@ Tests run offline: LLM calls, Sarvam, OCR and the scheduler are disabled, and da
 
 ## API Endpoints Reference
 
+### Staff, Voice, Documents & Escalation
+- `POST /api/staff/login`, `POST /api/staff/demo-login`, `GET /api/staff/session`, `POST /api/staff/logout`: Staff sign-in and sessions.
+- `POST /api/encounter/{token}/voice-consult`, `GET /api/encounter/{token}/consult-audio/{id}`: Voice or typed consultation draft, and recording replay.
+- `POST /api/patient/{token}/voice-symptoms`: Spoken symptom report.
+- `POST /api/documents/extract`, `POST /api/documents/ask`: Interactive document reading and grounded questions.
+- `GET /api/messages`, `POST /api/messages/test`, `POST /api/messages/provider-status`: Message log, test send and provider delivery updates.
+- `GET /api/authority/cases`, `POST /api/authority/cases/{id}/approve|decline|mark-sent`, `GET /api/authority/cases/{id}/dossier`: District escalation review.
+
 ### Showcase & Interactive Intelligence (`/api/showcase`)
-- `POST /api/showcase/parse-prescription`: High precision OCR extraction with spatial bounding coordinates and DPDP tokenization.
+- `POST /api/showcase/parse-prescription`: Sample slip extraction for the landing page studio.
 - `POST /api/showcase/voice-script`: Regional Indic voice adherence script generator.
 - `POST /api/showcase/synthesize-speech`: Live Sarvam AI `bulbul:v4-flash` audio synthesis.
-- `POST /api/showcase/graph-trace`: Multi agent LangGraph execution DAG trace.
+- `POST /api/showcase/graph-trace`: Latest real agent run and audit block, with a what-if escalation preview.
 - `POST /api/showcase/district-impact`: Public health population impact modeling.
 - `POST /api/showcase/register-pilot`: Pilot district hospital onboarding request.
 
@@ -446,7 +457,10 @@ Full interactive docs are available at **`/docs`** while the server is running.
 - **Patient Sessions**: The portal uses a signed, HttpOnly, SameSite-strict cookie limited to `/api`. A patient can only read their own data.
 - **Audit Ledger**: Every sensitive action is written to a SHA-256 chained, append-only ledger that can be verified end to end.
 - **Sandbox Boundaries**: The ABHA flow is simulated and refused in production mode. Synthetic demo patients are labelled at every level and kept out of real clinical queues.
-- **Known Limitations**: Staff screens are open for the hackathon demo and need real staff authentication before production use. The PII vault is a separate file store, so registration is made safe by idempotent, resumable steps rather than one cross-store transaction.
+- **Staff Access**: Staff APIs require a signed, HttpOnly session and the right role.
+- **Clinician in Control**: AI drafts, voice commands and extracted values do nothing until a clinician confirms them, and every AI output is decision support only.
+- **Document Reading**: With OCR enabled, the unmasked document image goes to Sarvam for reading, so use synthetic documents unless an agreement is in place. Extracted text is masked before display or further AI use.
+- **Known Limitations**: The staff roster is a fixed sample with one shared PIN, the ABHA flow is a sandbox and patients are synthetic. Live messaging needs a provider account, consent and approved templates before use with real patients. Production use needs real staff identity, hospital agreements and a clinical and compliance review.
 
 ---
 
