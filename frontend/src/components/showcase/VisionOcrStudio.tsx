@@ -425,8 +425,8 @@ export const VisionOcrStudio: React.FC = () => {
               </div>
 
               <div className="pt-3 border-t border-[#000000]/10 flex items-center justify-between text-[11px] text-[#4B5563]">
-                <span>IoU Spatial Precision: 0.94</span>
-                <span className="text-[#BA2D0B] font-bold">Zero Text Collision Confirmed</span>
+                <span>Sample document. Upload real documents in Clinical Intake.</span>
+                
               </div>
             </div>
           )}
@@ -577,12 +577,12 @@ export const VisionOcrStudio: React.FC = () => {
                 <span className="font-bold text-[#000000]">284.6 (Sharp · Min 85.0)</span>
               </div>
               <div className="p-2.5 rounded bg-[#FFFFFF] border border-[#F19941]/40">
-                <span className="text-[#4B5563] block text-[10px]">Average Character Confidence</span>
-                <span className="font-bold text-[#BA2D0B]">98.2% across 6 entities</span>
+                <span className="text-[#4B5563] block text-[10px]">Document source</span>
+                <span className="font-bold text-[#BA2D0B]">Sample slip for illustration</span>
               </div>
               <div className="p-2.5 rounded bg-[#FFFFFF] border border-[#F19941]/40">
-                <span className="text-[#4B5563] block text-[10px]">Spatial IoU Alignment</span>
-                <span className="font-bold text-[#000000]">0.94 Precision Fit</span>
+                <span className="text-[#4B5563] block text-[10px]">Real documents</span>
+                <span className="font-bold text-[#000000]">Clinical Intake workspace</span>
               </div>
               <div className="p-2.5 rounded bg-[#FFFFFF] border border-[#F19941]/40">
                 <span className="text-[#4B5563] block text-[10px]">Total Extraction Latency</span>

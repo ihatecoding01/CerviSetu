@@ -8,6 +8,7 @@ import { Textarea } from "./careui/textarea";
 import { Badge } from "./careui/badge";
 import { Alert, AlertTitle, AlertDescription } from "./careui/alert";
 import { Separator } from "./careui/separator";
+import { DocumentWorkspace } from "./DocumentWorkspace";
 import {
   FileText,
   AlertCircle,
@@ -240,6 +241,8 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
+
+      <DocumentWorkspace onUseInIntake={(summary) => setForm((prev) => ({ ...prev, raw_text: summary }))} />
 
       {/* Stepper Indicator */}
       <div className="bg-white border border-gray-200 rounded-xl p-3.5 shadow-2xs flex items-center justify-between overflow-x-auto text-xs">

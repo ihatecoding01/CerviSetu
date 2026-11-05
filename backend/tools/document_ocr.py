@@ -139,6 +139,19 @@ def _html_to_text(content: str) -> str:
     return re.sub(r"[ \t]+", " ", re.sub(r"\n\s*\n+", "\n", text)).strip()
 
 
+def _collect_blocks(page_items: list) -> list:
+    """Text blocks in reading order, each with its page and normalised [x1, y1, x2, y2] position."""
+    blocks = []
+    for page in page_items:
+        for b in sorted(page.get("blocks") or [], key=lambda b: b.get("reading_order") or 0):
+            text = _html_to_text(b.get("text") or "")
+            if text:
+                bbox = b.get("bbox_norm")
+                blocks.append({"id": b.get("block_id") or f"b{len(blocks) + 1}", "page": page.get("page_num") or 1, "text": text,
+                               "bbox": bbox if isinstance(bbox, list) and len(bbox) == 4 else None})
+    return blocks
+
+
 class SarvamVisionOCRProvider:
     """Sarvam Document AI parse job (REST paths per sarvamai SDK 0.1.43): create -> poll status -> results."""
 
@@ -191,11 +204,13 @@ class SarvamVisionOCRProvider:
                 results.raise_for_status()
                 docs = results.json().get("documents") or []
             page_items = sorted((p for d in docs for p in (d.get("pages") or [])),
-                                key=lambda p: p.get("page_number") or 0)
-            text = "\n\n".join(_html_to_text(p.get("content") or "") for p in page_items).strip()
+                                key=lambda p: p.get("page_num") or p.get("page_number") or 0)
+            blocks = _collect_blocks(page_items)
+            text = ("\n".join(b["text"] for b in blocks) if blocks else
+                    "\n\n".join(_html_to_text(p.get("content") or "") for p in page_items)).strip()
             ai_usage.record_usage("document_ocr", "doc-ai/parse", self.model, True,
                                   duration_ms=int((time.monotonic() - started) * 1000), pages=pages)
-            return {"text": text, "pages": pages, "partial": state == "partially_completed"}
+            return {"text": text, "pages": pages, "partial": state == "partially_completed", "blocks": blocks}
         except OCRError as e:
             category = e.category
         except httpx.TimeoutException:
@@ -253,7 +268,7 @@ def process_document(data: bytes, provider: Any = "default") -> Dict[str, Any]:
     if cached is not None:
         ai_usage.record_usage("document_ocr", "doc-ai/parse", provider.model, True, cache_hit=True)
         return {**result, "status": "COMPLETED", "text": cached["masked_text"], "cache_hit": True,
-                "provider": provider.name}
+                "provider": provider.name, "blocks": cached.get("masked_blocks") or []}
 
     try:
         ocr = provider.extract(payload, mime)
@@ -263,9 +278,11 @@ def process_document(data: bytes, provider: Any = "default") -> Dict[str, Any]:
         return {**result, "status": "OCR_EMPTY", "provider": provider.name}
 
     masked, _ = PIIShield.mask_text(ocr["text"])
-    ai_usage.cache_put(key, "document_ocr", {"masked_text": masked})
+    blocks = ocr.get("blocks") or []
+    masked_blocks = [{**b, "text": PIIShield.mask_text(b["text"])[0]} for b in blocks]
+    ai_usage.cache_put(key, "document_ocr", {"masked_text": masked, "masked_blocks": masked_blocks})
     return {**result, "status": "COMPLETED", "text": ocr["text"], "provider": provider.name,
-            "partial": ocr.get("partial", False)}
+            "partial": ocr.get("partial", False), "blocks": blocks}
 
 
 def _sha256(data: bytes) -> str:

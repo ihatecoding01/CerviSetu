@@ -420,6 +420,20 @@ export interface PatientProfile {
   data_label: string | null;
 }
 
+export interface DocumentBlock { id: string; page: number; text: string; bbox: [number, number, number, number] | null }
+export interface DocumentField { key: string; label: string; value: string; block_id: string | null; found_in_document: boolean }
+export interface DocumentLab { name: string; value: number; unit: string; abnormal: boolean; note: string; block_id: string }
+export interface DocumentResult {
+  status: "COMPLETED" | "QUALITY_REJECTED" | "OCR_DISABLED" | "OCR_FAILED" | "OCR_EMPTY";
+  quality: { status: string; reasons: string[]; warnings: string[] } | null;
+  file_type: string;
+  partial: boolean;
+  text?: string;
+  blocks?: DocumentBlock[];
+  fields?: DocumentField[];
+  labs?: DocumentLab[];
+}
+
 export interface VoiceConsultDraft {
   source: "AI_DRAFT" | "TRANSCRIPT_ONLY";
   chief_complaints: string;
@@ -982,6 +996,19 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     });
+  },
+
+  async extractDocument(file: File): Promise<DocumentResult> {
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch(`${BASE_URL}/api/documents/extract`, { method: "POST", body: form });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.detail?.message || (typeof body.detail === "string" ? body.detail : "Could not read the document"));
+    return body;
+  },
+
+  async askDocument(text: string, question: string): Promise<{ found: boolean; answer: string | null; quote: string | null }> {
+    return request("/api/documents/ask", { method: "POST", body: JSON.stringify({ text, question }) });
   },
 
   async voiceConsult(token: string, input: { audio?: Blob; text?: string; context?: string }): Promise<VoiceConsultResult> {
