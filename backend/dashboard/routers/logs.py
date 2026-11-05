@@ -438,6 +438,11 @@ async def update_asha_ticket_outcome(req: AshaTicketOutcomeRequest):
         arrival_watch_hours=req.arrival_watch_hours or 24
     )
 
+    if "ESCORT" in req.outcome and updated.get("patient_token"):
+        from backend.tools import authority_cases
+        authority_cases.raise_case(updated["patient_token"], None, updated.get("days_missed") or 0,
+                                   f"ASHA field report: escort needed. Cause: {req.root_cause or 'not stated'}")
+
     action = "ASHA_TICKET_FAST_TRACK_ESCORT" if "ESCORT" in req.outcome else "ASHA_TICKET_RESOLVED_TRAVELING_TOMORROW"
     global_audit.record_user_event(
         user_role=UserRole.NURSE_HEALTHCARE_WORKER,

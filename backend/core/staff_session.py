@@ -72,6 +72,7 @@ ROLE_RULES = [
     ("POST", r"^/api/clinical/(linac-downtime|downtime-toggle|facility-downtime)$", CLINICAL),
     ("POST", r"^/api/run-case$", CLINICAL),
     ("GET", r"^/api/clinical/chemo-clearance/", CLINICAL),
+    ("*", r"^/api/authority/", (DOCTOR, ADMIN)),
     ("POST", r"^/api/documents/", CLINICAL),
     ("POST", r"^/api/messages/test$", CLINICAL),
     ("GET", r"^/api/messages$", ALL_STAFF),

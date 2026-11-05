@@ -92,5 +92,6 @@ def test_progressive_escalation_tiers():
     )
     assert tier4 == "TIER_4_AUTHORITY_ESCALATION"
     assert dossier4 is not None
-    assert dossier4["full_name"] == "Sita Devi"
-    assert "House 12, Village Rampur" in dossier4["village_address"]
+    # Identity stays in the vault until a clinician approves the district case
+    assert "Sita Devi" not in str(dossier4) and "House 12" not in str(dossier4)
+    assert "Sita Devi" not in str(notifs4)

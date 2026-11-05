@@ -1620,5 +1620,17 @@
   "No messages yet.",
   "Simulated, not sent",
   "Blocked: number not approved",
-  "No phone number"
+  "No phone number",
+  "District Escalation Review",
+  "Personal details stay hidden until a doctor or administrator approves. Approving does not send anything: hand the dossier to the district office, then mark it sent.",
+  "No cases waiting for review.",
+  "Only doctors and administrators can review district cases.",
+  "Approve",
+  "Decline",
+  "Open dossier",
+  "Mark sent",
+  "Awaiting review",
+  "Approved",
+  "Declined",
+  "Sent to district"
 ]

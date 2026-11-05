@@ -104,12 +104,12 @@ export function AshaCoordination({}: Props) {
       setActionSuccessMsg(
         outcome === "TRAVELING_TOMORROW"
           ? `✓ 24-Hour Spoke Arrival Watch Activated for ${selectedTicket.patient_name}. Verification timer running.`
-          : `🚨 Escorted to Tier 4 CMO Statutory Action: Emergency transport dispatched for ${selectedTicket.patient_name}.`
+          : `Escort request sent for doctor review for ${selectedTicket.patient_name}. The team will arrange transport support.`
       );
       setSelectedTicket(null);
       loadTickets();
     } catch {
-      setActionSuccessMsg(`Action recorded for ${selectedTicket.patient_name}.`);
+      setActionSuccessMsg(`Could not save this for ${selectedTicket.patient_name}. Please try again.`);
       setSelectedTicket(null);
     }
   };

@@ -423,6 +423,16 @@ export interface PatientProfile {
   data_label: string | null;
 }
 
+export interface AuthorityCase {
+  case_id: string;
+  patient_token: string;
+  diagnosis: string | null;
+  days_overdue: number;
+  reason: string | null;
+  status: "PENDING_REVIEW" | "APPROVED" | "DECLINED" | "SENT_TO_DISTRICT";
+  decided_by: string | null;
+}
+
 export interface MessageLog {
   mode: "simulated" | "twilio";
   provider_configured: boolean;
@@ -1006,6 +1016,18 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     });
+  },
+
+  async getAuthorityCases(): Promise<{ cases: AuthorityCase[] }> {
+    return request("/api/authority/cases");
+  },
+
+  async authorityAction(caseId: string, action: "approve" | "decline" | "mark-sent"): Promise<AuthorityCase> {
+    return request(`/api/authority/cases/${caseId}/${action}`, { method: "POST" });
+  },
+
+  authorityDossierUrl(caseId: string): string {
+    return `${BASE_URL}/api/authority/cases/${caseId}/dossier`;
   },
 
   async getMessages(): Promise<MessageLog> {

@@ -21,6 +21,8 @@ from backend.tools.tracker_tools import (
 )
 
 NO_SHOW = "PATIENT_NO_SHOW"
+from backend.tools import authority_cases, messaging  # noqa: E402
+
 TIER_ORDER = ["TIER_1_SMS", "TIER_2_IVR", "TIER_3_ASHA", "TIER_4_AUTHORITY_ESCALATION"]
 
 
@@ -158,9 +160,10 @@ def _dispatch(tier: str, token: str, streak: int):
         return MultiChannelReminderTool.dispatch_tier_2_ivr(token, live=True)
     score, _ = CancerRiskScorerTool.evaluate_risk(cancer, stage, "POSITIVE", [])
     if tier == "TIER_3_ASHA":
-        return CommunityWorkerDispatchTool.dispatch_asha_visit(token, cancer, score, vault=global_vault)
+        return CommunityWorkerDispatchTool.dispatch_asha_visit(token, cancer, score, vault=global_vault, live=True)
     notif, _dossier = EmergencyAuthorityEscalationTool.generate_authority_escalation_dossier(
         token, cancer, stage, score, streak, vault=global_vault)
+    authority_cases.raise_case(token, f"{cancer} - {stage}", streak, "Missed sessions with no response after ASHA visit")
     return notif
 
 
@@ -191,7 +194,7 @@ def evaluate_plan(plan: Dict[str, Any], today: Optional[date] = None) -> Dict[st
         notif = _dispatch(newly[-1], token, streak)
         global_db.log_notification(
             notif_id=f"NOTIF-{secrets.token_hex(4).upper()}", patient_token=token, tier=notif.tier,
-            channel=f"{notif.channel} (SIMULATED)", recipient_role=notif.recipient_role,
+            channel=f"{notif.channel} ({notif.status})", recipient_role=notif.recipient_role,
             message_content=notif.message_content, timestamp=notif.timestamp,
         )
         if "TIER_3_ASHA" in newly:
@@ -199,7 +202,7 @@ def evaluate_plan(plan: Dict[str, Any], today: Optional[date] = None) -> Dict[st
             _open_asha_ticket(token, streak, clock["completed_sessions"])
         global_audit.record_event(action="TREATMENT_CLOCK_ESCALATION", actor="TREATMENT_CLOCK", patient_token=token,
                                   details={"plan_id": plan["plan_id"], "tiers": newly, "missed_streak": streak,
-                                           "dispatch_mode": "SIMULATED"})
+                                           "dispatch_mode": messaging.mode().upper()})
 
     return {
         "patient_token": token,
@@ -210,7 +213,7 @@ def evaluate_plan(plan: Dict[str, Any], today: Optional[date] = None) -> Dict[st
         "consecutive_missed_sessions": streak,
         "newly_escalated_tiers": newly,
         "escalation_paused_for_downtime": bool(streak and paused),
-        "dispatch_mode": "SIMULATED",
+        "dispatch_mode": messaging.mode().upper(),
     }
 
 

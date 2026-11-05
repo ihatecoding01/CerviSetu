@@ -148,7 +148,8 @@ class CommunityWorkerDispatchTool:
         patient_token: str,
         cancer_type: str,
         severity_score: float,
-        vault: Optional[TokenVault] = None
+        vault: Optional[TokenVault] = None,
+        live: bool = False,
     ) -> NotificationDispatch:
         """Tier 3: Dispatch local ASHA worker with tasking order (Day 6-7 overdue)."""
         # Retrieve sanitized sector info without exposing full address
@@ -166,6 +167,12 @@ class CommunityWorkerDispatchTool:
             f"Patient ID: {patient_token}. Condition: Suspected {cancer_type} (Severity: {severity_score:.2f}). "
             f"Action: Verify patient well-being, assess barriers (travel, fear, funds), and assist transport to District Hospital."
         )
+
+        if live:
+            # Worker SMS stays stigma-safe: no diagnosis, the details are on the signed-in ticket
+            alert = f"CerviSetu: home visit needed in {village}. Please open your ASHA tickets."
+            messaging.send("SMS", alert, asha_contact, patient_token, "TIER_3_ASHA", live=True,
+                           dedupe=f"{patient_token}:TIER_3_ASHA:{datetime.now(timezone.utc).date()}")
 
         notif = NotificationDispatch(
             tier="TIER_3_ASHA_WORKER_DISPATCH",
@@ -204,38 +211,28 @@ class EmergencyAuthorityEscalationTool:
         authorized_by: str = "CHIEF_MEDICAL_OFFICER_ROUTER",
         vault: Optional[TokenVault] = None
     ) -> Tuple[NotificationDispatch, Dict[str, Any]]:
-        """
-        Tier 4: Emergency District Health Authority Intervention.
-        Unmasks patient address from encrypted vault and compiles official relief dossier.
-        """
-        v = vault or global_vault
-        try:
-            pii = v.retrieve_pii(patient_token)
-        except Exception as e:
-            pii = {"error": f"Failed to retrieve vault: {str(e)}"}
-
+        """Tier 4: raises the case for review. Personal details stay in the vault (see authority_cases)."""
         dossier_id = f"EMERG-DOSSIER-{secrets.token_hex(3).upper()}"
         dossier = {
             "dossier_id": dossier_id,
             "patient_token": patient_token,
-            "full_name": pii.get("full_name", "UNKNOWN"),
-            "primary_phone": pii.get("phone", "UNAVAILABLE"),
-            "village_address": pii.get("full_address") or f"Village {pii.get('village', 'Unknown')}, Dist. {pii.get('district', 'Unknown')}",
-            "guardian_name": pii.get("guardian_name", "N/A"),
-            "guardian_phone": pii.get("guardian_phone", "N/A"),
+            "full_name": "Released only after clinician approval",
+            "primary_phone": "Released only after clinician approval",
+            "village_address": "Released only after clinician approval",
+            "guardian_name": "Released only after clinician approval",
+            "guardian_phone": "Released only after clinician approval",
             "clinical_diagnosis": f"{cancer_type} - {stage}",
             "severity_score": severity_score,
             "days_overdue": days_overdue,
             "escalation_reason": "High-severity malignant condition with total patient non-response exceeding statutory timeout (>7 days).",
-            "dispatch_directive": "District Mobile Health Unit dispatched for emergency on-ground welfare check & medical escort.",
+            "dispatch_directive": "Awaiting clinician review in District Escalation Review.",
             "authorized_by": authorized_by,
             "created_at": datetime.now(timezone.utc).isoformat()
         }
 
         content = (
-            f"[CRITICAL AUTHORITY ALERT {dossier_id}] Patient {pii.get('full_name')} at "
-            f"{dossier['village_address']} is {days_overdue} days overdue for critical {cancer_type} care (Severity: {severity_score:.2f}). "
-            f"District Medical Officer intervention ordered."
+            f"[DISTRICT ESCALATION {dossier_id}] Patient {patient_token} is {days_overdue} days overdue for "
+            f"{cancer_type} care. Awaiting clinician approval before personal details are released."
         )
 
         notif = NotificationDispatch(
@@ -244,20 +241,20 @@ class EmergencyAuthorityEscalationTool:
             recipient_role="DISTRICT_HEALTH_AUTHORITY / CMO",
             channel="Emergency Government Health Dispatch Portal",
             message_content=content,
-            status="EMERGENCY_DISPATCH_AUTHORIZED",
+            status="PENDING_CLINICIAN_REVIEW",
             escalation_reason="Severe cancer risk with prolonged patient non-response; unmasked address for emergency outreach."
         )
 
         # High-severity audit event
         global_audit.record_event(
-            action="TIER_4_AUTHORITY_ESCALATION_UNMASKED",
+            action="TIER_4_AUTHORITY_ESCALATION_RAISED",
             actor=authorized_by,
             patient_token=patient_token,
             details={
                 "dossier_id": dossier_id,
                 "days_overdue": days_overdue,
                 "severity_score": severity_score,
-                "unmasked_address": dossier["village_address"]
+                "identity_released": False
             },
             severity="CRITICAL"
         )
