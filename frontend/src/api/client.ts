@@ -423,6 +423,13 @@ export interface PatientProfile {
   data_label: string | null;
 }
 
+export interface MessageLog {
+  mode: "simulated" | "twilio";
+  provider_configured: boolean;
+  approved_numbers: number;
+  messages: { message_id: string; patient_token: string | null; channel: string; tier: string | null; body: string; phone_last4: string | null; status: string; error: string | null; created_at: string }[];
+}
+
 export interface DocumentBlock { id: string; page: number; text: string; bbox: [number, number, number, number] | null }
 export interface DocumentField { key: string; label: string; value: string; block_id: string | null; found_in_document: boolean }
 export interface DocumentLab { name: string; value: number; unit: string; abnormal: boolean; note: string; block_id: string }
@@ -999,6 +1006,14 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     });
+  },
+
+  async getMessages(): Promise<MessageLog> {
+    return request("/api/messages");
+  },
+
+  async sendTestMessage(channel: string, phone: string): Promise<{ status: string }> {
+    return request("/api/messages/test", { method: "POST", body: JSON.stringify({ channel, phone }) });
   },
 
   async extractDocument(file: File): Promise<DocumentResult> {

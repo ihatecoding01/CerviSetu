@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { MessageCenter } from "./MessageCenter";
 import { api, type PatientCase, type EscalationSimResult } from "../api/client";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./careui/card";
 import { Button } from "./careui/button";
@@ -363,6 +364,7 @@ export function EscalationHeatmap({ cases, lastSim, onSimulate }: Props) {
           </CardContent>
         </Card>
       </div>
+      <MessageCenter />
     </div>
   );
 }

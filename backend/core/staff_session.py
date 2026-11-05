@@ -73,6 +73,8 @@ ROLE_RULES = [
     ("POST", r"^/api/run-case$", CLINICAL),
     ("GET", r"^/api/clinical/chemo-clearance/", CLINICAL),
     ("POST", r"^/api/documents/", CLINICAL),
+    ("POST", r"^/api/messages/test$", CLINICAL),
+    ("GET", r"^/api/messages$", ALL_STAFF),
     ("*", r"^/api/encounter/[^/]+/(voice-consult|consult-audio)", CLINICAL),
     ("*", r"^/api/patient/[^/]+/(purge-audio-cache|audio-cache)$", CLINICAL),
     # ASHA field work

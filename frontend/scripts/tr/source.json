@@ -1612,5 +1612,13 @@
   "Clinical Intake workspace",
   "Showing the latest real case run on this server. The slider shows what would happen at that many missed days.",
   "No case has run on this server yet. Run one in Clinical Intake to record real timings.",
-  "Could not reach the server. Showing sample values."
+  "Could not reach the server. Showing sample values.",
+  "Patient Messages",
+  "Simulation mode: reminders are logged but nothing is sent to patients.",
+  "Test phone number",
+  "Send test",
+  "No messages yet.",
+  "Simulated, not sent",
+  "Blocked: number not approved",
+  "No phone number"
 ]

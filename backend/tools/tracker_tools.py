@@ -9,6 +9,9 @@ from backend.core.security import TokenVault, global_vault, global_audit
 from backend.core.state import NotificationDispatch
 
 
+from backend.tools import messaging  # noqa: E402
+
+
 class CancerRiskScorerTool:
     """Computes comprehensive cancer severity score and urgency tier."""
 
@@ -78,19 +81,21 @@ class MultiChannelReminderTool:
         cls,
         patient_token: str,
         center_name: str = "Community Health Centre",
-        language: str = "HINDI"
+        language: str = "HINDI",
+        live: bool = False,
     ) -> NotificationDispatch:
         """Tier 1: Send SMS / WhatsApp reminder (Day 1-2 overdue)."""
         template = cls.SMS_TEMPLATES.get(language, cls.SMS_TEMPLATES["ENGLISH"])
         msg = template.format(center=center_name)
-        
+        sent = messaging.send_to_patient("SMS", msg, patient_token, "TIER_1_SMS", live)
+
         notif = NotificationDispatch(
             tier="TIER_1_SMS_WHATSAPP",
             timestamp=datetime.now(timezone.utc).isoformat(),
             recipient_role="PATIENT_PRIMARY_PHONE",
             channel="SMS/WhatsApp",
             message_content=msg,
-            status="DELIVERED",
+            status=sent["status"],
             escalation_reason="Day 1-2 missed follow-up appointment."
         )
 
@@ -98,7 +103,7 @@ class MultiChannelReminderTool:
             action="TIER_1_SMS_DISPATCHED",
             actor="TRACKER_AGENT",
             patient_token=patient_token,
-            details={"channel": "SMS", "language": language, "tier": notif.tier}
+            details={"channel": "SMS", "language": language, "tier": notif.tier, "status": notif.status}
         )
         return notif
 
@@ -107,11 +112,13 @@ class MultiChannelReminderTool:
         cls,
         patient_token: str,
         center_name: str = "Community Health Centre",
-        language: str = "HINDI"
+        language: str = "HINDI",
+        live: bool = False,
     ) -> NotificationDispatch:
         """Tier 2: Automated Voice / IVR Call (Day 3-5 overdue)."""
         script = cls.IVR_SCRIPTS.get(language, cls.IVR_SCRIPTS["ENGLISH"])
         msg = script.format(center=center_name)
+        sent = messaging.send_to_patient("VOICE", msg, patient_token, "TIER_2_IVR", live)
 
         notif = NotificationDispatch(
             tier="TIER_2_IVR_VOICE_CALL",
@@ -119,7 +126,7 @@ class MultiChannelReminderTool:
             recipient_role="PATIENT_PRIMARY_AND_GUARDIAN",
             channel="Automated Voice IVR",
             message_content=msg,
-            status="COMPLETED_CALL",
+            status=sent["status"],
             escalation_reason="Day 3-5 persistent non-response to SMS."
         )
 
@@ -127,7 +134,7 @@ class MultiChannelReminderTool:
             action="TIER_2_IVR_DISPATCHED",
             actor="TRACKER_AGENT",
             patient_token=patient_token,
-            details={"channel": "IVR_VOICE", "tier": notif.tier}
+            details={"channel": "IVR_VOICE", "tier": notif.tier, "status": notif.status}
         )
         return notif
 

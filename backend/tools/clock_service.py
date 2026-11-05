@@ -1,7 +1,7 @@
 """Connects the pure treatment clock engine to stored plans, sessions, exceptions and escalation.
 
 Every call recomputes the clock from source records, so there is no cached progress to drift.
-Escalation dispatches are simulated (no SMS/IVR gateway is connected) and recorded as such.
+SMS and voice go through backend.tools.messaging: simulated unless a provider and approved numbers are configured.
 """
 import json
 import secrets
@@ -153,9 +153,9 @@ def _dispatch(tier: str, token: str, streak: int):
     case = global_db.get_latest_case(token) or {}
     cancer, stage = case.get("cancer_type") or "CERVICAL", case.get("suspected_stage") or "Unknown"
     if tier == "TIER_1_SMS":
-        return MultiChannelReminderTool.dispatch_tier_1_sms(token)
+        return MultiChannelReminderTool.dispatch_tier_1_sms(token, live=True)
     if tier == "TIER_2_IVR":
-        return MultiChannelReminderTool.dispatch_tier_2_ivr(token)
+        return MultiChannelReminderTool.dispatch_tier_2_ivr(token, live=True)
     score, _ = CancerRiskScorerTool.evaluate_risk(cancer, stage, "POSITIVE", [])
     if tier == "TIER_3_ASHA":
         return CommunityWorkerDispatchTool.dispatch_asha_visit(token, cancer, score, vault=global_vault)

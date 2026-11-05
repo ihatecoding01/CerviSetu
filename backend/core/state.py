@@ -68,7 +68,7 @@ class NotificationDispatch(BaseModel):
     recipient_role: str
     channel: str
     message_content: str
-    status: str = "DELIVERED"
+    status: str = "SIMULATED"
     escalation_reason: str = ""
 
 
