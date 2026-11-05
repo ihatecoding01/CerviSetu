@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { api } from "../api/client";
+import { api, type VoiceConsultResult } from "../api/client";
+import { useVoiceRecorder } from "../lib/useVoiceRecorder";
 import {
   Activity,
   Clock,
@@ -109,9 +110,11 @@ export function ClinicianEncounter({
   const [dischargeMsg, setDischargeMsg] = useState<string | null>(null);
 
   // AI Voice Consultation State
-  const [isRecording, setIsRecording] = useState<boolean>(false);
-  const [recordingSeconds, setRecordingSeconds] = useState<number>(54);
-  const [aiTranscriptVisible, setAiTranscriptVisible] = useState<boolean>(true);
+  const [consult, setConsult] = useState<VoiceConsultResult | null>(null);
+  const [consultBusy, setConsultBusy] = useState(false);
+  const [consultError, setConsultError] = useState<string | null>(null);
+  const [typedNotes, setTypedNotes] = useState("");
+  const [doneCommands, setDoneCommands] = useState<string[]>([]);
   const [chiefComplaints, setChiefComplaints] = useState<string>(
     "Patient presents with persistent watery discharge and moderate pelvic burning for 4 days. Denies fever. Reports fatigue after radiation fractions."
   );
@@ -152,17 +155,6 @@ export function ClinicianEncounter({
   };
 
   // Recording timer
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | null = null;
-    if (isRecording) {
-      interval = setInterval(() => {
-        setRecordingSeconds((prev) => prev + 1);
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isRecording]);
 
   // Undo countdown
   useEffect(() => {
@@ -292,20 +284,55 @@ export function ClinicianEncounter({
       });
       setDischargeComplete(true);
       setDischargeMsg(res.message);
-      await api.purgeAudioCache(patientToken);
-      showToast("Discharge sign-off registered. Audio cache purged (DPDP Act).", "success");
+      const purge = await api.purgeAudioCache(patientToken) as { recordings_deleted?: number };
+      showToast(`Discharge sign-off registered. ${purge.recordings_deleted ?? 0} stored recording(s) deleted (DPDP Act).`, "success");
     } catch {
-      setDischargeComplete(true);
-      setDischargeMsg("Discharge sign-off registered. Audio cache purged in accordance with DPDP Act 2023.");
-      showToast("Discharge sign-off complete. Audio cache purged.", "success");
+      setDischargeMsg("Discharge sign-off could not be confirmed with the server. Please retry when back online.");
+      showToast("Could not reach the server. Sign-off and audio purge not confirmed.", "warning");
     }
   };
 
+  const analyseConsult = async (input: { audio?: Blob; text?: string }) => {
+    setConsultBusy(true);
+    setConsultError(null);
+    try {
+      const context = `EBRT fractions delivered ${ebrtFractions}; Hb ${labHb} g/dL; ANC ${labAnc}/uL; platelets ${labPlatelets} x10^3/uL; creatinine ${labCreatinine} mg/dL.`;
+      const result = await api.voiceConsult(patientToken, { ...input, context });
+      setConsult(result);
+      setDoneCommands([]);
+      setTypedNotes("");
+    } catch (e) {
+      setConsultError(e instanceof Error ? e.message : "Could not process the consultation");
+    } finally {
+      setConsultBusy(false);
+    }
+  };
+
+  const consultRecorder = useVoiceRecorder(180, (audio) => analyseConsult({ audio }));
+  const isRecording = consultRecorder.recording;
+  const recordingSeconds = consultRecorder.seconds;
+
+  const runVoiceCommand = (command: VoiceConsultResult["commands"][number]) => {
+    if (command.command === "CHEMO_HOLD") handleChemoAction("HELD");
+    if (command.command === "CHEMO_REDUCE") handleChemoAction("REDUCED");
+    if (command.command === "CHEMO_APPROVE") handleChemoAction("APPROVED");
+    if (command.command === "LOG_FRACTION") handleLogFraction();
+    setDoneCommands((prev) => [...prev, command.command]);
+  };
+
   const handleApplyAiTranscript = () => {
-    setChiefComplaints("Patient reports mild pelvic burning and loose motions 3 times a day. Denies fever. Overall performance status stable.");
-    setClinicalHistory("On Day 21 of CCRT (EBRT fraction 14 complete). Weekly Cisplatin cycle 3 cleared. Diarrhea Grade 2 managed with oral Loperamide.");
-    setAiTranscriptVisible(false);
-    showToast("AI ambient summary applied to Chief Complaints & Narrative", "success");
+    if (!consult) return;
+    const { draft } = consult;
+    if (draft.chief_complaints) setChiefComplaints(draft.chief_complaints);
+    if (draft.clinical_history) setClinicalHistory(draft.clinical_history);
+    if (draft.medications.length) {
+      setMedications((prev) => [
+        ...prev,
+        ...draft.medications.map((m, i) => ({ ...m, id: `med-voice-${Date.now()}-${i}` })),
+      ]);
+    }
+    setConsult(null);
+    showToast("Draft applied to the form. Please review before signing.", "success");
   };
 
   const handleExportFhir = () => {
@@ -1323,50 +1350,107 @@ export function ClinicianEncounter({
                   </div>
                   {/* Ambient Microphone Toggle Button */}
                   <button
-                    onClick={() => {
-                      const next = !isRecording;
-                      setIsRecording(next);
-                      showToast(next ? "Ambient voice recording started" : "Ambient voice recording paused", next ? "info" : "warning");
-                    }}
+                    onClick={() => (isRecording ? consultRecorder.stop() : consultRecorder.start())}
+                    disabled={consultBusy}
+                    data-testid="consult-mic"
                     className={`h-9 px-3.5 rounded-full flex items-center gap-2 text-white shadow-xs transition-all cursor-pointer ${
                       isRecording ? "bg-black animate-pulse" : "bg-[#BA2D0B] hover:bg-[#a02609]"
                     }`}
                   >
                     {isRecording ? <MicOff className="size-4" /> : <Mic className="size-4" />}
                     <span className="text-xs font-mono font-semibold">
-                      {isRecording ? `Recording 00:${recordingSeconds < 10 ? "0" : ""}${recordingSeconds}` : "Ambient Mic"}
+                      {isRecording
+                        ? `Recording ${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, "0")} · Stop`
+                        : consultBusy
+                          ? "Analysing..."
+                          : "Ambient Mic"}
                     </span>
                   </button>
                 </CardHeader>
                 <CardContent className="pt-4 space-y-5">
-                  {/* AI Ambient Voice Auto-Fill Preview Banner */}
-                  {aiTranscriptVisible && (
-                    <div className="p-4 bg-emerald-50/80 rounded-xl border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div>
-                        <div className="flex items-center gap-2 text-xs font-bold text-emerald-900">
-                          <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-                          <span>8 Clinical Fields Extracted by Sarvam AI Ambient Audio</span>
+                  {/* Voice or typed consultation -> reviewable diagnostic draft */}
+                  <div className="p-3 rounded-xl border border-gray-200 bg-gray-50 space-y-2">
+                    <p className="text-xs text-gray-600">
+                      Press Ambient Mic and speak the consultation in any supported language, or type your notes. Say things like "hold chemo" or "log the fraction" and they appear below for you to confirm.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <textarea
+                        value={typedNotes}
+                        onChange={(e) => setTypedNotes(e.target.value)}
+                        rows={2}
+                        placeholder="Or type consultation notes here"
+                        data-testid="consult-notes"
+                        className="flex-1 text-xs p-2.5 rounded-lg border border-gray-200 bg-white focus:outline-none focus:border-black"
+                      />
+                      <Button
+                        size="xs"
+                        variant="obsidian"
+                        disabled={consultBusy || !typedNotes.trim()}
+                        onClick={() => analyseConsult({ text: typedNotes })}
+                      >
+                        Analyse Notes
+                      </Button>
+                    </div>
+                    {(consultError || consultRecorder.error) && (
+                      <p role="alert" className="text-xs text-[#BA2D0B]">{consultError || consultRecorder.error}</p>
+                    )}
+                  </div>
+
+                  {consult && (
+                    <div data-testid="consult-draft" className="p-4 bg-emerald-50/80 rounded-xl border border-emerald-200 space-y-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-xs font-bold text-emerald-900">
+                          {consult.draft.source === "AI_DRAFT" ? "AI draft for your review" : "Transcript ready (AI draft unavailable)"}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <Button size="xs" variant="obsidian" onClick={handleApplyAiTranscript} className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold">
+                            Apply to Form ✓
+                          </Button>
+                          <button onClick={() => setConsult(null)} aria-label="Dismiss draft" className="p-1 rounded text-emerald-700 hover:bg-emerald-100 cursor-pointer">
+                            <X className="size-4" />
+                          </button>
                         </div>
-                        <p className="text-xs text-emerald-800 mt-1 italic">
-                          "The patient has mild pelvic burning and loose motions 3 times a day. Continue EBRT fraction 15 tomorrow. Prescribed oral Loperamide 2mg thrice daily and ORS."
-                        </p>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Button
-                          size="xs"
-                          variant="obsidian"
-                          onClick={handleApplyAiTranscript}
-                          className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold"
-                        >
-                          Apply to Form ✓
-                        </Button>
-                        <button
-                          onClick={() => setAiTranscriptVisible(false)}
-                          className="p-1 rounded text-emerald-700 hover:bg-emerald-100 cursor-pointer"
-                        >
-                          <X className="size-4" />
-                        </button>
-                      </div>
+                      <p className="text-xs text-emerald-800 italic">"{consult.transcript}"</p>
+                      {consult.audio_id && (
+                        <audio controls preload="none" src={api.consultAudioUrl(patientToken, consult.audio_id)} className="w-full h-8" />
+                      )}
+                      {consult.draft.working_impression && (
+                        <div className="text-xs text-gray-800">
+                          <span className="font-bold">Working impression: </span>
+                          {consult.draft.working_impression}
+                          {consult.draft.toxicity_grade !== null && <span className="font-semibold"> (Toxicity grade {consult.draft.toxicity_grade})</span>}
+                        </div>
+                      )}
+                      {([
+                        ["Consider", consult.draft.differentials, "text-gray-800"],
+                        ["Red flags", consult.draft.red_flags, "text-[#BA2D0B]"],
+                        ["Suggested next steps", consult.draft.next_steps, "text-gray-800"],
+                      ] as const).map(([title, items, color]) =>
+                        items.length > 0 ? (
+                          <div key={title} className={`text-xs ${color}`}>
+                            <span className="font-bold">{title}</span>
+                            <ul className="list-disc pl-4 mt-0.5">
+                              {items.map((item) => <li key={item}>{item}</li>)}
+                            </ul>
+                          </div>
+                        ) : null
+                      )}
+                      {consult.commands.length > 0 && (
+                        <div className="flex flex-wrap gap-2 pt-1" data-testid="consult-commands">
+                          {consult.commands.map((c) => (
+                            <button
+                              key={c.command}
+                              onClick={() => runVoiceCommand(c)}
+                              disabled={doneCommands.includes(c.command)}
+                              className="text-xs font-semibold px-3 py-1.5 rounded-full bg-black text-white disabled:opacity-50 cursor-pointer"
+                            >
+                              {doneCommands.includes(c.command) ? `Done: ${c.label}` : `Confirm: ${c.label}`}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-[11px] text-gray-500">Decision support only. Nothing is saved or actioned until you confirm it.</p>
                     </div>
                   )}
 

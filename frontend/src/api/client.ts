@@ -420,6 +420,32 @@ export interface PatientProfile {
   data_label: string | null;
 }
 
+export interface VoiceConsultDraft {
+  source: "AI_DRAFT" | "TRANSCRIPT_ONLY";
+  chief_complaints: string;
+  clinical_history: string;
+  working_impression: string;
+  toxicity_grade: number | null;
+  differentials: string[];
+  red_flags: string[];
+  next_steps: string[];
+  medications: { name: string; dosage: string; frequency: string; duration: string; instructions: string }[];
+}
+
+export interface VoiceConsultResult {
+  transcript: string;
+  detected_language: string | null;
+  draft: VoiceConsultDraft;
+  commands: { command: "CHEMO_HOLD" | "CHEMO_REDUCE" | "CHEMO_APPROVE" | "LOG_FRACTION"; label: string }[];
+  audio_id: string | null;
+}
+
+export interface VoiceSymptomResult {
+  transcript: string;
+  triage: { symptom_category: string; grade: number; english_summary: string };
+  checkin: { is_ward_alert?: boolean };
+}
+
 export const api = {
   async getPatientProfile(token: string): Promise<PatientProfile> {
     return request<PatientProfile>(`/api/abdm/profile/${token}`);
@@ -956,6 +982,31 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     });
+  },
+
+  async voiceConsult(token: string, input: { audio?: Blob; text?: string; context?: string }): Promise<VoiceConsultResult> {
+    const form = new FormData();
+    if (input.audio) form.append("audio", input.audio, "consult.wav");
+    if (input.text) form.append("text", input.text);
+    if (input.context) form.append("context", input.context);
+    const res = await fetch(`${BASE_URL}/api/encounter/${token}/voice-consult`, { method: "POST", body: form });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(typeof body.detail === "string" ? body.detail : body.detail?.message || "Could not process the consultation");
+    return body;
+  },
+
+  consultAudioUrl(token: string, audioId: string): string {
+    return `${BASE_URL}/api/encounter/${token}/consult-audio/${audioId}`;
+  },
+
+  async reportVoiceSymptoms(token: string, audio: Blob, clockDay: number): Promise<VoiceSymptomResult> {
+    const form = new FormData();
+    form.append("audio", audio, "symptoms.wav");
+    form.append("clock_day", String(clockDay));
+    const res = await fetch(`${BASE_URL}/api/patient/${token}/voice-symptoms`, { method: "POST", body: form });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(typeof body.detail === "string" ? body.detail : "Could not process the recording");
+    return body;
   },
 
   async purgeAudioCache(token: string): Promise<{ status: string; message: string; token: string }> {

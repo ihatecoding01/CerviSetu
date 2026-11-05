@@ -1,4 +1,5 @@
 import { CerviSetuLogo } from "./icons/CerviSetuLogo";
+import { VoiceSymptomReporter } from "./VoiceSymptomReporter";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
@@ -386,6 +387,7 @@ export const PatientPortal: React.FC<Props> = ({ token, onRequireLogin, onOpenOw
           {status}
         </div>
       </div>
+      <VoiceSymptomReporter patientToken={token} clockDay={1} />
       {journey}
       {info}
     </>,

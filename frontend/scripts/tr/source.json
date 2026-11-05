@@ -1572,5 +1572,21 @@
   "Log in",
   "Log in / Book Appointment",
   "Choose your role. Each role only sees and does what it is allowed to.",
-  "Cannot reach the server. Please try again shortly."
+  "Cannot reach the server. Please try again shortly.",
+  "Press Ambient Mic and speak the consultation in any supported language, or type your notes. Say things like \"hold chemo\" or \"log the fraction\" and they appear below for you to confirm.",
+  "Or type consultation notes here",
+  "Analyse Notes",
+  "Analysing...",
+  "AI draft for your review",
+  "Transcript ready (AI draft unavailable)",
+  "Working impression:",
+  "Consider",
+  "Red flags",
+  "Suggested next steps",
+  "Decision support only. Nothing is saved or actioned until you confirm it.",
+  "Speak your symptoms",
+  "Listening to your message...",
+  "The ward has been alerted and will contact you.",
+  "Your care team has received this and a nurse will review it.",
+  "Draft applied to the form. Please review before signing."
 ]

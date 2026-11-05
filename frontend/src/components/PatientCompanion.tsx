@@ -24,6 +24,7 @@ import {
   Layers,
   CircleDot,
 } from "lucide-react";
+import { VoiceSymptomReporter } from "./VoiceSymptomReporter";
 import { api, type HealingClock, type HubSpokePass, type SoundboardTrack } from "../api/client";
 import type { PatientProfile } from "../api/client";
 
@@ -558,7 +559,7 @@ export const PatientCompanion: React.FC<Props> = ({
         patient_token: patientToken,
         symptoms: [symptomName],
         severity_grade: grade,
-        voice_note_received: true,
+        voice_note_received: false,
       });
 
       if (grade === 1) {
@@ -1107,6 +1108,8 @@ export const PatientCompanion: React.FC<Props> = ({
           <p className="text-sm text-slate-600 mb-5 leading-relaxed">
             {t.triagePrompt}
           </p>
+
+          <VoiceSymptomReporter patientToken={patientToken} clockDay={clock.ebrt_start_date ? Math.max(1, Math.ceil((Date.now() - new Date(clock.ebrt_start_date).getTime()) / 86400000)) : 1} />
 
           {/* 4 Accessible Symptom Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">

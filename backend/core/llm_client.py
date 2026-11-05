@@ -6,6 +6,7 @@ Each provider request is recorded in the usage log (metadata only, see backend/c
 """
 import json
 import logging
+import mimetypes
 import time
 from typing import Any, Dict, Optional
 
@@ -119,7 +120,7 @@ class SarvamLLMClient:
             resp = httpx.post(
                 f"{SARVAM_BASE_URL}/speech-to-text",
                 headers={"api-subscription-key": self.api_key},
-                files={"file": (filename, audio)},
+                files={"file": (filename, audio, mimetypes.guess_type(filename)[0] or "audio/wav")},
                 data={"model": "saaras:v4", "language_code": language_code},
                 timeout=self.timeout,
             )

@@ -391,13 +391,15 @@ async def acknowledge_hydration(token: str, req: PatientHydrationAckRequest):
 @router.post("/{token}/purge-audio-cache")
 @router.delete("/{token}/audio-cache")
 async def purge_patient_audio_cache(token: str):
-    """DPDP-mandated voice audio cache purge upon discharge or patient request."""
+    """DPDP-mandated voice audio purge: really deletes the patient's stored consultation recordings."""
+    from backend.dashboard.routers.encounter_voice import purge_audio
+    removed = purge_audio(token)
     block = global_audit.record_user_event(
         user_role=UserRole.SYSTEM,
         action="DPDP_AUDIO_CACHE_PURGED",
         actor_id="PRIVACY_GUARD",
         patient_token=token,
-        details={"storage_limitation_clause": "DPDP_ACT_2023_SEC_8"},
+        details={"storage_limitation_clause": "DPDP_ACT_2023_SEC_8", "recordings_deleted": removed},
         severity="INFO",
         channel="SYSTEM"
     )
@@ -406,6 +408,7 @@ async def purge_patient_audio_cache(token: str):
         "status": "SUCCESS",
         "patient_token": token,
         "audio_purged": True,
+        "recordings_deleted": removed,
         "compliance": "DPDP Storage Limitation Verified",
         "audit_block": block
     }
@@ -467,7 +470,7 @@ async def report_voice_symptoms(
     if audio.content_type and not audio.content_type.startswith(("audio/", "video/webm", "application/octet-stream")):
         raise HTTPException(status_code=422, detail="Upload must be an audio clip")
 
-    stt = global_llm.transcribe(data, "voice-clip", language_code)
+    stt = global_llm.transcribe(data, audio.filename or "voice-clip.wav", language_code)
     if not stt or not stt["transcript"].strip():
         raise HTTPException(status_code=503, detail="Voice transcription unavailable; please use the symptom buttons.")
 

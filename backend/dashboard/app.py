@@ -20,6 +20,7 @@ from backend.dashboard.routers import (
     portal_router,
     staff_router,
 )
+from backend.dashboard.routers.encounter_voice import router as encounter_voice_router
 from backend.core import staff_session
 from backend.dashboard.routers.clinical import IntakeRequest, SimulationRequest
 from backend.tools.escalation_scheduler import escalation_loop
@@ -106,6 +107,7 @@ app.include_router(showcase_router)
 app.include_router(abdm_router)
 app.include_router(portal_router)
 app.include_router(staff_router)
+app.include_router(encounter_voice_router)
 
 # Static & Frontend Assets Directory
 STATIC_DIR = Path(__file__).resolve().parent / "static"
