@@ -7,6 +7,7 @@ import { staffApi, StaffLoginError, DEMO_STAFF, PRELOADED_PIN, type StaffProfile
 interface Props {
   /** Role to highlight first (e.g. ASHA when coming from the ASHA login card). */
   preferredRole?: StaffRole;
+  sessionEnded?: boolean;
   onSignedIn: (staff: StaffProfile) => void;
   onBack: () => void;
 }
@@ -18,7 +19,7 @@ const DEMO_ROLES: { role: StaffRole; label: string; hint: string; icon: typeof U
   { role: "ADMIN", label: "Administrator", hint: "Everything, plus the audit ledger", icon: UserCog, color: "#475569" },
 ];
 
-export function StaffSignIn({ preferredRole, onSignedIn, onBack }: Props) {
+export function StaffSignIn({ preferredRole, sessionEnded, onSignedIn, onBack }: Props) {
   const firstRole: StaffRole = preferredRole ?? "DOCTOR";
   const [selectedRole, setSelectedRole] = useState<StaffRole>(firstRole);
   const [staffId, setStaffId] = useState(DEMO_STAFF[firstRole].staff_id);
@@ -104,6 +105,11 @@ export function StaffSignIn({ preferredRole, onSignedIn, onBack }: Props) {
             <p className="mt-1 text-xs text-slate-500">
               {DEMO_STAFF[selectedRole].name} · {DEMO_STAFF[selectedRole].facility}
             </p>
+            {sessionEnded && (
+              <p role="status" data-testid="session-ended" className="mt-3 rounded-lg bg-slate-100 px-3 py-2 text-xs text-slate-700">
+                Your session has ended. Please log in again to continue.
+              </p>
+            )}
 
             <form
               className="mt-5 flex flex-col gap-3"

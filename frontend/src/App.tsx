@@ -114,6 +114,21 @@ export default function App() {
     staffApi.session().then((s) => setStaff(s));
   }, []);
 
+  const [sessionEnded, setSessionEnded] = useState(false);
+  useEffect(() => {
+    const onEnded = () => {
+      setStaff((current) => {
+        if (current && !current.offline) {
+          setSessionEnded(true);
+          return null;
+        }
+        return current;
+      });
+    };
+    window.addEventListener("cervisetu:staff-session-ended", onEnded);
+    return () => window.removeEventListener("cervisetu:staff-session-ended", onEnded);
+  }, []);
+
   useEffect(() => {
     if (!staff) return;
     fetchCases();
@@ -211,6 +226,7 @@ export default function App() {
   if (!staff) {
     return (
       <StaffSignIn
+        sessionEnded={sessionEnded}
         preferredRole={currentTab === "asha-tab" ? "ASHA" : undefined}
         onSignedIn={(s) => {
           setStaff(s);

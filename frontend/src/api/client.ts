@@ -406,7 +406,12 @@ async function request<T>(
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail || "API Error");
+    const detail = err.detail;
+    // The staff session ended (timed out or revoked): the app returns to sign-in instead of failing silently
+    if (res.status === 401 && detail?.code === "STAFF_SIGN_IN_REQUIRED") {
+      window.dispatchEvent(new Event("cervisetu:staff-session-ended"));
+    }
+    throw new Error((typeof detail === "string" ? detail : detail?.message) || "API Error");
   }
   return res.json();
 }
