@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { ArrowUp, Mic, Plus, Square, Sparkles, Volume2, VolumeX, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
+import { ArrowUp, Mic, Minus, Plus, Square, Sparkles, Volume2, VolumeX, X } from "lucide-react";
 import { api } from "../api/client";
 import { WARD_COHORT } from "../data/wardCohort";
 import { useVoiceRecorder } from "../lib/useVoiceRecorder";
@@ -73,13 +73,15 @@ function Reveal({ text, animate, onTick }: { text: string; animate: boolean; onT
 
 interface GenieProps {
   open: boolean;
+  left: number;
   staffName?: string;
+  onOpen: () => void;
   onClose: () => void;
   onOpenTab: (tab: Tab) => void;
   onOpenPatient: (token: string) => void;
 }
 
-export function GeniePanel({ open, staffName, onClose, onOpenTab, onOpenPatient }: GenieProps) {
+export function GeniePanel({ open, left, staffName, onOpen, onClose, onOpenTab, onOpenPatient }: GenieProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [question, setQuestion] = useState("");
   const [busy, setBusy] = useState(false);
@@ -188,12 +190,26 @@ export function GeniePanel({ open, staffName, onClose, onOpenTab, onOpenPatient 
   const micError = notice || recorder.error;
 
   return (
+    <>
+    {!open && (
+      <button
+        type="button"
+        onClick={onOpen}
+        data-testid="genie-launcher"
+        style={{ left }}
+        className="fixed bottom-4 z-50 flex items-center gap-2 rounded-full bg-black text-white pl-3 pr-4 py-2.5 text-sm font-semibold shadow-lg hover:bg-black/85 transition-colors cursor-pointer"
+      >
+        <Sparkles className="size-4 text-[#DBFE87]" />
+        <span>Ask Genie</span>
+      </button>
+    )}
     <aside
       role="complementary"
       aria-label="Ask Genie"
       data-testid="genie-panel"
       hidden={!open}
-      className="fixed inset-y-0 right-0 z-50 w-full sm:w-[440px] bg-white sm:border-l border-slate-200 sm:shadow-[-12px_0_40px_rgba(0,0,0,0.08)] flex-col [&:not([hidden])]:flex"
+      style={{ "--genie-left": `${left}px` } as CSSProperties}
+      className="fixed z-50 inset-0 sm:inset-auto sm:bottom-4 sm:left-[var(--genie-left)] sm:w-[400px] sm:h-[min(620px,calc(100vh-2rem))] bg-white sm:rounded-2xl sm:border border-slate-200 shadow-2xl overflow-hidden flex-col [&:not([hidden])]:flex"
     >
       <header className="flex items-center gap-2.5 px-4 h-14 shrink-0">
         <span className="size-7 rounded-full bg-black text-[#DBFE87] flex items-center justify-center">
@@ -206,8 +222,8 @@ export function GeniePanel({ open, staffName, onClose, onOpenTab, onOpenPatient 
         <button type="button" onClick={newChat} title="New conversation" aria-label="New conversation" data-testid="genie-new" className="p-2 rounded-full text-slate-500 hover:text-black hover:bg-slate-100 cursor-pointer">
           <Plus className="size-4" />
         </button>
-        <button type="button" onClick={onClose} aria-label="Close" className="p-2 rounded-full text-slate-500 hover:text-black hover:bg-slate-100 cursor-pointer">
-          <X className="size-4" />
+        <button type="button" onClick={onClose} aria-label="Minimise" title="Minimise" data-testid="genie-minimise" className="p-2 rounded-full text-slate-500 hover:text-black hover:bg-slate-100 cursor-pointer">
+          <Minus className="size-4" />
         </button>
       </header>
 
@@ -326,6 +342,7 @@ export function GeniePanel({ open, staffName, onClose, onOpenTab, onOpenPatient 
         </form>
       </div>
     </aside>
+    </>
   );
 }
 

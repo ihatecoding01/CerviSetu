@@ -221,7 +221,11 @@ export default function App() {
   const currentTab: Tab = currentRoute.tab || "overview-tab";
 
   if (staff === undefined) {
-    return <div className="min-h-screen bg-[#FAFAFA]" />;
+    return (
+      <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center text-sm text-slate-500" data-testid="app-loading">
+        Loading CerviSetu...
+      </div>
+    );
   }
   if (!staff) {
     return (
