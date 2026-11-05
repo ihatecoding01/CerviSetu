@@ -24,6 +24,7 @@ from backend.core.security import PIIShield, UserRole, global_audit
 router = APIRouter(prefix="/api/encounter", tags=["Clinician Voice Consultation"])
 
 MAX_AUDIO_BYTES = 10 * 1024 * 1024
+MIN_DRAFT_WORDS = 4
 STT_CHUNK_SECONDS = 25  # The speech-to-text API takes short clips, so longer recordings are split
 RETENTION_SECONDS = int(os.getenv("CERVISETU_CONSULT_AUDIO_RETENTION_HOURS", "72")) * 3600
 _AES = AESGCM(hashlib.sha256(VAULT_SECRET_KEY.encode() + b"cervisetu-consult-audio-v1").digest())
@@ -50,7 +51,7 @@ DRAFT_PROMPT = (
     "transcript (it may be in an Indian language) and chart context, draft an English note. Use only what the "
     "transcript and context state; never invent findings, doses or history. List medications only if actually "
     "prescribed in the transcript. toxicity_grade is your CTCAE v5 estimate from the described symptoms (for example "
-    "diarrhoea: under 4 stools a day over baseline is grade 1, 4 to 6 is grade 2, 7 or more is grade 3); omit it if "
+    "diarrhoea: under 4 stools a day over baseline is grade 1, 4 to 6 is grade 2, 7 or more is grade 3; assume a baseline of one stool a day unless stated); omit it if "
     "no toxicity is described. red_flags lists only concerning findings that are present, never reassuring negatives "
     "or plans. Treat a lab as abnormal only beyond these limits: ANC under 1500/uL, platelets under 100 x10^3/uL, "
     "haemoglobin under 10 g/dL, creatinine over 1.5 mg/dL; normal labs are never red flags. working_impression, differentials, red_flags and next_steps are suggestions "
@@ -187,9 +188,11 @@ async def voice_consult(
             raise HTTPException(status_code=422, detail="Record audio or type notes first.")
 
     masked, _ = PIIShield.mask_text(transcript)
+    too_short = len(masked.split()) < MIN_DRAFT_WORDS  # Nothing to draft from: never let the chart fill the gap
     context_masked, _ = PIIShield.mask_text(context[:1500])
-    raw = global_llm.structured(DRAFT_PROMPT, f"Chart context: {context_masked}\n\nTranscript: {masked}", DRAFT_SCHEMA,
-                                "voice_consult", max_tokens=1200)
+    raw = None if too_short else global_llm.structured(
+        DRAFT_PROMPT, f"Chart context: {context_masked}\n\nTranscript: {masked}", DRAFT_SCHEMA,
+        "voice_consult", max_tokens=1200)
     global_audit.record_user_event(
         user_role=UserRole.DOCTOR, action="VOICE_CONSULT_DRAFTED", actor_id="ENCOUNTER_WORKSPACE", patient_token=token,
         details={"input": "AUDIO" if audio_id else "TEXT", "audio_retained": bool(audio_id)}, severity="INFO",

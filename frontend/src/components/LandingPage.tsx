@@ -204,20 +204,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* ARCHITECTURAL HEADER WITH EMBLEM & PRIMARY/SECONDARY BORDERS              */}
       {/* ========================================================================= */}
       <header className="sticky top-0 z-40 w-full bg-[#FFFFFF]/95 backdrop-blur-md border-b-2 border-[#BA2D0B]/25">
-        <div ref={setHeaderRowEl} className="max-w-[1760px] mx-auto px-6 sm:px-8 py-4 flex items-center justify-between gap-4">
+        <div ref={setHeaderRowEl} className="max-w-[1760px] mx-auto px-3 sm:px-8 py-4 flex items-center justify-between gap-2 sm:gap-4">
           {/* Brand Logo with CerviSetu Caring Hands SVG Emblem */}
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="size-10 rounded-xl bg-white border border-[#0F766E]/30 flex items-center justify-center text-[#000000] shadow-xs p-1 transition-transform hover:scale-105">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 sm:shrink-0">
+            <div className="size-10 shrink-0 rounded-xl bg-white border border-[#0F766E]/30 flex items-center justify-center text-[#000000] shadow-xs p-1 transition-transform hover:scale-105">
               <CerviSetuLogo size={30} />
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-lg font-semibold tracking-tight text-[#000000]">CerviSetu</span>
                 <span className="hidden 2xl:inline text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#90C3CB]/40 text-[#000000] font-semibold border border-[#F19941] font-mono-data">
                   Sovereign Health
                 </span>
               </div>
-              <span className="text-[11px] text-[#4B5563] tracking-normal whitespace-nowrap">
+              <span className="hidden sm:block text-[11px] text-[#4B5563] tracking-normal whitespace-nowrap">
                 Rural Oncology Radiation Network
               </span>
             </div>

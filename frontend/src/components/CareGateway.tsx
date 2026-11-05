@@ -33,7 +33,7 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginAsha, onLogi
     }
   });
   const [showPatientLoginModal, setShowPatientLoginModal] = useState(!!loginNotice);
-  const [authMethod, setAuthMethod] = useState<"OTP" | "QR" | "ABHA">("ABHA");
+  const [authMethod, setAuthMethod] = useState<"OTP" | "QR" | "ABHA">("OTP");
 
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();

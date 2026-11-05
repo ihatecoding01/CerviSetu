@@ -1018,6 +1018,10 @@ export const api = {
     });
   },
 
+  async askGenie(question: string, language: string): Promise<{ source: string; answer: string; patients: string[]; open_tab: string | null; as_of_date: string }> {
+    return request("/api/genie/ask", { method: "POST", body: JSON.stringify({ question, language }) });
+  },
+
   async getAuthorityCases(): Promise<{ cases: AuthorityCase[] }> {
     return request("/api/authority/cases");
   },

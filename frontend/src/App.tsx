@@ -228,6 +228,10 @@ export default function App() {
       onLogoutToGateway={() => navigate("/")}
       staff={staff}
       onSignOut={signOutStaff}
+      onOpenPatient={(token) => {
+        setSelectedPatientToken(token);
+        navigate({ view: "staff", tab: "encounter-tab" });
+      }}
     >
       {currentTab === "overview-tab" && (
         <OverviewPanel
@@ -243,7 +247,13 @@ export default function App() {
       )}
 
       {currentTab === "prevention-tab" && (
-        <PreventionScreening />
+        staff?.role === "ASHA" ? (
+          <p className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600" data-testid="role-notice">
+            Prevention and screening records are open to doctors, nurses and administrators. Your field work is in ASHA Network.
+          </p>
+        ) : (
+          <PreventionScreening />
+        )
       )}
 
       {currentTab === "encounter-tab" && (
@@ -276,6 +286,7 @@ export default function App() {
 
       {currentTab === "tracker-tab" && (
         <EscalationHeatmap
+          canReview={staff?.role === "DOCTOR" || staff?.role === "ADMIN"}
           cases={cases}
           lastSim={lastSim}
           onSimulate={setLastSim}

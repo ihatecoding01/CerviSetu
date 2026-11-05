@@ -171,11 +171,11 @@ export const DualScreenDemo: React.FC<Props> = ({
   };
 
   return (
-    <div className={`w-full font-sans antialiased text-black ${isInsideDashboard ? "" : "min-h-screen bg-[#FAFAFA] p-6"}`}>
+    <div className={`w-full font-sans antialiased text-black ${isInsideDashboard ? "" : "min-h-screen bg-[#FAFAFA] p-3 sm:p-6"}`}>
       {/* 1. Standalone Top Navbar (only rendered if outside dashboard) */}
       {!isInsideDashboard && (
-        <header className="bg-white border border-slate-200/90 rounded-2xl px-6 py-3.5 mb-6 flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-3">
+        <header className="bg-white border border-slate-200/90 rounded-2xl px-4 sm:px-6 py-3.5 mb-6 flex flex-wrap items-center justify-between gap-3 shadow-xs">
+          <div className="flex flex-wrap items-center gap-3 min-w-0">
             {onBackToGateway && (
               <button
                 onClick={onBackToGateway}
@@ -185,8 +185,8 @@ export const DualScreenDemo: React.FC<Props> = ({
               </button>
             )}
             <div className="h-4 w-px bg-slate-200" />
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-sm text-black">Live Dual-Screen Demonstration</span>
+            <div className="flex flex-wrap items-center gap-2 min-w-0">
+              <span className="font-bold text-sm text-black">Live Dual-Screen View</span>
               <span className="text-xs bg-[#DBFE87] text-black border border-[#c4e872] px-2.5 py-0.5 rounded-full font-bold">
                 Spoke Clinic Tablet · Patient Phone
               </span>
@@ -196,7 +196,7 @@ export const DualScreenDemo: React.FC<Props> = ({
           {onBackToStaff && (
             <button
               onClick={onBackToStaff}
-              className="text-xs font-semibold bg-black hover:bg-black/85 text-white px-4 py-1.5 rounded-full shadow-xs transition-colors cursor-pointer"
+              className="shrink-0 text-xs font-semibold bg-black hover:bg-black/85 text-white px-4 py-1.5 rounded-full shadow-xs transition-colors cursor-pointer"
             >
               Full Workstation ➔
             </button>

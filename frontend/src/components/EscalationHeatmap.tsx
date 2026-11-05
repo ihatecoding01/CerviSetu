@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 
 interface Props {
+  canReview?: boolean;
   cases: PatientCase[];
   lastSim: EscalationSimResult | null;
   onSimulate: (result: EscalationSimResult) => void;
@@ -34,7 +35,7 @@ const TIERS = [
   { tier: "Tier 4 · Authority", days: "8+", icon: AlertOctagon, desc: "Emergency District Authority dossier", variant: "destructive" as const },
 ];
 
-export function EscalationHeatmap({ cases, lastSim, onSimulate }: Props) {
+export function EscalationHeatmap({ canReview = true, cases, lastSim, onSimulate }: Props) {
   const [token, setToken] = useState("PT-RURAL-7891");
   const [stage, setStage] = useState("Stage III");
   const [cancerType, setCancerType] = useState("ORAL");
@@ -365,7 +366,7 @@ export function EscalationHeatmap({ cases, lastSim, onSimulate }: Props) {
           </CardContent>
         </Card>
       </div>
-      <AuthorityReview />
+      {canReview && <AuthorityReview />}
       <MessageCenter />
     </div>
   );

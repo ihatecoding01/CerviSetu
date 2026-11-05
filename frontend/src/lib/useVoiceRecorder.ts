@@ -35,6 +35,7 @@ async function toWav(blob: Blob): Promise<Blob> {
 
 export function useVoiceRecorder(maxSeconds: number, onComplete: (wav: Blob) => void) {
   const [recording, setRecording] = useState(false);
+  const [starting, setStarting] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const recorder = useRef<MediaRecorder | null>(null);
@@ -51,6 +52,7 @@ export function useVoiceRecorder(maxSeconds: number, onComplete: (wav: Blob) => 
       setError("This browser cannot record audio. Please type instead.");
       return;
     }
+    setStarting(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const chunks: Blob[] = [];
@@ -66,11 +68,13 @@ export function useVoiceRecorder(maxSeconds: number, onComplete: (wav: Blob) => 
         }
       };
       recorder.current = rec;
-      rec.start();
+      rec.start(1000);
       setSeconds(0);
       setRecording(true);
     } catch {
       setError("Microphone access was blocked. Allow the microphone or type instead.");
+    } finally {
+      setStarting(false);
     }
   }, []);
 
@@ -87,5 +91,5 @@ export function useVoiceRecorder(maxSeconds: number, onComplete: (wav: Blob) => 
 
   useEffect(() => () => stop(), [stop]);
 
-  return { recording, seconds, error, start, stop };
+  return { recording, starting, seconds, error, start, stop };
 }

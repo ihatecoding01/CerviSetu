@@ -1351,7 +1351,7 @@ export function ClinicianEncounter({
                   {/* Ambient Microphone Toggle Button */}
                   <button
                     onClick={() => (isRecording ? consultRecorder.stop() : consultRecorder.start())}
-                    disabled={consultBusy}
+                    disabled={consultBusy || consultRecorder.starting}
                     data-testid="consult-mic"
                     className={`h-9 px-3.5 rounded-full flex items-center gap-2 text-white shadow-xs transition-all cursor-pointer ${
                       isRecording ? "bg-black animate-pulse" : "bg-[#BA2D0B] hover:bg-[#a02609]"
@@ -1363,7 +1363,9 @@ export function ClinicianEncounter({
                         ? `Recording ${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, "0")} · Stop`
                         : consultBusy
                           ? "Analysing..."
-                          : "Ambient Mic"}
+                          : consultRecorder.starting
+                            ? "Starting mic..."
+                            : "Ambient Mic"}
                     </span>
                   </button>
                 </CardHeader>

@@ -456,12 +456,15 @@ export function translate(lang: Lang, key: Key, vars?: Record<string, string | n
 
 function readLang(): Lang {
   try {
+    // The site-wide picker decides, so a page never mixes two languages
+    const site = localStorage.getItem("cervisetu_site_lang");
+    if (site) return site === "hi" ? "hi" : "en";
     const v = localStorage.getItem(LANG_STORAGE_KEY);
     if (v === "en" || v === "hi") return v;
   } catch {
     // storage unavailable (private mode)
   }
-  return "hi";
+  return "en";
 }
 
 const listeners = new Set<(l: Lang) => void>();

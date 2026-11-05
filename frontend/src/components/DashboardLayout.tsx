@@ -1,6 +1,7 @@
 import { CerviSetuLogo } from "./icons/CerviSetuLogo";
 import { LanguageSwitch } from "./LanguageSwitch";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { GeniePanel, WhatsNewPanel } from "./GeniePanel";
 import type { StaffProfile } from "../api/staff";
 import {
   LayoutDashboard,
@@ -39,6 +40,7 @@ interface Props {
   onLogoutToGateway?: () => void;
   staff?: StaffProfile | null;
   onSignOut?: () => void;
+  onOpenPatient?: (token: string) => void;
   children: ReactNode;
 }
 
@@ -54,23 +56,47 @@ const NAV_ITEMS: NavItem[] = [
   { id: "prevention-tab", label: "Prevention & Screening", icon: ShieldPlus, category: "clinical" },
   { id: "encounter-tab", label: "Clinical Encounter", icon: Stethoscope, category: "clinical" },
   { id: "patient-tab", label: "Patient Portal", icon: HeartHandshake, category: "clinical" },
-  { id: "dual-tab", label: "Dual-Screen Demo", icon: Tablet, category: "clinical" },
+  { id: "dual-tab", label: "Dual-Screen View", icon: Tablet, category: "clinical" },
   { id: "intake-tab", label: "Clinical Intake", icon: ClipboardList, category: "diagnostics" },
   { id: "tracker-tab", label: "Rural Tracker", icon: Activity, category: "diagnostics" },
   { id: "asha-tab", label: "ASHA Network", icon: Users, category: "coordination" },
   { id: "privacy-tab", label: "Security & Audit", icon: ShieldCheck, category: "coordination" },
 ];
 
-export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, staff, onSignOut, children }: Props) {
+export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, staff, onSignOut, onOpenPatient, children }: Props) {
   const initials = staff
     ? staff.name.replace(/^(Dr|Sister)\.?\s+/i, "").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase()
     : "DM";
-  const [collapsed, setCollapsed] = useState(false);
+  // Phones have no room for the navigation panel beside the page, so it starts closed there.
+  const [collapsed, setCollapsed] = useState(() => window.innerWidth < 768);
+  const [panel, setPanel] = useState<"genie" | "whats-new" | null>(null);
+  const [search, setSearch] = useState("");
+  const searchBox = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setCollapsed(false);
+        setTimeout(() => searchBox.current?.focus());
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const goTo = (tab: Tab) => {
+    setPanel(null);
+    setSearch("");
+    if (window.innerWidth < 768) setCollapsed(true);
+    onTabChange(tab);
+  };
+  const matches = (item: NavItem) => item.label.toLowerCase().includes(search.trim().toLowerCase());
   const currentNav = NAV_ITEMS.find((item) => item.id === activeTab) || NAV_ITEMS[0];
 
-  const clinicalItems = NAV_ITEMS.filter((i) => i.category === "clinical");
-  const diagnosticItems = NAV_ITEMS.filter((i) => i.category === "diagnostics");
-  const coordinationItems = NAV_ITEMS.filter((i) => i.category === "coordination");
+  const clinicalItems = NAV_ITEMS.filter((i) => i.category === "clinical" && matches(i));
+  const diagnosticItems = NAV_ITEMS.filter((i) => i.category === "diagnostics" && matches(i));
+  const coordinationItems = NAV_ITEMS.filter((i) => i.category === "coordination" && matches(i));
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#FAFAFA] text-black font-sans antialiased">
@@ -145,7 +171,7 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
               className={`p-2 rounded-xl transition-colors cursor-pointer ${
                 activeTab === "dual-tab" ? "bg-slate-100 text-[#F19941]" : "hover:bg-slate-50 hover:text-black"
               }`}
-              title="Dual-Screen Demo"
+              title="Dual-Screen View"
             >
               <Tablet className="size-4.5" />
             </button>
@@ -222,7 +248,7 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
 
       {/* 2. Main Navigation Panel with Generous Whitespace (Collapsible) */}
       {!collapsed && (
-        <aside className="w-60 min-w-60 h-full bg-white border-r border-slate-200/90 flex flex-col justify-between p-4 z-20 select-none">
+        <aside className="max-md:fixed max-md:left-14 max-md:top-0 max-md:shadow-xl w-60 min-w-60 h-full bg-white border-r border-slate-200/90 flex flex-col justify-between p-4 z-20 select-none">
           <div className="overflow-y-auto pr-1">
             {/* Header: Title + Plan + Collapse Toggle */}
             <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
@@ -249,8 +275,17 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
               <div className="relative flex items-center">
                 <Search className="absolute left-3 size-3.5 text-slate-400" />
                 <input
+                  ref={searchBox}
                   type="text"
                   placeholder="Search"
+                  value={search}
+                  data-testid="nav-search"
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") setSearch("");
+                    const first = NAV_ITEMS.find(matches);
+                    if (e.key === "Enter" && search.trim() && first) goTo(first.id);
+                  }}
                   className="w-full pl-8.5 pr-12 py-2 text-xs bg-slate-50/80 border border-slate-200/80 rounded-xl text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-black transition-colors"
                 />
                 <span className="absolute right-2.5 px-1.5 py-0.5 text-xs font-mono text-slate-400 bg-white border border-slate-200 rounded">
@@ -286,7 +321,7 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
                   return (
                     <button
                       key={item.id}
-                      onClick={() => onTabChange(item.id)}
+                      onClick={() => goTo(item.id)}
                       className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors cursor-pointer ${
                         isActive
                           ? "bg-slate-100 text-black font-semibold"
@@ -313,7 +348,7 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
                   return (
                     <button
                       key={item.id}
-                      onClick={() => onTabChange(item.id)}
+                      onClick={() => goTo(item.id)}
                       className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors cursor-pointer ${
                         isActive
                           ? "bg-slate-100 text-black font-semibold"
@@ -340,7 +375,7 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
                   return (
                     <button
                       key={item.id}
-                      onClick={() => onTabChange(item.id)}
+                      onClick={() => goTo(item.id)}
                       className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors cursor-pointer ${
                         isActive
                           ? "bg-slate-100 text-black font-semibold"
@@ -357,7 +392,12 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
 
             {/* What's New Item */}
             <div className="pt-2 mb-2">
-              <div className="flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+              <button
+                type="button"
+                onClick={() => setPanel("whats-new")}
+                data-testid="whats-new"
+                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+              >
                 <div className="flex items-center gap-2.5">
                   <Bell className="size-4 text-[#F19941]" />
                   <span>What's new</span>
@@ -365,7 +405,7 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
                 <span className="text-xs font-bold bg-[#DBFE87] text-black px-2 py-0.5 rounded-full">
                   New
                 </span>
-              </div>
+              </button>
             </div>
           </div>
 
@@ -397,9 +437,9 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
       {/* 3. Main Workspace Area */}
       <div className="flex-1 h-full overflow-hidden flex flex-col bg-[#FAFAFA]">
         {/* Top Header Bar Matching Image 1 */}
-        <header className="h-14 min-h-14 bg-white border-b border-slate-200/90 px-6 lg:px-8 flex items-center justify-between z-10">
+        <header className="h-14 min-h-14 bg-white border-b border-slate-200/90 px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-2 z-10">
           {/* Breadcrumb / Title */}
-          <div className="flex items-center gap-2.5 text-xs text-slate-500 font-medium">
+          <div className="flex items-center gap-2.5 min-w-0 text-xs text-slate-500 font-medium">
             {collapsed && (
               <button
                 type="button"
@@ -412,16 +452,16 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
             )}
             <span
               onClick={() => onTabChange("overview-tab")}
-              className="cursor-pointer hover:text-black transition-colors"
+              className="hidden lg:inline cursor-pointer hover:text-black transition-colors"
             >
               Home
             </span>
-            <ChevronRight className="size-3 text-slate-400" />
-            <span className="text-black font-semibold text-sm">{currentNav.label}</span>
+            <ChevronRight className="hidden lg:block size-3 text-slate-400" />
+            <span className="hidden sm:inline truncate text-black font-semibold text-sm">{currentNav.label}</span>
           </div>
 
           {/* Right Action Controls: Pill Buttons matching Image 1 */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             {staff && (
               <div
                 className="hidden md:flex items-center gap-2 border border-slate-200 rounded-full pl-1 pr-3 py-1 text-xs"
@@ -435,27 +475,33 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
                 {staff.offline && <span className="text-[10px] text-[#F19941] font-semibold">offline</span>}
               </div>
             )}
-            <LanguageSwitch />
+            <LanguageSwitch className="max-sm:w-[88px] max-sm:[&>select]:w-full" />
             {/* Ask Genie / AI Pill Button with Secondary Orange Dot */}
-            <div className="hidden sm:flex items-center gap-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-800 transition-colors cursor-pointer">
+            <button
+              type="button"
+              onClick={() => setPanel("genie")}
+              data-testid="ask-genie"
+              className="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-800 whitespace-nowrap transition-colors cursor-pointer"
+            >
               <span className="size-2 rounded-full bg-[#F19941]" />
               <span>Ask Genie</span>
-            </div>
+            </button>
 
             {/* Black Pill Button: New Patient Case (Inspired by "Build your voice agent") */}
             <button
               onClick={() => onTabChange("intake-tab")}
-              className="flex items-center gap-1.5 bg-black hover:bg-black/85 text-white rounded-full px-4 py-1.5 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+              aria-label="New Patient Case"
+              className="flex items-center gap-1.5 bg-black hover:bg-black/85 text-white rounded-full px-2 sm:px-4 py-1.5 whitespace-nowrap text-xs font-semibold shadow-xs transition-colors cursor-pointer"
             >
               <Plus className="size-3.5" />
-              <span>New Patient Case</span>
+              <span className="hidden sm:inline">New Patient Case</span>
             </button>
           </div>
         </header>
 
         {/* Tab Viewport with Adaptive Layout (Full-bleed for clinical encounter) */}
-        <main className={`flex-1 h-[calc(100vh-3.5rem)] overflow-y-auto overflow-x-hidden ${
-          activeTab === "encounter-tab" || activeTab === "dual-tab" ? "p-0" : "p-6 sm:p-8 lg:p-10"
+        <main className={`staff-main flex-1 h-[calc(100vh-3.5rem)] overflow-y-auto overflow-x-hidden ${
+          activeTab === "encounter-tab" || activeTab === "dual-tab" ? "p-0" : "p-4 sm:p-8 lg:p-10"
         }`}>
           <div className={`w-full ${
             activeTab === "encounter-tab" || activeTab === "dual-tab" ? "h-full" : "max-w-5xl mx-auto"
@@ -464,6 +510,17 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
           </div>
         </main>
       </div>
+      {panel === "genie" && (
+        <GeniePanel
+          onClose={() => setPanel(null)}
+          onOpenTab={goTo}
+          onOpenPatient={(token) => {
+            setPanel(null);
+            onOpenPatient?.(token);
+          }}
+        />
+      )}
+      {panel === "whats-new" && <WhatsNewPanel onClose={() => setPanel(null)} onOpenTab={goTo} />}
     </div>
   );
 }

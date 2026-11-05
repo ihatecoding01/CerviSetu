@@ -96,7 +96,7 @@ console.log("Spatial Bounding Boxes:", result.bounding_boxes.length);`,
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Code Snippets Studio */}
         <div className="lg:col-span-7 space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             {/* Language Switcher */}
             <div className="flex items-center gap-1 bg-[#F8F9FA] border-2 border-[#F19941] rounded-lg p-1">
               {(["curl", "python", "typescript"] as const).map((lang) => (
