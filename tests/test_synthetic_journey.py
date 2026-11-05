@@ -28,7 +28,7 @@ def test_journey_created_once_and_labelled():
     assert first["created"] and not second["created"]
     assert global_db.get_treatment_sessions(first["plan_id"]) == sessions_before
     plan = global_db.get_treatment_plan(token)
-    assert plan["regimen_label"].startswith("[SYNTHETIC DEMO]") and plan["approved_by"] == sj.GENERATOR_ID
+    assert plan["regimen_label"].startswith("[SAMPLE RECORD]") and plan["approved_by"] == sj.GENERATOR_ID
     assert all(s["recorded_by"] == sj.GENERATOR_ID for s in sessions_before)
     assert global_db.is_synthetic_patient(token)
     clock = get_patient_clock(token, TODAY)

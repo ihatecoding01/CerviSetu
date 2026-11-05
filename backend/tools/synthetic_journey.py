@@ -95,7 +95,7 @@ def ensure_synthetic_journey(token: str, registered_on: date = None) -> Dict[str
         "target_days": 49,
         "limit_days": 56,
         "facility_name": spec["facility"],
-        "regimen_label": "[SYNTHETIC DEMO] CCRT: EBRT 25 fractions + HDR brachytherapy 4 fractions",
+        "regimen_label": "[SAMPLE RECORD] CCRT: EBRT 25 fractions + HDR brachytherapy 4 fractions",
         "approved_by": GENERATOR_ID,
     })
     for n, d in enumerate(spec["completed_dates"], start=1):

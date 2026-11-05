@@ -171,7 +171,7 @@ export const AbhaRegistration: React.FC<Props> = ({ onVerified, onUseMobileLogin
           setCard(mockCard);
           return;
         } else {
-          throw new AbdmError("Invalid OTP. For demo use 123456.", "OTP_INVALID");
+          throw new AbdmError("Invalid OTP. For testing use 123456.", "OTP_INVALID");
         }
       }
       const r = await post<{ patient_token: string; abha_card: Card; returning: boolean }>("/otp/verify", { txn_id: txnId, otp });

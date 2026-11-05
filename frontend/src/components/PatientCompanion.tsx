@@ -143,11 +143,11 @@ const TRANSLATIONS = {
     viewPassBtn: "डिजिटल बोर्डिंग पास व QR कोड देखें",
     passPendingNotice:
       "हब ऑन्कोलॉजिस्ट द्वारा Day 41 स्लॉट पुष्टि के उपरांत डिजिटल पास डाउनलोड हेतु उपलब्ध होगा।",
-    evaluatorHeader: "Evaluator Live Demo Controls",
+    evaluatorHeader: "उपचार यात्रा सिम्युलेटर",
     resetBtn: "रीसेट करें (Reset to Step 14)",
-    demo1Pending: "डेमो 1: Fraction 15 (Day 21 Milestone) आगे बढ़ाएं",
+    demo1Pending: "चरण 1: Fraction 15 (Day 21 Milestone) आगे बढ़ाएं",
     demo1Done: "Fraction 15 पूर्ण · Days 38–44 हब स्लॉट अनुरोधित",
-    demo2Pending: "डेमो 2: हब ऑन्कोलॉजिस्ट OT स्लॉट स्वीकृत करें (Day 41)",
+    demo2Pending: "चरण 2: हब ऑन्कोलॉजिस्ट OT स्लॉट स्वीकृत करें (Day 41)",
     demo2Done: "Day 41 OT स्लॉट, बस पास व धर्मशाला स्वीकृत",
     modalBadge: "UP Government Cancer Care Protocol",
     modalTitle: "यात्रा व धर्मशाला बोर्डिंग पास",
@@ -266,11 +266,11 @@ const TRANSLATIONS = {
     viewPassBtn: "View Digital Boarding Pass & QR Code",
     passPendingNotice:
       "Digital boarding pass will unlock once the Hub oncologist confirms the Day 41 OT slot.",
-    evaluatorHeader: "Evaluator Live Demo Controls",
-    resetBtn: "Reset Demo (Step 14)",
-    demo1Pending: "Demo 1: Advance to Fraction 15 (Day 21 Milestone)",
+    evaluatorHeader: "Treatment Journey Simulator",
+    resetBtn: "Reset to Step 14",
+    demo1Pending: "Step 1: Advance to Fraction 15 (Day 21 Milestone)",
     demo1Done: "Fraction 15 Completed · Days 38–44 Hub Slot Requested",
-    demo2Pending: "Demo 2: Hub Oncologist Confirms OT Slot (Day 41)",
+    demo2Pending: "Step 2: Hub Oncologist Confirms OT Slot (Day 41)",
     demo2Done: "Day 41 OT Slot, Bus Voucher & Dharamshala Approved",
     modalBadge: "UP Government Cancer Care Protocol",
     modalTitle: "Travel & Accommodation Boarding Pass",
@@ -521,8 +521,8 @@ export const PatientCompanion: React.FC<Props> = ({
     setNotificationMsg({
       title:
         language === "hi"
-          ? "डेमो रीसेट संपन्न (Reset to Step 14)"
-          : "Demo Reset Completed (Step 14)",
+          ? "रीसेट संपन्न (Reset to Step 14)"
+          : "Reset Completed (Step 14)",
       desc:
         language === "hi"
           ? "रोगी स्थिति मूल 14/29 स्तर पर रीसेट कर दी गई है।"
@@ -643,7 +643,7 @@ export const PatientCompanion: React.FC<Props> = ({
                 </span>
                 {profile?.synthetic_patient && (
                   <span className="text-xs bg-[#BA2D0B]/10 text-[#BA2D0B] border border-[#BA2D0B]/30 px-2.5 py-0.5 rounded-full font-bold">
-                    SYNTHETIC DEMO
+                    SAMPLE RECORD
                   </span>
                 )}
                 <span className="text-xs bg-[#90C3CB]/20 text-slate-800 border border-[#90C3CB]/50 px-2.5 py-0.5 rounded-full font-semibold">
@@ -660,7 +660,7 @@ export const PatientCompanion: React.FC<Props> = ({
               )}
               {profile?.synthetic_patient && (
                 <p className="text-xs text-[#BA2D0B] bg-[#BA2D0B]/5 border border-[#BA2D0B]/20 rounded-lg px-2.5 py-1.5 mt-2">
-                  Synthetic demo patient: treatment history, clock and escalations are generated demo data, not real
+                  Sample patient: treatment history, clock and escalations are generated, not real
                   clinical records. ABHA shown is a {profile.abha_label}.
                 </p>
               )}

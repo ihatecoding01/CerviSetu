@@ -32,7 +32,7 @@ OTP_MAX_ATTEMPTS = 5
 OTP_MAX_SENDS = 3
 
 SYNTHETIC_ABHA_LABEL = "Synthetic ABHA Sandbox ID - not issued by ABDM"
-AUTH_NOTICE = "Demo authentication: sandbox OTP shown on screen; not secure production authentication."
+AUTH_NOTICE = "Test sign-in: sandbox OTP shown on screen; not secure production authentication."
 # The seeded demo patient can log in by mobile OTP like any registered patient
 DEMO_MOBILE_LINKS = {"9876543210": "PT-RURAL-7891"}
 
@@ -159,7 +159,7 @@ def _check_mode():
     if ABDM_MODE != "sandbox_simulated":
         raise RegistrationError("ABDM_GATEWAY_NOT_CONFIGURED", "Live ABDM gateway integration is not configured.", 503)
     if APP_ENV == "production":
-        raise RegistrationError("SIMULATION_DISABLED", "Sandbox OTP is demo authentication and is disabled in production.", 503)
+        raise RegistrationError("SIMULATION_DISABLED", "Sandbox OTP is test sign-in and is disabled in production.", 503)
 
 
 def _new_otp_session(mode: str, id_type: str, identifier_hash: str, last4: str, mobile_last4: Optional[str],

@@ -229,7 +229,7 @@ async def advance_fraction_15(req: AdvanceFraction15Request):
     block = global_audit.record_user_event(
         user_role=UserRole.NURSE_HEALTHCARE_WORKER,
         action="NURSE_EBRT_FRACTION_LOG",
-        actor_id="NURSE-SPOKE-DEMO",
+        actor_id="NURSE-SPOKE",
         patient_token=req.patient_token,
         details={"fraction_number": 15, "milestone": "DAY_21_HUB_SPOKE_TRIGGER"},
         severity="INFO",

@@ -105,7 +105,7 @@ export const MobileOtpLogin: React.FC<Props> = ({ onVerified, onRegister }) => {
           onVerified("PT-RURAL-7891");
           return;
         } else {
-          throw new AbdmError("Invalid OTP. For demo use 123456.", "OTP_INVALID");
+          throw new AbdmError("Invalid OTP. For testing use 123456.", "OTP_INVALID");
         }
       }
       const r = await post<{ patient_token: string }>("/otp/verify", { txn_id: txnId, otp });

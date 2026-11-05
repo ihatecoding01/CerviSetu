@@ -45,7 +45,7 @@ async def login(body: StaffLoginRequest, request: Request):
 @router.post("/demo-login")
 async def demo_login(body: DemoLoginRequest, request: Request):
     if not ss.demo_signin_allowed():
-        return JSONResponse({"detail": {"code": "DEMO_DISABLED", "message": "Demo sign-in is turned off."}},
+        return JSONResponse({"detail": {"code": "DEMO_DISABLED", "message": "Test sign-in is turned off."}},
                             status_code=403)
     staff_id = ss.DEMO_ACCOUNT_FOR_ROLE.get((body.role or "").upper())
     if not staff_id:
