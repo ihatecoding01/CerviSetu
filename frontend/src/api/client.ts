@@ -1023,8 +1023,21 @@ export const api = {
     });
   },
 
-  async askGenie(question: string, language: string): Promise<{ source: string; answer: string; patients: string[]; open_tab: string | null; as_of_date: string }> {
-    return request("/api/genie/ask", { method: "POST", body: JSON.stringify({ question, language }) });
+  async askGenie(body: { question: string; language: string; history: { role: string; text: string }[]; board: unknown[] }): Promise<{ source: string; answer: string; patients: string[]; open_tab: string | null; suggestions: string[]; as_of_date: string }> {
+    return request("/api/genie/ask", { method: "POST", body: JSON.stringify(body) });
+  },
+
+  async genieTranscribe(audio: Blob): Promise<{ text: string }> {
+    const form = new FormData();
+    form.append("audio", audio, "genie.wav");
+    const res = await fetch(`${BASE_URL}/api/genie/transcribe`, { method: "POST", body: form, credentials: "include" });
+    if (res.status === 401) window.dispatchEvent(new Event("cervisetu:staff-session-ended"));
+    if (!res.ok) throw new Error("I couldn't hear that. Please try again or type your question.");
+    return res.json();
+  },
+
+  async genieSpeak(text: string, language: string): Promise<{ audio_base64: string | null }> {
+    return request("/api/genie/speak", { method: "POST", body: JSON.stringify({ text, language }) });
   },
 
   async getAuthorityCases(): Promise<{ cases: AuthorityCase[] }> {

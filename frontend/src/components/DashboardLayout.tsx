@@ -21,6 +21,7 @@ import {
   PanelLeft,
   Home,
   ShieldPlus,
+  Sparkles,
 } from "lucide-react";
 
 export type Tab =
@@ -63,6 +64,15 @@ const NAV_ITEMS: NavItem[] = [
   { id: "privacy-tab", label: "Security & Audit", icon: ShieldCheck, category: "coordination" },
 ];
 
+// The conversation survives closing the panel, so it stays mounted once opened.
+function useGenieOpened(open: boolean) {
+  const [used, setUsed] = useState(false);
+  useEffect(() => {
+    if (open) setUsed(true);
+  }, [open]);
+  return used || open;
+}
+
 export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, staff, onSignOut, onOpenPatient, children }: Props) {
   const initials = staff
     ? staff.name.replace(/^(Dr|Sister)\.?\s+/i, "").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase()
@@ -70,6 +80,7 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
   // Phones have no room for the navigation panel beside the page, so it starts closed there.
   const [collapsed, setCollapsed] = useState(() => window.innerWidth < 768);
   const [panel, setPanel] = useState<"genie" | "whats-new" | null>(null);
+  const genieUsed = useGenieOpened(panel === "genie");
   const [search, setSearch] = useState("");
   const searchBox = useRef<HTMLInputElement>(null);
 
@@ -99,7 +110,7 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
   const coordinationItems = NAV_ITEMS.filter((i) => i.category === "coordination" && matches(i));
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#FAFAFA] text-black font-sans antialiased">
+    <div className={`flex h-screen w-screen overflow-hidden bg-[#FAFAFA] text-black font-sans antialiased ${panel === "genie" ? "lg:pr-[440px]" : ""}`}>
       {/* 1. Far-Left Slim Icon Rail (Inspired by Sarvam Voice Agents Left Rail) */}
       <aside className="w-14 min-w-14 h-full bg-white border-r border-slate-200/90 flex flex-col justify-between items-center py-4 z-30 select-none">
         {/* Top Brand Hexagon */}
@@ -479,11 +490,11 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
             {/* Ask Genie / AI Pill Button with Secondary Orange Dot */}
             <button
               type="button"
-              onClick={() => setPanel("genie")}
+              onClick={() => setPanel((p) => (p === "genie" ? null : "genie"))}
               data-testid="ask-genie"
               className="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-800 whitespace-nowrap transition-colors cursor-pointer"
             >
-              <span className="size-2 rounded-full bg-[#F19941]" />
+              <Sparkles className="size-3.5 text-[#F19941]" />
               <span>Ask Genie</span>
             </button>
 
@@ -510,12 +521,14 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
           </div>
         </main>
       </div>
-      {panel === "genie" && (
+      {genieUsed && (
         <GeniePanel
+          open={panel === "genie"}
+          staffName={staff?.name}
           onClose={() => setPanel(null)}
           onOpenTab={goTo}
           onOpenPatient={(token) => {
-            setPanel(null);
+            if (window.innerWidth < 640) setPanel(null);
             onOpenPatient?.(token);
           }}
         />

@@ -1,3 +1,4 @@
+import { WARD_COHORT } from "../data/wardCohort";
 import { useState, useEffect } from "react";
 import type { PatientCase, LinacDowntimeStatus, WardBoardRow } from "../api/client";
 import { api } from "../api/client";
@@ -217,88 +218,7 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
   };
 
   // Enriched clinical cohort registry with unmasked local identity and 3-lane status
-  const patientRoster = [
-    {
-      token: "PT-RURAL-7891",
-      name: "Shanti Devi",
-      age: "48Y, Female",
-      village: "Kalyanpur, Mirzapur",
-      stage: "Stage IIB Cervix (CCRT)",
-      lane: "optimal",
-      ottDays: 44,
-      ottBadge: "🟢 Proj: Day 44 (<=49d)",
-      ottSub: "GEC-ESTRO Optimal On-Track",
-      adhStatus: "🟢 Attending Daily",
-      adhDetail: "Fraction 14 Done · Step 15 Due Today",
-      tier: null,
-      severity: 0.76,
-      avatarColor: "bg-[#DBFE87] text-black border-[#c4e872]",
-    },
-    {
-      token: "PT-RURAL-4421",
-      name: "Sunita Maurya",
-      age: "45Y, Female",
-      village: "Vindhyachal Sector 2",
-      stage: "Stage IIIA Cervix (CCRT)",
-      lane: "warning",
-      ottDays: 52,
-      ottBadge: "🟡 Proj: Day 52 (<=56d)",
-      ottSub: "NCG Warning Margin · Pre-Brachy Due",
-      adhStatus: "🟡 Missed Day +1",
-      adhDetail: "Tier 1 SMS/WhatsApp Sent · Cycle 3 Labs Pending",
-      tier: "TIER_1_SMS",
-      severity: 0.82,
-      avatarColor: "bg-[#F19941]/30 text-[#BA2D0B] border-[#F19941]",
-    },
-    {
-      token: "PT-RURAL-1102",
-      name: "Manju Verma",
-      age: "50Y, Female",
-      village: "Robertsganj Rural",
-      stage: "Stage IIIB Cervix (CCRT)",
-      lane: "critical",
-      ottDays: 59,
-      ottBadge: "🔴 Proj: Day 59 (>56d)",
-      ottSub: "HARD CLOCK BREACH · ~1%/d Pelvic Loss",
-      adhStatus: "🔴 Overdue Day +3 (Missed 2 Fractions)",
-      adhDetail: "Tier 3 ASHA Ticket Dispatched · Home Visit Active",
-      tier: "TIER_3_ASHA",
-      severity: 0.94,
-      avatarColor: "bg-[#BA2D0B]/20 text-[#BA2D0B] border-[#BA2D0B]",
-    },
-    {
-      token: "PT-RURAL-9034",
-      name: "Anjali Patel",
-      age: "42Y, Female",
-      village: "Chunar Block B",
-      stage: "Stage IIB Cervix (New CCRT)",
-      lane: "optimal",
-      ottDays: 45,
-      ottBadge: "🟢 Proj: Day 45 (<=49d)",
-      ottSub: "GEC-ESTRO Optimal On-Track",
-      adhStatus: "🟢 Day 1 Baseline Verified",
-      adhDetail: "CBC/RFT Verified · Fraction 1 Scheduled",
-      tier: null,
-      severity: 0.68,
-      avatarColor: "bg-[#90C3CB]/40 text-black border-[#90C3CB]",
-    },
-    {
-      token: "PT-PREC-202",
-      name: "Rekha Devi",
-      age: "36Y, Female",
-      village: "Pipra, Mirzapur",
-      stage: "Precancer CIN-2 (VIA+)",
-      lane: "optimal",
-      ottDays: 0,
-      ottBadge: "🟢 Precancer Surveillance",
-      ottSub: "Thermal Ablation Complete · 6m Recall",
-      adhStatus: "🟢 Margin Clear",
-      adhDetail: "Follow-up due March 2027",
-      tier: null,
-      severity: 0.35,
-      avatarColor: "bg-[#DBFE87] text-black border-[#c4e872]",
-    },
-  ];
+  const patientRoster = [...WARD_COHORT];
 
   // Live cervical cases from the database, newest first, appended after the demo cohort
   const seenTokens = new Set(DEMO_TOKENS);

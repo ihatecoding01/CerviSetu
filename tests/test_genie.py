@@ -39,3 +39,29 @@ def test_near_empty_speech_gets_no_ai_draft(monkeypatch):
 
 def test_internal_labels_are_hidden():
     assert genie._plain("From the LIVE DATA, see Clinical Intake (intake-tab).") == "From today's records, see Clinical Intake."
+
+
+def test_follow_ups_get_history_and_board_patients_are_known(monkeypatch):
+    seen = {}
+    def fake(system, user, *a, **k):
+        seen["user"] = user
+        return {"answer": "She has missed two.", "patients": ["PT-RURAL-1102"], "suggestions": ["What next?"]}
+    monkeypatch.setattr(genie.global_llm, "structured", fake)
+    body = TestClient(app).post("/api/genie/ask", json={
+        "question": "what about her?", "history": [{"role": "user", "text": "Who is overdue?"}],
+        "board": [{"token": "PT-RURAL-1102", "lane": "critical", "projected_day": 59, "attendance": "Overdue"}]}).json()
+    assert "Who is overdue?" in seen["user"] and "PT-RURAL-1102" in seen["user"]
+    assert "missed_sessions" not in seen["user"]
+    assert body["patients"] == ["PT-RURAL-1102"] and body["suggestions"] == ["What next?"]
+
+
+def test_fallback_lists_critical_board_patient(monkeypatch):
+    monkeypatch.setattr(genie.global_llm, "structured", lambda *a, **k: None)
+    body = TestClient(app).post("/api/genie/ask", json={
+        "question": "Who needs attention?",
+        "board": [{"token": "PT-RURAL-1102", "lane": "critical", "projected_day": 59, "attendance": "Overdue"}]}).json()
+    assert body["patients"][0] == "PT-RURAL-1102"
+
+
+def test_tab_ids_become_screen_names():
+    assert genie._plain("Check the tracker-tab.") == "Check Rural Tracker."
