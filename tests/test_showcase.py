@@ -37,16 +37,21 @@ def test_voice_script_dialects():
         assert res["ivr_parameters"]["dtmf_key_confirm"] == "1"
 
 
-def test_graph_trace_pipeline():
-    req = GraphTraceRequest(simulated_days_overdue=4)
-    res = execute_graph_trace(req)
+def test_graph_trace_reports_real_runs_only(monkeypatch):
+    from backend.core import run_trace
 
-    assert res["node_count"] == 5
-    assert res["total_latency_ms"] > 0
-    assert any(n["node"] == "ocr_intake" for n in res["nodes"])
-    assert any(n["node"] == "rural_tracker" for n in res["nodes"])
-    assert "ledger_block" in res
-    assert res["ledger_block"]["compliance"] == "DPDP Act 2023 Compliant"
+    monkeypatch.setattr(run_trace, "latest_trace", lambda: None)
+    empty = execute_graph_trace(GraphTraceRequest(simulated_days_overdue=4))
+    assert empty["source"] == "NO_RUN_YET" and empty["total_latency_ms"] == 0
+    assert all(n["latency_ms"] == 0 for n in empty["nodes"])
+
+    real = {"trace_id": "RUN-1", "recorded_at": "now", "total_latency_ms": 12.5, "patient_token": "PT-1",
+            "nodes": [{"node": "tracker", "name": "T", "role": "", "latency_ms": 12.5, "status": "COMPLETED", "summary": "Done."}]}
+    monkeypatch.setattr(run_trace, "latest_trace", lambda: real)
+    res = execute_graph_trace(GraphTraceRequest(simulated_days_overdue=3))
+    assert res["source"] == "LATEST_REAL_RUN" and res["total_latency_ms"] == 12.5
+    assert "TIER_3_ASHA" in res["nodes"][-1]["summary"]
+    assert len(res["ledger_block"]["sha256"]) == 64
 
 
 def test_district_impact_formula():

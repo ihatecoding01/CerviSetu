@@ -1609,5 +1609,8 @@
   "Document source",
   "Sample slip for illustration",
   "Real documents",
-  "Clinical Intake workspace"
+  "Clinical Intake workspace",
+  "Showing the latest real case run on this server. The slider shows what would happen at that many missed days.",
+  "No case has run on this server yet. Run one in Clinical Intake to record real timings.",
+  "Could not reach the server. Showing sample values."
 ]

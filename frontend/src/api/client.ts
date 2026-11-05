@@ -15,6 +15,7 @@ export interface PatientCase {
   diagnostic_synthesis?: Record<string, unknown>;
   current_escalation_tier?: string | null;
   dispatched_notifications?: Notification[];
+  execution_trace?: { trace_id: string; total_latency_ms: number; nodes: GraphTraceNode[] };
   status?: string;
   days_overdue?: number;
   cancer_severity_score?: number;
@@ -251,6 +252,8 @@ export interface GraphTraceNode {
 }
 
 export interface GraphTraceResult {
+  source?: "LATEST_REAL_RUN" | "NO_RUN_YET";
+  recorded_at?: string | null;
   trace_id: string;
   total_latency_ms: number;
   node_count: number;

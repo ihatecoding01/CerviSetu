@@ -511,6 +511,19 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
                   </p>
                 </div>
 
+                {/* Real timings of the agents that just processed this case */}
+                {result.execution_trace && (
+                  <div className="p-3 rounded-xl bg-white border border-gray-200" data-testid="run-trace">
+                    <p className="text-xs font-bold text-gray-800 mb-1.5">Agent run ({Math.round(result.execution_trace.total_latency_ms)} ms)</p>
+                    {result.execution_trace.nodes.map((n: { node: string; name: string; summary: string; latency_ms: number }) => (
+                      <div key={n.node} className="flex justify-between gap-3 text-xs text-gray-700 py-0.5">
+                        <span className="min-w-0">{n.name}: {n.summary}</span>
+                        <span className="font-mono shrink-0">{Math.round(n.latency_ms)} ms</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 {/* Sarvam AI Extraction & Draft Messages (clinician must approve) */}
                 {result.diagnostic_synthesis?.ai_generated ? (
                   <div className="p-4 rounded-xl bg-white border border-[#BA2D0B]/25 flex flex-col gap-3">

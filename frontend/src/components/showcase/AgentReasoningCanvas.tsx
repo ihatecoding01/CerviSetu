@@ -27,6 +27,13 @@ export const AgentReasoningCanvas: React.FC = () => {
 
   return (
     <div className="w-full bg-[#FFFFFF] border-2 border-[#BA2D0B] rounded-2xl p-6 sm:p-8 shadow-sm">
+      <p className="text-xs text-[#4B5563] mb-4" data-testid="trace-source">
+        {traceData?.source === "LATEST_REAL_RUN"
+          ? "Showing the latest real case run on this server. The slider shows what would happen at that many missed days."
+          : traceData?.source === "NO_RUN_YET"
+            ? "No case has run on this server yet. Run one in Clinical Intake to record real timings."
+            : "Could not reach the server. Showing sample values."}
+      </p>
       {/* Canvas Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b-2 border-[#F19941]/30 mb-6">
         <div>

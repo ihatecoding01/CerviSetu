@@ -511,78 +511,29 @@ def execute_graph_trace(req: GraphTraceRequest):
     Executes a simulated LangGraph multi-agent diagnostic & tracking pipeline,
     returning node execution latency, state changes, and DPDP cryptographic hash chain.
     """
-    trace_id = f"TRACE-{secrets.token_hex(4).upper()}"
-    t0 = time.perf_counter()
+    from backend.core.run_trace import latest_ledger_block, latest_trace, what_if_tier
 
-    # Step 1: Intake Node
-    intake_ms = 42.1
-    # Step 2: Image Triage & Laplacian Blur
-    blur_ms = 28.4
-    # Step 3: PII Shield
-    pii_ms = 18.2
-    # Step 4: Oncology Diagnostic Differential
-    diagnostic_ms = 64.7
-    # Step 5: Rural 56-Day Follow-Up Tracker
-    tracker_ms = 35.8
+    tier = what_if_tier(req.simulated_days_overdue)
+    what_if = f"What-if at {req.simulated_days_overdue} missed day(s): {tier}"
+    real = latest_trace()
+    if real:
+        nodes = [dict(n) for n in real["nodes"]]
+        nodes[-1]["summary"] = f"{nodes[-1]['summary']} {what_if}."
+        return {"trace_id": real["trace_id"], "source": "LATEST_REAL_RUN", "recorded_at": real["recorded_at"],
+                "total_latency_ms": real["total_latency_ms"], "node_count": len(nodes), "nodes": nodes,
+                "patient_token": real["patient_token"], "ledger_block": latest_ledger_block()}
 
+    # No case has run on this server yet: show the pipeline's steps without inventing any measurements
     nodes = [
-        {
-            "node": "ocr_intake",
-            "name": "Frontline Smart OCR Intake",
-            "role": "Paper Prescription & Slip Ingestion",
-            "latency_ms": intake_ms,
-            "status": "COMPLETED",
-            "summary": "Extracted Carcinoma Cervix FIGO IIB, 25 EBRT + 4 Brachytherapy"
-        },
-        {
-            "node": "image_triage",
-            "name": "Laplacian Blur & Quality Gate",
-            "role": "Artifact & Glare Verification",
-            "latency_ms": blur_ms,
-            "status": "COMPLETED",
-            "summary": "Sharpness variance 142.5 >= threshold 85.0. Slip accepted."
-        },
-        {
-            "node": "pii_shield",
-            "name": "DPDP AES-256 Token Vault",
-            "role": "Zero Knowledge Cryptographic Anonymization",
-            "latency_ms": pii_ms,
-            "status": "COMPLETED",
-            "summary": "Replaced patient identity with vault token PT-ANON-7B93."
-        },
-        {
-            "node": "diagnostic_oncology",
-            "name": "NCG Guidelines Oncology Synthesis",
-            "role": "Clinical Differential & Workup Planner",
-            "latency_ms": diagnostic_ms,
-            "status": "COMPLETED",
-            "summary": "Validated concurrent weekly cisplatin + 50 Gy EBRT plan."
-        },
-        {
-            "node": "rural_tracker",
-            "name": "56-Day Radiobiological Adherence Engine",
-            "role": "Fraction Timing & Progressive Escalation",
-            "latency_ms": tracker_ms,
-            "status": "COMPLETED",
-            "summary": f"Evaluated adherence at day +{req.simulated_days_overdue}. Active tier: TIER_1_SMS."
-        }
+        {"node": "intake", "name": "Intake & PII Vault", "role": "Masks identity, reads the case", "latency_ms": 0,
+         "status": "WAITING", "summary": "Run a case in Clinical Intake to record real timings."},
+        {"node": "diagnostic", "name": "Diagnostic Synthesis", "role": "Clinical impression and pathway", "latency_ms": 0,
+         "status": "WAITING", "summary": "Run a case in Clinical Intake to record real timings."},
+        {"node": "tracker", "name": "56-Day Adherence Tracker", "role": "Follow-up and escalation", "latency_ms": 0,
+         "status": "WAITING", "summary": f"{what_if}."},
     ]
-
-    total_pipeline_ms = round((time.perf_counter() - t0) * 1000 + sum(n["latency_ms"] for n in nodes), 2)
-
-    return {
-        "trace_id": trace_id,
-        "total_latency_ms": total_pipeline_ms,
-        "node_count": len(nodes),
-        "nodes": nodes,
-        "patient_token": "PT-ANON-7B93",
-        "ledger_block": {
-            "block_index": 142,
-            "sha256": "8f3b6c2d1e0a4f598216c4e098bd1e7790c3cbdbfe87ba2d0bf19941a31d2890",
-            "previous_hash": "2a1c9d8e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c",
-            "compliance": "DPDP Act 2023 Compliant"
-        }
-    }
+    return {"trace_id": "NO-RUN-YET", "source": "NO_RUN_YET", "recorded_at": None, "total_latency_ms": 0,
+            "node_count": len(nodes), "nodes": nodes, "patient_token": "None yet", "ledger_block": latest_ledger_block()}
 
 
 @router.post("/district-impact")

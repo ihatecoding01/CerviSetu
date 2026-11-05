@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from backend.core.database import global_db
 from backend.core.security import PIIShield, global_vault, global_audit, UserRole
+from backend.core.run_trace import traced_invoke
 from backend.graph.workflow import clinical_graph
 from backend.tools.tracker_tools import TrackerTriageEngine
 
@@ -113,7 +114,8 @@ async def run_case(
     }
 
     config = {"configurable": {"thread_id": session_id}}
-    final_state = clinical_graph.invoke(initial_state, config=config)
+    final_state, trace = traced_invoke(clinical_graph, initial_state, config)
+    final_state["execution_trace"] = trace
     final_state["intake_sources"] = {"combination": sources, "typed_text": bool(raw_text.strip()),
                                      "document_ocr": bool(ocr_text and sources != "TYPED_ONLY_OCR_DUPLICATE")}
     final_state["document_processing"] = document
