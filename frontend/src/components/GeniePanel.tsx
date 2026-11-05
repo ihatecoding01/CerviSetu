@@ -94,8 +94,13 @@ export function GeniePanel({ open, left, staffName, onOpen, onClose, onOpenTab, 
   const historyRef = useRef<Message[]>([]);
   historyRef.current = messages;
 
-  const scroll = useRef(() => log.current?.scrollTo({ top: log.current.scrollHeight })).current;
-  useEffect(scroll, [messages, busy, hearing, scroll]);
+  const scroll = useRef(() => {
+    // Sets scrollTop rather than scrollTo(), which returns a Promise in current Chrome: an effect must not return one
+    if (log.current) log.current.scrollTop = log.current.scrollHeight;
+  }).current;
+  useEffect(() => {
+    scroll();
+  }, [messages, busy, hearing, scroll]);
   useEffect(() => {
     if (open) input.current?.focus();
     else stopSpeaking();

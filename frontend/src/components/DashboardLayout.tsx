@@ -500,7 +500,14 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
           </div>
         </main>
       </div>
-      <ErrorBoundary name="genie" fallback={null}>
+      <ErrorBoundary
+        name="genie"
+        fallback={
+          <button type="button" onClick={() => window.location.reload()} data-testid="genie-failed" className="fixed bottom-4 left-[72px] md:left-[312px] z-50 rounded-full bg-white border border-[#BA2D0B]/40 px-4 py-2.5 text-sm font-semibold text-[#BA2D0B] shadow-lg cursor-pointer">
+            Genie stopped. Reload
+          </button>
+        }
+      >
         <GeniePanel
           open={panel === "genie"}
           left={collapsed || window.innerWidth < 768 ? 72 : 312}
