@@ -1,3 +1,4 @@
+import { Sym } from "./icons/Sym";
 import { CerviSetuLogo } from "./icons/CerviSetuLogo";
 import React, { useEffect, useState } from "react";
 import { Search, User, Users, CheckCircle2, MapPin, ShieldCheck, QrCode, Phone, HeartHandshake } from "lucide-react";
@@ -84,7 +85,7 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginAsha, onLogi
               onClick={onOpenLanding}
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-black bg-slate-100 hover:bg-slate-200 px-3.5 py-1.5 rounded-full border border-slate-200 transition-colors cursor-pointer"
             >
-              ← System Overview
+              <Sym n="arrow-left" /> System Overview
             </button>
           ) : (
             <span />
@@ -176,7 +177,7 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginAsha, onLogi
                     </div>
 
                     <div className="mt-3 pt-2.5 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-600">
-                      <span className="font-bold text-black">✓ Free Treatment (PMJAY)</span>
+                      <span className="font-bold text-black"><Sym n="check" /> Free Treatment (PMJAY)</span>
                       <button
                         onClick={onLoginStaff}
                         className="px-3 py-1 rounded-lg bg-[#BA2D0B] hover:bg-[#a02609] text-white font-semibold text-xs transition-colors cursor-pointer"
@@ -335,7 +336,7 @@ const PatientLoginModal: React.FC<ModalProps> = ({ method, setMethod, notice, on
               aria-label={t("login.close")}
               className="size-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center font-bold focus-visible:outline-2 focus-visible:outline-black"
             >
-              ✕
+              <Sym n="x" />
             </button>
           </div>
         </div>

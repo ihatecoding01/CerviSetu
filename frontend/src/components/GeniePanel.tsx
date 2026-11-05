@@ -74,13 +74,12 @@ function Reveal({ text, animate, onTick }: { text: string; animate: boolean; onT
 interface GenieProps {
   open: boolean;
   staffName?: string;
-  onOpen: () => void;
   onClose: () => void;
   onOpenTab: (tab: Tab) => void;
   onOpenPatient: (token: string) => void;
 }
 
-export function GeniePanel({ open, staffName, onOpen, onClose, onOpenTab, onOpenPatient }: GenieProps) {
+export function GeniePanel({ open, staffName, onClose, onOpenTab, onOpenPatient }: GenieProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [question, setQuestion] = useState("");
   const [busy, setBusy] = useState(false);
@@ -195,17 +194,6 @@ export function GeniePanel({ open, staffName, onOpen, onClose, onOpenTab, onOpen
 
   return (
     <>
-    {!open && (
-      <button
-        type="button"
-        onClick={onOpen}
-        data-testid="genie-launcher"
-        className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-full bg-black text-white pl-3 pr-4 py-2.5 text-sm font-semibold shadow-lg hover:bg-black/85 transition-colors cursor-pointer"
-      >
-        <Sparkles className="size-4 text-[#DBFE87]" />
-        <span>Ask Genie</span>
-      </button>
-    )}
     <aside
       role="complementary"
       aria-label="Ask Genie"

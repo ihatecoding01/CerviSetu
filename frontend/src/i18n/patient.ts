@@ -141,8 +141,8 @@ const en = {
   "err.SIMULATION_DISABLED": "Test sign-in is switched off on this server.",
   "err.generic": "Something went wrong. Please try again.",
   "err.network": "Could not reach the server. Check your connection and try again.",
-  "err.loginWithMobile": "Log in with Mobile OTP →",
-  "err.registerAbha": "Register with ABHA →",
+  "err.loginWithMobile": "Log in with Mobile OTP",
+  "err.registerAbha": "Register with ABHA",
 
   // Portal
   "portal.name": "Patient Portal",
@@ -359,8 +359,8 @@ const hi: Record<Key, string> = {
   "err.SIMULATION_DISABLED": "इस सर्वर पर टेस्ट लॉगिन बंद है।",
   "err.generic": "कुछ गड़बड़ हो गई। कृपया फिर से कोशिश करें।",
   "err.network": "सर्वर से संपर्क नहीं हो पाया। अपना इंटरनेट जाँचें और फिर से कोशिश करें।",
-  "err.loginWithMobile": "मोबाइल OTP से लॉगिन करें →",
-  "err.registerAbha": "ABHA से पंजीकरण करें →",
+  "err.loginWithMobile": "मोबाइल OTP से लॉगिन करें",
+  "err.registerAbha": "ABHA से पंजीकरण करें",
 
   "portal.name": "मरीज़ पोर्टल",
   "portal.logout": "लॉग आउट",

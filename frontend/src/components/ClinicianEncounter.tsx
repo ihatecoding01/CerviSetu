@@ -1,3 +1,4 @@
+import { Sym } from "./icons/Sym";
 import { useState, useEffect } from "react";
 import { api, type VoiceConsultResult } from "../api/client";
 import { useVoiceRecorder } from "../lib/useVoiceRecorder";
@@ -490,7 +491,7 @@ export function ClinicianEncounter({
                 onClick={onBackToDashboard}
                 className="text-xs font-medium text-gray-700"
               >
-                ← Back
+                <Sym n="arrow-left" /> Back
               </Button>
             )}
 
@@ -1019,7 +1020,7 @@ export function ClinicianEncounter({
                       <span className="font-bold text-gray-700 uppercase tracking-wider">
                         24h Ingested Pathology Labs (CBC & RFT)
                       </span>
-                      <span className="text-emerald-700 font-semibold">Pathology Lab OCR Verified ✓</span>
+                      <span className="text-emerald-700 font-semibold">Pathology Lab OCR Verified <Sym n="check" /></span>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
@@ -1279,7 +1280,7 @@ export function ClinicianEncounter({
                         }}
                         className="bg-black hover:bg-black/85 text-white"
                       >
-                        {hubSlotConfirmed ? "✓ Slot Confirmed (Day 41)" : "Confirm Hub OT Slot (Step 2B)"}
+                        {hubSlotConfirmed ? <><Sym n="check" /> Slot Confirmed (Day 41)</> : "Confirm Hub OT Slot (Step 2B)"}
                       </Button>
                       <Button
                         variant="outline"
@@ -1406,7 +1407,7 @@ export function ClinicianEncounter({
                         </span>
                         <div className="flex items-center gap-2">
                           <Button size="xs" variant="obsidian" onClick={handleApplyAiTranscript} className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold">
-                            Apply to Form ✓
+                            Apply to Form <Sym n="check" />
                           </Button>
                           <button onClick={() => setConsult(null)} aria-label="Dismiss draft" className="p-1 rounded text-emerald-700 hover:bg-emerald-100 cursor-pointer">
                             <X className="size-4" />
@@ -1595,7 +1596,7 @@ export function ClinicianEncounter({
                       <Volume2 className="size-4 text-emerald-700" />
                       <span className="font-semibold text-gray-800">DPDP Audio Consent Recording (Hindi)</span>
                     </div>
-                    <span className="text-[10px] font-mono text-gray-500">SHA-256: 0x8bb3a45c...Verified ✓</span>
+                    <span className="text-[10px] font-mono text-gray-500">SHA-256: 0x8bb3a45c...Verified <Sym n="check" /></span>
                   </div>
 
                   {/* Curative Milestone Completion & Final Discharge */}
@@ -1617,7 +1618,7 @@ export function ClinicianEncounter({
                           </p>
                           {dischargeMsg && (
                             <div className="mt-2 text-xs font-semibold text-emerald-900 bg-white/90 p-2.5 rounded-lg border border-emerald-300">
-                              ✓ {dischargeMsg}
+                              <Sym n="check" /> {dischargeMsg}
                             </div>
                           )}
                         </div>
@@ -1628,7 +1629,7 @@ export function ClinicianEncounter({
                         onClick={handleDischargeSignoff}
                         className="shrink-0 bg-black hover:bg-black/85 text-white text-xs font-bold"
                       >
-                        {dischargeComplete ? "✓ Discharged & Purged" : "Execute Discharge Sign-Off"}
+                        {dischargeComplete ? <><Sym n="check" /> Discharged & Purged</> : "Execute Discharge Sign-Off"}
                       </Button>
                     </div>
                   </div>

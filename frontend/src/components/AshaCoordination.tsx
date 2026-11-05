@@ -103,7 +103,7 @@ export function AshaCoordination({}: Props) {
       });
       setActionSuccessMsg(
         outcome === "TRAVELING_TOMORROW"
-          ? `✓ 24-Hour Spoke Arrival Watch Activated for ${selectedTicket.patient_name}. Verification timer running.`
+          ? `24-Hour Spoke Arrival Watch Activated for ${selectedTicket.patient_name}. Verification timer running.`
           : `Escort request sent for doctor review for ${selectedTicket.patient_name}. The team will arrange transport support.`
       );
       setSelectedTicket(null);

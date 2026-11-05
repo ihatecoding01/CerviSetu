@@ -522,7 +522,6 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
         <GeniePanel
           open={panel === "genie"}
           staffName={staff?.name}
-          onOpen={() => setPanel("genie")}
           onClose={() => setPanel(null)}
           onOpenTab={goTo}
           onOpenPatient={(token) => {

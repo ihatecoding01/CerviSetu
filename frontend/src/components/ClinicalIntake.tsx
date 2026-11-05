@@ -1,3 +1,4 @@
+import { Sym } from "./icons/Sym";
 import { useState, useRef } from "react";
 import { api } from "../api/client";
 import type { TreatmentClock } from "../api/client";
@@ -395,7 +396,7 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
                           <span>Slip Sharpness Verified (σ² = {sharpnessScore} &ge; 85.0 threshold)</span>
                         </div>
                         <span className="text-emerald-800 font-bold bg-emerald-100/80 px-2 py-0.5 rounded">
-                          Ready for Zero-Knowledge OCR ✓
+                          Ready for Zero-Knowledge OCR <Sym n="check" />
                         </span>
                       </div>
                     ) : (

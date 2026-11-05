@@ -1,3 +1,4 @@
+import { Sym } from "./icons/Sym";
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, FileUp, Loader2, MessageCircleQuestion } from "lucide-react";
 import { api, type DocumentBlock, type DocumentResult } from "../api/client";
@@ -188,7 +189,7 @@ export function DocumentWorkspace({ onUseInIntake }: Props) {
                 data-testid="document-use"
                 className="mt-2 w-full py-2 rounded-full bg-[#0F766E] text-white text-xs font-semibold cursor-pointer hover:bg-[#0d635c]"
               >
-                {used ? "Added to intake notes ✓" : "Use in intake notes"}
+                {used ? <>Added to intake notes <Sym n="check" /></> : "Use in intake notes"}
               </button>
             </div>
 

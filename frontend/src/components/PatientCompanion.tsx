@@ -1,3 +1,4 @@
+import { Sym } from "./icons/Sym";
 import React, { useState, useEffect } from "react";
 import { useSiteLang } from "../i18n/site";
 import { LanguageSwitch } from "./LanguageSwitch";
@@ -137,7 +138,7 @@ const TRANSLATIONS = {
     travelIntro:
       "मिर्ज़ापुर से वाराणसी (~75 km) यात्रा हेतु मरीज व 1 तीमारदार (Attendant) के लिए नि:शुल्क सरकारी रोडवेज बस व अस्पताल धर्मशाला की व्यवस्था:",
     busTitle: "यूपी रोडवेज बस वाउचर",
-    busRoute: "मिर्ज़ापुर ➔ कैंट वाराणसी (2 सीट)",
+    busRoute: "मिर्ज़ापुर → कैंट वाराणसी (2 सीट)",
     roomTitle: "धर्मशाला कमरा संख्या",
     roomLocation: "कैंसर सेंटर परिसर (मुफ्त ठहराव)",
     viewPassBtn: "डिजिटल बोर्डिंग पास व QR कोड देखें",
@@ -153,7 +154,7 @@ const TRANSLATIONS = {
     modalTitle: "यात्रा व धर्मशाला बोर्डिंग पास",
     modalTokenLabel: "मरीज पहचान टोकन:",
     modalRouteLabel: "मार्ग (~75 km Hub-Spoke Route):",
-    modalRouteVal: "Mirzapur Spoke Clinic ➔ Regional Cancer Centre (RCC) Varanasi Hub",
+    modalRouteVal: "Mirzapur Spoke Clinic → Regional Cancer Centre (RCC) Varanasi Hub",
     modalBusLabel: "रोडवेज बस वाउचर:",
     modalRoomLabel: "धर्मशाला कमरा:",
     modalValidity: "वैधता: Day 38 से Day 44 (ब्रैकीथेरेपी सत्र)",
@@ -260,7 +261,7 @@ const TRANSLATIONS = {
     travelIntro:
       "Complimentary UP State Roadways bus transit and hospital Dharamshala guest stay arranged for patient + 1 family attendant (~75 km route):",
     busTitle: "UP-RTC Roadways Bus Voucher",
-    busRoute: "Mirzapur ➔ Varanasi Cantt (2 Seats)",
+    busRoute: "Mirzapur → Varanasi Cantt (2 Seats)",
     roomTitle: "Dharamshala Room Number",
     roomLocation: "RCC Campus (Complimentary Stay)",
     viewPassBtn: "View Digital Boarding Pass & QR Code",
@@ -276,7 +277,7 @@ const TRANSLATIONS = {
     modalTitle: "Travel & Accommodation Boarding Pass",
     modalTokenLabel: "Patient Identification Token:",
     modalRouteLabel: "Route (~75 km Hub-Spoke Transit):",
-    modalRouteVal: "Mirzapur Spoke Clinic ➔ Regional Cancer Centre (RCC) Varanasi Hub",
+    modalRouteVal: "Mirzapur Spoke Clinic → Regional Cancer Centre (RCC) Varanasi Hub",
     modalBusLabel: "Roadways Bus Voucher:",
     modalRoomLabel: "Dharamshala Room:",
     modalValidity: "Validity: Days 38 to 44 (Brachytherapy Session)",
@@ -538,7 +539,7 @@ export const PatientCompanion: React.FC<Props> = ({
       await api.ackHydration(patientToken, { glasses_count: 8, ors_taken: true });
       setHydrationAcked(true);
       setNotificationMsg({
-        title: language === "hi" ? "जल सेवन पुष्टि दर्ज की गई ✓" : "Hydration Intake Confirmed ✓",
+        title: language === "hi" ? "जल सेवन पुष्टि दर्ज की गई" : "Hydration Intake Confirmed",
         desc: language === "hi" ? "दैनिक 8 गिलास (2.5 लीटर) जल सेवन दर्ज हुआ। गुर्दे की सुरक्षा सुनिश्चित है।" : "Daily 8 glasses (2.5L) fluids logged. Nephroprotection active.",
         type: "success",
       });
@@ -772,7 +773,7 @@ export const PatientCompanion: React.FC<Props> = ({
           <span>{t.tabs.travel}</span>
           {passData.slot_confirmed_by_doctor === 1 && (
             <span className="bg-[#DBFE87] text-black text-xs px-2 py-0.5 rounded-full font-bold">
-              ✓
+              <Sym n="check" />
             </span>
           )}
         </button>
@@ -807,7 +808,7 @@ export const PatientCompanion: React.FC<Props> = ({
               onClick={() => setNotificationMsg(null)}
               className="text-slate-400 hover:text-black text-xs font-bold px-2 py-1 cursor-pointer"
             >
-              ✕
+              <Sym n="x" />
             </button>
           </div>
         </div>
@@ -885,7 +886,7 @@ export const PatientCompanion: React.FC<Props> = ({
                     </button>
                   ) : (
                     <span className="text-xs font-bold text-black bg-[#DBFE87] px-2.5 py-0.5 rounded-full">
-                      Gate Cleared ✓
+                      Gate Cleared <Sym n="check" />
                     </span>
                   )}
                 </div>
@@ -1076,8 +1077,8 @@ export const PatientCompanion: React.FC<Props> = ({
               }`}
             >
               {hydrationAcked
-                ? (language === "hi" ? "✓ 8 गिलास पूर्ण (सत्यापित)" : "✓ 8 Glasses Completed")
-                : (language === "hi" ? "✓ हाँ, 8 गिलास पानी पी लिया" : "✓ Yes, 8 Glasses Taken")}
+                ? (language === "hi" ? <><Sym n="check" /> 8 गिलास पूर्ण (सत्यापित)</> : <><Sym n="check" /> 8 Glasses Completed</>)
+                : (language === "hi" ? <><Sym n="check" /> हाँ, 8 गिलास पानी पी लिया</> : <><Sym n="check" /> Yes, 8 Glasses Taken</>)}
             </button>
           </div>
 
@@ -1120,7 +1121,7 @@ export const PatientCompanion: React.FC<Props> = ({
             >
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-sm font-bold text-black">
-                  💧 {t.symp1Title}
+                  <Sym n="droplet" /> {t.symp1Title}
                 </span>
                 <span className="text-xs font-bold text-slate-800 bg-[#90C3CB]/40 px-2 py-0.5 rounded">
                   {t.symp1Grade}
@@ -1139,7 +1140,7 @@ export const PatientCompanion: React.FC<Props> = ({
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-sm font-bold text-[#BA2D0B] flex items-center gap-1.5">
                   <AlertTriangle className="size-4 text-[#BA2D0B]" />
-                  🚨 {t.symp2Title}
+                  <Sym n="alert" /> {t.symp2Title}
                 </span>
                 <span className="text-xs font-bold text-white bg-[#BA2D0B] px-2 py-0.5 rounded">
                   {t.symp2Grade}
@@ -1157,7 +1158,7 @@ export const PatientCompanion: React.FC<Props> = ({
             >
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-sm font-bold text-black">
-                  🔥 {t.symp3Title}
+                  <Sym n="flame" /> {t.symp3Title}
                 </span>
                 <span className="text-xs font-bold text-slate-900 bg-[#F19941]/30 px-2 py-0.5 rounded">
                   {t.symp3Grade}
@@ -1175,7 +1176,7 @@ export const PatientCompanion: React.FC<Props> = ({
             >
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-sm font-bold text-black">
-                  ⚡ {t.symp4Title}
+                  <Sym n="zap" /> {t.symp4Title}
                 </span>
                 <span className="text-xs font-bold text-white bg-black px-2 py-0.5 rounded">
                   {t.symp4Grade}
@@ -1271,7 +1272,7 @@ export const PatientCompanion: React.FC<Props> = ({
 
               {/* Active Transcript Display */}
               <div className="p-3.5 bg-slate-900 rounded-xl border border-slate-800 text-xs text-slate-200 leading-relaxed font-sans">
-                🔊 "{language === "en" ? currentTrack.english_translation : currentTrack.hindi_text}"
+                <Sym n="volume" /> "{language === "en" ? currentTrack.english_translation : currentTrack.hindi_text}"
               </div>
 
               {/* Subtext Comparison */}
@@ -1465,7 +1466,7 @@ export const PatientCompanion: React.FC<Props> = ({
                 onClick={() => setShowPassModal(false)}
                 className="size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold cursor-pointer"
               >
-                ✕
+                <Sym n="x" />
               </button>
             </div>
 

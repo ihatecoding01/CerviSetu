@@ -31,7 +31,10 @@ for (const f of fs.readdirSync(dir).filter((f) => f.endsWith(".tail"))) {
   const dict = (byLang[lang] ??= {});
   lines.forEach((l, i) => (dict[source[tailIdx[i]]] = l.trim()));
 }
-for (const [lang, dict] of Object.entries(byLang)) {
+// Symbols are drawn as icons in the UI, so dictionary text never carries emoji
+const clean = (t) => t.replace(/[\u{1F000}-\u{1FAFF}\u2600-\u26FF\u2705\u2713\u2715\uFE0F\u23F8]/gu, "").replace(/\u2794/g, "\u2192").replace(/\s+/g, " ").trim();
+for (const [lang, raw] of Object.entries(byLang)) {
+  const dict = Object.fromEntries(Object.entries(raw).map(([k, v]) => [clean(k), clean(v)]).filter(([k]) => k));
   fs.writeFileSync(path.join(out, `${lang}.json`), JSON.stringify(dict, null, 1) + "\n");
   console.log(lang, Object.keys(dict).length, "strings");
 }

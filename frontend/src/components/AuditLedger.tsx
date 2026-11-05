@@ -1,3 +1,4 @@
+import { Sym } from "./icons/Sym";
 import { useState, useEffect } from "react";
 import { api, type AuditLog, type ActivitySummary, type UserRole } from "../api/client";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./careui/card";
@@ -289,7 +290,7 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
             </div>
           </div>
           <Badge variant="primary" size="xs" className="shrink-0">
-            Immutable Chain ✓
+            Immutable Chain <Sym n="check" />
           </Badge>
         </div>
       )}

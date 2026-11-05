@@ -1,3 +1,5 @@
+import { StatusText } from "./icons/Sym";
+import { Dot } from "./icons/Sym";
 import { WARD_COHORT } from "../data/wardCohort";
 import { useState, useEffect } from "react";
 import type { PatientCase, LinacDowntimeStatus, WardBoardRow } from "../api/client";
@@ -457,7 +459,7 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
                 activeLaneFilter === "optimal" ? "bg-emerald-600 text-white shadow-2xs" : "text-emerald-700 hover:bg-emerald-50"
               }`}
             >
-              🟢 Optimal (&le;49d)
+              <Dot tone="green" /> Optimal (&le;49d)
             </button>
             <button
               onClick={() => setActiveLaneFilter("warning")}
@@ -465,7 +467,7 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
                 activeLaneFilter === "warning" ? "bg-amber-500 text-white shadow-2xs" : "text-amber-800 hover:bg-amber-50"
               }`}
             >
-              🟡 Warning (50-56d)
+              <Dot tone="amber" /> Warning (50-56d)
             </button>
             <button
               onClick={() => setActiveLaneFilter("critical")}
@@ -473,7 +475,7 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
                 activeLaneFilter === "critical" ? "bg-[#BA2D0B] text-white shadow-2xs" : "text-[#BA2D0B] hover:bg-rose-50"
               }`}
             >
-              🔴 Breach Risk (&gt;56d)
+              <Dot tone="red" /> Breach Risk (&gt;56d)
             </button>
           </div>
         </CardHeader>
@@ -537,7 +539,7 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
                     {/* Column 2: Biological Clock OTT */}
                     <TableCell>
                       <div>
-                        <div className="text-xs font-bold text-gray-900">{p.ottBadge}</div>
+                        <div className="text-xs font-bold text-gray-900"><StatusText text={p.ottBadge} /></div>
                         <div className="text-xs text-gray-500 mt-0.5">{p.ottSub}</div>
                       </div>
                     </TableCell>
@@ -545,7 +547,7 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
                     {/* Column 3: Acute Adherence & Tier */}
                     <TableCell>
                       <div>
-                        <div className="text-xs font-semibold text-gray-900">{p.adhStatus}</div>
+                        <div className="text-xs font-semibold text-gray-900"><StatusText text={p.adhStatus} /></div>
                         <div className="text-xs text-gray-500 mt-0.5">{p.adhDetail}</div>
                         <div className="mt-1">{getTierBadge(p.tier)}</div>
                       </div>

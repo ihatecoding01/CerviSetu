@@ -1,3 +1,4 @@
+import { Sym } from "./icons/Sym";
 import React, { useState, useEffect } from "react";
 import { CerviSetuLogo } from "./icons/CerviSetuLogo";
 import {
@@ -198,7 +199,7 @@ export const DualScreenDemo: React.FC<Props> = ({
               onClick={onBackToStaff}
               className="shrink-0 text-xs font-semibold bg-black hover:bg-black/85 text-white px-4 py-1.5 rounded-full shadow-xs transition-colors cursor-pointer"
             >
-              Full Workstation ➔
+              Full Workstation <Sym n="arrow-right" />
             </button>
           )}
         </header>
@@ -351,7 +352,7 @@ export const DualScreenDemo: React.FC<Props> = ({
                           <div className="mt-1">
                             {c.adherenceStatus === "ATTENDING_DAILY" ? (
                               <span className="text-xs font-bold text-black bg-[#DBFE87] px-2 py-0.5 rounded-full inline-block">
-                                Regular Attendance ✓
+                                Regular Attendance <Sym n="check" />
                               </span>
                             ) : c.adherenceStatus === "1_DAY_OVERDUE" ? (
                               <span className="text-xs font-bold text-[#BA2D0B] bg-[#F19941]/30 px-2 py-0.5 rounded-full inline-block">
@@ -395,7 +396,7 @@ export const DualScreenDemo: React.FC<Props> = ({
                   </div>
                   {clockSteps >= 15 ? (
                     <span className="text-xs font-bold bg-[#DBFE87] text-black px-2.5 py-1 rounded-full border border-[#c4e872]">
-                      Gate Cleared ✓
+                      Gate Cleared <Sym n="check" />
                     </span>
                   ) : (
                     <button
@@ -419,7 +420,7 @@ export const DualScreenDemo: React.FC<Props> = ({
                   </div>
                   {slotConfirmed ? (
                     <span className="text-xs font-bold bg-[#DBFE87] text-black px-2.5 py-1 rounded-full border border-[#c4e872]">
-                      Slot Confirmed (Day 41) ✓
+                      Slot Confirmed (Day 41) <Sym n="check" />
                     </span>
                   ) : (
                     <button
@@ -522,7 +523,7 @@ export const DualScreenDemo: React.FC<Props> = ({
                       <span className="block text-slate-700 mt-0.5 leading-snug">{phoneToast.desc}</span>
                     </div>
                     <button onClick={() => setPhoneToast(null)} className="text-slate-400 hover:text-black text-xs font-bold cursor-pointer">
-                      ✕
+                      <Sym n="x" />
                     </button>
                   </div>
                 </div>
@@ -614,7 +615,7 @@ export const DualScreenDemo: React.FC<Props> = ({
                           </button>
                         ) : (
                           <span className="text-xs font-bold text-black bg-[#DBFE87] px-1.5 py-0.2 rounded-full">
-                            Cleared ✓
+                            Cleared <Sym n="check" />
                           </span>
                         )}
                       </div>
@@ -730,7 +731,7 @@ export const DualScreenDemo: React.FC<Props> = ({
                     onClick={() => handleReportSymptom("mild")}
                     className="p-2.5 bg-slate-50 hover:bg-[#90C3CB]/20 border border-slate-200 rounded-xl text-left transition-colors cursor-pointer"
                   >
-                    <span className="text-xs font-bold text-black block">💧 {phoneLang === "hi" ? "हल्के दस्त" : "Mild Diarrhea"}</span>
+                    <span className="text-xs font-bold text-black block"><Sym n="droplet" /> {phoneLang === "hi" ? "हल्के दस्त" : "Mild Diarrhea"}</span>
                     <span className="text-xs text-slate-500 block mt-0.5">Grade 1 · ORS</span>
                   </button>
 
@@ -739,7 +740,7 @@ export const DualScreenDemo: React.FC<Props> = ({
                     onClick={() => handleReportSymptom("severe")}
                     className="p-2.5 bg-[#BA2D0B]/10 hover:bg-[#BA2D0B]/20 border border-[#BA2D0B]/30 rounded-xl text-left transition-colors cursor-pointer"
                   >
-                    <span className="text-xs font-bold text-[#BA2D0B] block">🚨 {phoneLang === "hi" ? "गंभीर दस्त" : "Severe Diarrhea"}</span>
+                    <span className="text-xs font-bold text-[#BA2D0B] block"><Sym n="alert" /> {phoneLang === "hi" ? "गंभीर दस्त" : "Severe Diarrhea"}</span>
                     <span className="text-xs text-[#BA2D0B]/80 block mt-0.5">Grade 2+ · Nurse Alert</span>
                   </button>
 
@@ -748,7 +749,7 @@ export const DualScreenDemo: React.FC<Props> = ({
                     onClick={() => handleReportSymptom("mild")}
                     className="p-2.5 bg-slate-50 hover:bg-[#F19941]/20 border border-slate-200 rounded-xl text-left transition-colors cursor-pointer"
                   >
-                    <span className="text-xs font-bold text-black block">🔥 {phoneLang === "hi" ? "पेशाब जलन" : "Burning"}</span>
+                    <span className="text-xs font-bold text-black block"><Sym n="flame" /> {phoneLang === "hi" ? "पेशाब जलन" : "Burning"}</span>
                     <span className="text-xs text-slate-500 block mt-0.5">Grade 1 · Fluids</span>
                   </button>
 
@@ -757,7 +758,7 @@ export const DualScreenDemo: React.FC<Props> = ({
                     onClick={() => handleReportSymptom("severe")}
                     className="p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition-colors cursor-pointer"
                   >
-                    <span className="text-xs font-bold text-black block">⚡ {phoneLang === "hi" ? "थकान/कमजोरी" : "Fatigue"}</span>
+                    <span className="text-xs font-bold text-black block"><Sym n="zap" /> {phoneLang === "hi" ? "थकान/कमजोरी" : "Fatigue"}</span>
                     <span className="text-xs text-slate-500 block mt-0.5">Grade 2 · Hb Review</span>
                   </button>
                 </div>
@@ -794,23 +795,23 @@ export const DualScreenDemo: React.FC<Props> = ({
 
                   <p className="text-xs text-slate-300 leading-snug">
                     {phoneLang === "hi"
-                      ? "🔊 'ब्रैकीथेरेपी के दौरान डॉक्टरों की टीम निश्चेतना (एनेस्थीसिया) व दर्द-निवारक व्यवस्था रखती है। घबराएं नहीं।'"
-                      : "🔊 'During brachytherapy, the medical team provides anesthesia and pain relief. Please do not fear the procedure.'"}
+                      ? "'ब्रैकीथेरेपी के दौरान डॉक्टरों की टीम निश्चेतना (एनेस्थीसिया) व दर्द-निवारक व्यवस्था रखती है। घबराएं नहीं।'"
+                      : "'During brachytherapy, the medical team provides anesthesia and pain relief. Please do not fear the procedure.'"}
                   </p>
                 </div>
 
                 {/* State Bus & Dharamshala Pass */}
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="p-2.5 bg-[#90C3CB]/20 rounded-xl border border-[#90C3CB]/40">
-                    <span className="font-bold text-black block">🚌 {phoneLang === "hi" ? "रोडवेज बस" : "Bus Voucher"}</span>
+                    <span className="font-bold text-black block"><Sym n="bus" /> {phoneLang === "hi" ? "रोडवेज बस" : "Bus Voucher"}</span>
                     <strong className="font-mono text-black block mt-0.5">
                       {slotConfirmed ? "UP-RTC-7891" : (phoneLang === "hi" ? "लंबित" : "Pending")}
                     </strong>
-                    <span className="text-xs text-slate-600 block mt-0.5">Mirzapur ➔ Varanasi</span>
+                    <span className="text-xs text-slate-600 block mt-0.5">Mirzapur → Varanasi</span>
                   </div>
 
                   <div className="p-2.5 bg-[#F19941]/20 rounded-xl border border-[#F19941]/40">
-                    <span className="font-bold text-black block">🏠 {phoneLang === "hi" ? "धर्मशाला" : "Dharamshala"}</span>
+                    <span className="font-bold text-black block"><Sym n="home" /> {phoneLang === "hi" ? "धर्मशाला" : "Dharamshala"}</span>
                     <strong className="font-mono text-black block mt-0.5">
                       {slotConfirmed ? "ROOM-402" : (phoneLang === "hi" ? "लंबित" : "Pending")}
                     </strong>
@@ -861,7 +862,7 @@ export const DualScreenDemo: React.FC<Props> = ({
                 onClick={() => setShowPassModal(false)}
                 className="size-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold cursor-pointer"
               >
-                ✕
+                <Sym n="x" />
               </button>
             </div>
 
@@ -874,7 +875,7 @@ export const DualScreenDemo: React.FC<Props> = ({
               <div>
                 <span className="text-xs text-slate-500 block">Hub-Spoke Transit Route:</span>
                 <strong className="text-black text-xs block mt-0.5">
-                  Mirzapur Spoke Clinic ➔ RCC Varanasi Hub (~75 km)
+                  Mirzapur Spoke Clinic → RCC Varanasi Hub (~75 km)
                 </strong>
               </div>
 
