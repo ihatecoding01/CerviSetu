@@ -141,7 +141,12 @@ export function GeniePanel({ open, staffName, onClose, onOpenTab, onOpenPatient 
     setMessages((m) => [...m, { role: "user", text: q }]);
     setBusy(true);
     try {
-      const r = await api.askGenie({ question: hideNames(q), language: siteLang(), history, board: BOARD });
+      const body = { question: hideNames(q), language: siteLang(), history, board: BOARD };
+      // One automatic retry covers a dropped connection or a server restart
+      const r = await api.askGenie(body).catch(async () => {
+        await new Promise((done) => setTimeout(done, 1500));
+        return api.askGenie(body);
+      });
       setMessages((m) => [...m, {
         role: "genie",
         text: showNames(r.answer),

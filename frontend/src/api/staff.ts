@@ -72,7 +72,11 @@ async function signedIn(res: Response): Promise<StaffProfile> {
 export const staffApi = {
   async session(): Promise<StaffProfile | null> {
     try {
-      const res = await call("session");
+      // Never leave the app blank: if the check stalls, carry on to sign-in
+      const res = await Promise.race([
+        call("session"),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 6000)),
+      ]);
       if (!res.ok) throw new Error("unreachable");
       const data = await res.json();
       return data.authenticated ? data.staff : readOffline();
