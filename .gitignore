@@ -37,4 +37,6 @@ frontend/public/inspo/care_ui_insp/
 backend/dashboard/static/inspo/care_ui_insp/
 *.local
 .claude/
+*.exe
+
 

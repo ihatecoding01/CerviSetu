@@ -4,6 +4,7 @@
   "description": "CerviSetu — Cloudflare Pages root runner",
   "scripts": {
     "build": "cd frontend && npm install && npm run build",
-    "tunnel": "cloudflared tunnel --url http://localhost:8000"
+    "tunnel": "cloudflared tunnel --url http://localhost:8000",
+    "backend": ".venv\\Scripts\\python.exe main.py"
   }
 }
