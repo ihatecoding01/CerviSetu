@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { ArrowUp, Mic, Minus, Plus, Square, Sparkles, Volume2, VolumeX, X } from "lucide-react";
 import { api } from "../api/client";
 import { WARD_COHORT } from "../data/wardCohort";
@@ -73,7 +73,6 @@ function Reveal({ text, animate, onTick }: { text: string; animate: boolean; onT
 
 interface GenieProps {
   open: boolean;
-  left: number;
   staffName?: string;
   onOpen: () => void;
   onClose: () => void;
@@ -81,7 +80,7 @@ interface GenieProps {
   onOpenPatient: (token: string) => void;
 }
 
-export function GeniePanel({ open, left, staffName, onOpen, onClose, onOpenTab, onOpenPatient }: GenieProps) {
+export function GeniePanel({ open, staffName, onOpen, onClose, onOpenTab, onOpenPatient }: GenieProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [question, setQuestion] = useState("");
   const [busy, setBusy] = useState(false);
@@ -201,8 +200,7 @@ export function GeniePanel({ open, left, staffName, onOpen, onClose, onOpenTab, 
         type="button"
         onClick={onOpen}
         data-testid="genie-launcher"
-        style={{ left }}
-        className="fixed bottom-4 z-50 flex items-center gap-2 rounded-full bg-black text-white pl-3 pr-4 py-2.5 text-sm font-semibold shadow-lg hover:bg-black/85 transition-colors cursor-pointer"
+        className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-full bg-black text-white pl-3 pr-4 py-2.5 text-sm font-semibold shadow-lg hover:bg-black/85 transition-colors cursor-pointer"
       >
         <Sparkles className="size-4 text-[#DBFE87]" />
         <span>Ask Genie</span>
@@ -213,8 +211,7 @@ export function GeniePanel({ open, left, staffName, onOpen, onClose, onOpenTab, 
       aria-label="Ask Genie"
       data-testid="genie-panel"
       hidden={!open}
-      style={{ "--genie-left": `${left}px` } as CSSProperties}
-      className="fixed z-50 inset-0 sm:inset-auto sm:bottom-4 sm:left-[var(--genie-left)] sm:w-[400px] sm:h-[min(620px,calc(100vh-2rem))] bg-white sm:rounded-2xl sm:border border-slate-200 shadow-2xl overflow-hidden flex-col [&:not([hidden])]:flex"
+      className="fixed z-50 inset-0 sm:inset-auto sm:bottom-4 sm:right-4 sm:w-[400px] sm:h-[min(620px,calc(100vh-2rem))] bg-white sm:rounded-2xl sm:border border-slate-200 shadow-2xl overflow-hidden flex-col [&:not([hidden])]:flex"
     >
       <header className="flex items-center gap-2.5 px-4 h-14 shrink-0">
         <span className="size-7 rounded-full bg-black text-[#DBFE87] flex items-center justify-center">

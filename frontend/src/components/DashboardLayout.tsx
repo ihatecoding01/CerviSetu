@@ -22,6 +22,7 @@ import {
   PanelLeft,
   Home,
   ShieldPlus,
+  Sparkles,
 } from "lucide-react";
 
 export type Tab =
@@ -477,6 +478,16 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
               </div>
             )}
             <LanguageSwitch className="max-sm:w-[88px] max-sm:[&>select]:w-full" />
+            <button
+              type="button"
+              onClick={() => setPanel((p) => (p === "genie" ? null : "genie"))}
+              data-testid="ask-genie"
+              className="flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-800 whitespace-nowrap transition-colors cursor-pointer"
+            >
+              <Sparkles className="size-3.5 text-[#F19941]" />
+              <span>Ask Genie</span>
+            </button>
+
             {/* Black Pill Button: New Patient Case (Inspired by "Build your voice agent") */}
             <button
               onClick={() => onTabChange("intake-tab")}
@@ -503,14 +514,13 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
       <ErrorBoundary
         name="genie"
         fallback={
-          <button type="button" onClick={() => window.location.reload()} data-testid="genie-failed" className="fixed bottom-4 left-[72px] md:left-[312px] z-50 rounded-full bg-white border border-[#BA2D0B]/40 px-4 py-2.5 text-sm font-semibold text-[#BA2D0B] shadow-lg cursor-pointer">
+          <button type="button" onClick={() => window.location.reload()} data-testid="genie-failed" className="fixed bottom-4 right-4 z-50 rounded-full bg-white border border-[#BA2D0B]/40 px-4 py-2.5 text-sm font-semibold text-[#BA2D0B] shadow-lg cursor-pointer">
             Genie stopped. Reload
           </button>
         }
       >
         <GeniePanel
           open={panel === "genie"}
-          left={collapsed || window.innerWidth < 768 ? 72 : 312}
           staffName={staff?.name}
           onOpen={() => setPanel("genie")}
           onClose={() => setPanel(null)}
