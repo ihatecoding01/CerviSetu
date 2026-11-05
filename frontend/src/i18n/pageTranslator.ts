@@ -47,7 +47,33 @@ function lookup(source: string): string | null {
   return null;
 }
 
+// First character of each language's digit block. Tamil and Telugu keep 0-9: that is what readers and clinics
+// use day to day, and their native digits are easy to misread on clinical numbers.
+const ZERO: Partial<Record<SiteLang, number>> = { hi: 0x966, bho: 0x966, mr: 0x966, bn: 0x9e6 };
+// Stay exactly as issued, so they can be read out and matched: patient and staff codes (PT-RURAL-7891, AES-256),
+// short codes (R4), hashes, web and email addresses, and phone, OTP and ID numbers (5 or more digits)
+const KEEP = /https?:\S+|\S+@\S+|0x[0-9a-fA-F.]+|\b[A-Z][A-Za-z0-9]*(?:[-_][A-Za-z0-9]+)+\b|\b[A-Z]+\d+[A-Z0-9]*\b|\*+\d+|\d{5}\s\d{5}|\d{5,}/g;
+let digitZero: number | undefined;
+
+/** Writes numbers in the active language's digits, leaving codes and identifiers untouched. */
+export function localizeDigits(text: string): string {
+  const zero = digitZero;
+  if (zero === undefined || !/\d/.test(text)) return text;
+  const convert = (t: string) => t.replace(/\d/g, (d) => String.fromCharCode(zero + Number(d)));
+  let out = "";
+  let at = 0;
+  for (const m of text.matchAll(KEEP)) {
+    out += convert(text.slice(at, m.index)) + m[0];
+    at = m.index + m[0].length;
+  }
+  return out + convert(text.slice(at));
+}
+
 function translated(source: string): string {
+  return localizeDigits(translatedWords(source));
+}
+
+function translatedWords(source: string): string {
   const tr = lookup(source);
   if (tr === null) return source;
   const lead = source.match(/^\s*/)![0];
@@ -117,6 +143,7 @@ const dictListeners = new Set<() => void>();
 
 async function switchTo(lang: SiteLang) {
   dict = await loadDictionary(lang);
+  digitZero = ZERO[lang];
   buildPatterns();
   apply();
   dictListeners.forEach((fn) => fn());
@@ -133,7 +160,7 @@ export function useTranslatedText(text: string): string {
       dictListeners.delete(fn);
     };
   }, []);
-  return lookup(text) ?? text;
+  return localizeDigits(lookup(text) ?? text);
 }
 
 export function startPageTranslator() {

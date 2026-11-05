@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { ArrowUp, Mic, Minus, Plus, Square, Sparkles, Volume2, VolumeX, X } from "lucide-react";
 import { api } from "../api/client";
+import { localizeDigits } from "../i18n/pageTranslator";
 import { WARD_COHORT } from "../data/wardCohort";
 import { useVoiceRecorder } from "../lib/useVoiceRecorder";
 import type { Tab } from "./DashboardLayout";
@@ -240,7 +241,7 @@ export function GeniePanel({ open, staffName, onClose, onOpenTab, onOpenPatient 
               ) : (
                 <div key={i} data-testid="genie-answer">
                   <p translate="no" className={`notranslate text-[15px] leading-relaxed whitespace-pre-line break-words ${m.failed ? "text-[#BA2D0B]" : "text-slate-900"}`}>
-                    <Reveal text={m.text} animate={i === messages.length - 1} onTick={scroll} />
+                    <Reveal text={localizeDigits(m.text)} animate={i === messages.length - 1} onTick={scroll} />
                   </p>
                   {(!!m.patients?.length || (m.openTab && TAB_NAMES[m.openTab])) && (
                     <div className="mt-2.5 flex flex-wrap gap-1.5">

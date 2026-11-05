@@ -339,7 +339,7 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
                   </div>
                 </div>
               </div>
-              <div className="text-2xl font-bold text-[#111418] tracking-tight">{patientRoster.length} Cases</div>
+              <div className="min-w-0 shrink text-right text-xl font-bold text-[#111418] tracking-tight break-words">{patientRoster.length} Cases</div>
             </div>
           </CardHeader>
           <CardContent className="pt-2">
