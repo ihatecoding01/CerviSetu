@@ -42,7 +42,7 @@ export function printAbhaCard(rows: [string, string | null | undefined][], label
     .join("");
   w.document.write(`<!doctype html><title>Demo ABHA Card</title>
 <style>body{font-family:system-ui,sans-serif;padding:24px}.c{border:1px solid #cbd5e1;border-radius:16px;padding:20px;max-width:380px}
-h2{margin:0 0 4px;font-size:16px}p{color:#BA2D0B;font-size:12px;font-weight:600;margin:0 0 12px}td{padding:6px 8px 6px 0;font-size:13px;border-top:1px solid #e2e8f0}td:first-child{color:#64748b}</style>
+h2{margin:0 0 4px;font-size:16px}p{color:#0D9488;font-size:12px;font-weight:600;margin:0 0 12px}td{padding:6px 8px 6px 0;font-size:13px;border-top:1px solid #e2e8f0}td:first-child{color:#64748b}</style>
 <div class="c"><h2>ABHA Card (Sandbox Demo)</h2><p>${esc(label)}</p><table>${body}</table></div>`);
   w.document.close();
   w.focus();

@@ -349,23 +349,23 @@ export function ClinicianEncounter({
           {/* Patient Identification & Clinical Tags */}
           <div className="flex items-center gap-3.5 min-w-0">
             {/* Avatar Initial */}
-            <div className="size-11 rounded-xl bg-[#DBFE87] text-black font-bold text-lg flex items-center justify-center border border-[#c4e872] shadow-2xs shrink-0">
+            <div className="size-11 rounded-xl bg-teal-50 text-teal-800 font-bold text-lg flex items-center justify-center border border-teal-200 shadow-2xs shrink-0">
               {patientDisplayName.charAt(0)}
             </div>
 
             <div className="min-w-0">
               {/* Primary Identity Row */}
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-base sm:text-lg font-bold tracking-tight text-black truncate">
+                <h1 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 truncate">
                   {patientDisplayName}
                 </h1>
-                <span className="text-xs text-gray-500 font-medium">48 Y, Female</span>
-                <span className="text-gray-300">•</span>
-                <span className="text-xs font-mono text-gray-600">ID: BHY67-7891</span>
-                <span className="text-gray-300">•</span>
+                <span className="text-xs text-slate-500 font-medium">48 Y, Female</span>
+                <span className="text-slate-300">•</span>
+                <span className="text-xs font-mono text-slate-600">ID: BHY67-7891</span>
+                <span className="text-slate-300">•</span>
                 <button
                   onClick={handleCopyToken}
-                  className="flex items-center gap-1 text-xs font-mono text-[#BA2D0B] font-semibold bg-[#BA2D0B]/10 hover:bg-[#BA2D0B]/20 px-2 py-0.5 rounded border border-[#BA2D0B]/20 transition-colors cursor-pointer"
+                  className="flex items-center gap-1 text-xs font-mono text-teal-700 font-semibold bg-teal-50 hover:bg-teal-100 px-2 py-0.5 rounded border border-teal-200 transition-colors cursor-pointer"
                   title="Click to copy token"
                 >
                   <span>{patientToken}</span>
@@ -377,14 +377,14 @@ export function ClinicianEncounter({
                   <div className="relative">
                     <button
                       onClick={() => setPatientDropdownOpen(!patientDropdownOpen)}
-                      className="text-[11px] font-semibold text-gray-600 hover:text-black flex items-center gap-1 bg-gray-100 hover:bg-gray-200 px-2 py-0.5 rounded transition-colors cursor-pointer"
+                      className="text-[11px] font-semibold text-slate-600 hover:text-slate-900 flex items-center gap-1 bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded transition-colors cursor-pointer"
                     >
                       <span>Switch Patient ({cases.length})</span>
                       <ChevronDown className="size-3" />
                     </button>
                     {patientDropdownOpen && (
-                      <div className="absolute left-0 mt-1 w-56 bg-white border border-gray-200 rounded-xl shadow-xl py-1 z-50 text-xs">
-                        <div className="px-3 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                      <div className="absolute left-0 mt-1 w-56 bg-white border border-slate-200 rounded-xl shadow-xl py-1 z-50 text-xs">
+                        <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                           Active Ward Patients
                         </div>
                         {cases.map((c) => (
@@ -394,12 +394,12 @@ export function ClinicianEncounter({
                               if (c.patient_token) onSelectPatient(c.patient_token);
                               setPatientDropdownOpen(false);
                             }}
-                            className={`w-full text-left px-3 py-1.5 hover:bg-gray-50 flex items-center justify-between transition-colors ${
-                              c.patient_token === patientToken ? "bg-blue-50/80 font-bold text-blue-900" : "text-gray-700"
+                            className={`w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center justify-between transition-colors ${
+                              c.patient_token === patientToken ? "bg-teal-50 font-bold text-teal-900" : "text-slate-700"
                             }`}
                           >
                             <span className="truncate">{c.patient_name || c.patient_token}</span>
-                            <span className="text-[10px] font-mono text-gray-400">{c.suspected_stage || "CCRT"}</span>
+                            <span className="text-[10px] font-mono text-slate-400">{c.suspected_stage || "CCRT"}</span>
                           </button>
                         ))}
                       </div>
@@ -410,19 +410,19 @@ export function ClinicianEncounter({
 
               {/* Clinical Tags Row */}
               <div className="flex flex-wrap items-center gap-2 mt-1">
-                <span className="text-[11px] font-semibold text-slate-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                <span className="text-[11px] font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-300">
                   Blood Group: B+
                 </span>
-                <span className="text-[11px] font-semibold text-rose-900 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                <span className="text-[11px] font-semibold text-rose-800 bg-rose-50 px-2 py-0.5 rounded border border-rose-300">
                   Allergy: Cisplatin Rash (Mild)
                 </span>
-                <span className="text-[11px] font-semibold text-black bg-[#DBFE87]/40 px-2 py-0.5 rounded border border-[#c4e872]">
+                <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-300">
                   BPL / Pink (PM-JAY Eligible)
                 </span>
-                <span className="text-[11px] font-medium text-slate-700 bg-gray-100 px-2 py-0.5 rounded">
+                <span className="text-[11px] font-mono text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                   ABHA: 91-4521-8890-1234
                 </span>
-                <span className="text-[11px] font-medium text-slate-800 bg-[#90C3CB]/20 px-2 py-0.5 rounded border border-[#90C3CB]/40 hidden md:inline">
+                <span className="text-[11px] font-medium text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200 hidden md:inline">
                   Mirzapur Spoke Clinic (~12 km)
                 </span>
               </div>
@@ -553,7 +553,7 @@ export function ClinicianEncounter({
                     }}
                     className="w-full text-left px-3.5 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700 transition-colors"
                   >
-                    <Sparkles className="size-3.5 text-[#F19941]" />
+                    <Sparkles className="size-3.5 text-amber-500" />
                     <span>Ambient AI Voice Intake</span>
                   </button>
 
@@ -975,7 +975,7 @@ export function ClinicianEncounter({
                       <button
                         onClick={handleLogFraction}
                         disabled={ebrtFractions >= 25}
-                        className="px-5 py-3 rounded-xl bg-[#BA2D0B] hover:bg-[#a02609] text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                        className="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-bold shadow-sm transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50 active:scale-98"
                       >
                         <Zap className="size-4" />
                         <span>LOG FRACTION {ebrtFractions + 1} AS DELIVERED</span>
@@ -1100,13 +1100,13 @@ export function ClinicianEncounter({
 
                   {/* Crucial Chemo Hold Clinical Directive Alert */}
                   {chemoStatus === "HELD" && (
-                    <div className="p-4 bg-rose-50 border-2 border-[#BA2D0B] rounded-xl shadow-xs">
+                    <div className="p-4 bg-rose-50 border border-rose-300 rounded-xl shadow-xs">
                       <div className="flex items-start gap-3">
-                        <div className="size-8 rounded-lg bg-[#BA2D0B] text-white flex items-center justify-center shrink-0">
+                        <div className="size-8 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0">
                           <AlertCircle className="size-5" />
                         </div>
                         <div>
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-white bg-[#BA2D0B] px-2 py-0.5 rounded">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-white bg-rose-600 px-2 py-0.5 rounded">
                             NCG &amp; GEC-ESTRO Curative Directive
                           </span>
                           <div className="text-sm font-bold text-rose-950 mt-1">
@@ -1144,7 +1144,7 @@ export function ClinicianEncounter({
                         variant="outline"
                         size="sm"
                         onClick={() => handleChemoAction("HELD")}
-                        className="text-[#BA2D0B] border-[#BA2D0B]/40 hover:bg-rose-50 font-bold"
+                        className="text-rose-700 border-rose-300 hover:bg-rose-50 font-bold"
                       >
                         Hold (Keep EBRT Running)
                       </Button>
@@ -1204,7 +1204,7 @@ export function ClinicianEncounter({
                           type="checkbox"
                           checked={pacCleared}
                           onChange={() => setPacCleared(!pacCleared)}
-                          className="rounded size-4 text-[#BA2D0B]"
+                          className="rounded size-4 accent-teal-600 text-teal-600"
                         />
                         <span>Pre-Anesthetic Clearance (PAC) Cleared by Anesthetist</span>
                       </label>
@@ -1213,7 +1213,7 @@ export function ClinicianEncounter({
                           type="checkbox"
                           checked={intracavitarySuitable}
                           onChange={() => setIntracavitarySuitable(!intracavitarySuitable)}
-                          className="rounded size-4 text-[#BA2D0B]"
+                          className="rounded size-4 accent-teal-600 text-teal-600"
                         />
                         <span>Pelvic Regression: Intracavitary Tandem &amp; Ovoids Suitable</span>
                       </label>
@@ -1229,20 +1229,20 @@ export function ClinicianEncounter({
                   </div>
 
                   {/* Accelerated BID Advisor for Late Arrivals */}
-                  <div className="p-4 bg-[#DBFE87]/40 border border-[#b8dc63] rounded-xl flex items-start gap-3">
-                    <div className="size-8 rounded-lg bg-black text-[#DBFE87] font-bold text-xs flex items-center justify-center shrink-0">
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start gap-3">
+                    <div className="size-8 rounded-lg bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
                       BID
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-black bg-[#DBFE87] px-2 py-0.5 rounded">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
                           Accelerated Brachytherapy Protocol
                         </span>
-                        <span className="text-xs font-bold text-black">
+                        <span className="text-xs font-bold text-slate-900">
                           GEC-ESTRO Curative Envelope Salvage (Late Arrivals / Delay Salvage)
                         </span>
                       </div>
-                      <p className="text-xs text-gray-800 mt-1 leading-relaxed">
+                      <p className="text-xs text-slate-700 mt-1 leading-relaxed">
                         For patients arriving on or after Day 45, deliver 2 High-Dose-Rate brachytherapy fractions per day separated by &ge; 6 hours inter-fraction interval (e.g. 09:00 and 16:00). This protects normal rectal and bladder tissue while bringing overall treatment time (OTT) back under the 56-day curative threshold.
                       </p>
                     </div>
@@ -1286,7 +1286,7 @@ export function ClinicianEncounter({
                         variant="outline"
                         size="sm"
                         onClick={handleReturnDeficiency}
-                        className="text-[#BA2D0B] border-[#BA2D0B]/40 hover:bg-rose-50 font-bold"
+                        className="text-rose-700 border-rose-300 hover:bg-rose-50 font-bold"
                       >
                         Return with Deficiency (48h SLA)
                       </Button>
@@ -1355,7 +1355,7 @@ export function ClinicianEncounter({
                     disabled={consultBusy || consultRecorder.starting}
                     data-testid="consult-mic"
                     className={`h-9 px-3.5 rounded-full flex items-center gap-2 text-white shadow-xs transition-all cursor-pointer ${
-                      isRecording ? "bg-black animate-pulse" : "bg-[#BA2D0B] hover:bg-[#a02609]"
+                      isRecording ? "bg-rose-600 animate-pulse" : "bg-teal-600 hover:bg-teal-700"
                     }`}
                   >
                     {isRecording ? <MicOff className="size-4" /> : <Mic className="size-4" />}
@@ -1395,7 +1395,7 @@ export function ClinicianEncounter({
                       </Button>
                     </div>
                     {(consultError || consultRecorder.error) && (
-                      <p role="alert" className="text-xs text-[#BA2D0B]">{consultError || consultRecorder.error}</p>
+                      <p role="alert" className="text-xs text-rose-600 font-semibold">{consultError || consultRecorder.error}</p>
                     )}
                   </div>
 
@@ -1427,7 +1427,7 @@ export function ClinicianEncounter({
                       )}
                       {([
                         ["Consider", consult.draft.differentials, "text-gray-800"],
-                        ["Red flags", consult.draft.red_flags, "text-[#BA2D0B]"],
+                        ["Red flags", consult.draft.red_flags, "text-rose-600 font-semibold"],
                         ["Suggested next steps", consult.draft.next_steps, "text-gray-800"],
                       ] as const).map(([title, items, color]) =>
                         items.length > 0 ? (
@@ -1501,7 +1501,7 @@ export function ClinicianEncounter({
                             },
                           ])
                         }
-                        className="text-xs text-[#BA2D0B]"
+                        className="text-xs text-teal-700 font-semibold"
                       >
                         <Plus className="size-3 mr-1" /> Add Medication
                       </Button>
@@ -1570,21 +1570,21 @@ export function ClinicianEncounter({
 
                   <div className="space-y-3 pt-1 text-gray-700">
                     <label className="flex items-start gap-2.5 cursor-pointer">
-                      <input type="checkbox" defaultChecked className="mt-0.5 rounded size-4 text-[#BA2D0B]" />
+                      <input type="checkbox" defaultChecked className="mt-0.5 rounded size-4 accent-teal-600 text-teal-600" />
                       <span>
                         I voluntarily authorize sharing my health records with Regional Cancer Centre Hub and Mirzapur Spoke Clinic for the purpose of curative cancer management.
                       </span>
                     </label>
 
                     <label className="flex items-start gap-2.5 cursor-pointer">
-                      <input type="checkbox" defaultChecked className="mt-0.5 rounded size-4 text-[#BA2D0B]" />
+                      <input type="checkbox" defaultChecked className="mt-0.5 rounded size-4 accent-teal-600 text-teal-600" />
                       <span>
                         I consent to the pseudonymization and cryptographic tokenization ({patientToken}) of my records for epidemiological tracking under DPDP Act 2023.
                       </span>
                     </label>
 
                     <label className="flex items-start gap-2.5 cursor-pointer">
-                      <input type="checkbox" defaultChecked className="mt-0.5 rounded size-4 text-[#BA2D0B]" />
+                      <input type="checkbox" defaultChecked className="mt-0.5 rounded size-4 accent-teal-600 text-teal-600" />
                       <span>
                         Vernacular Audio Consent captured in Hindi: <em>"हाँ, मुझे सर्वाइसेतु से सहायता संदेश चाहिए।"</em> (Recorded on Day 1 Onboarding).
                       </span>

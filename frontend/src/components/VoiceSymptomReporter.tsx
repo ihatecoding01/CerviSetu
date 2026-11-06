@@ -22,7 +22,7 @@ export function VoiceSymptomReporter({ patientToken, clockDay }: { patientToken:
   });
 
   return (
-    <div className="mb-5 p-4 rounded-2xl border border-[#90C3CB] bg-[#90C3CB]/10">
+    <div className="mb-5 p-4 rounded-2xl border border-teal-200 bg-teal-50/50">
       <button
         type="button"
         onClick={() => (recorder.recording ? recorder.stop() : recorder.start())}
@@ -33,7 +33,7 @@ export function VoiceSymptomReporter({ patientToken, clockDay }: { patientToken:
         {busy ? <Loader2 className="size-4 animate-spin" /> : recorder.recording ? <MicOff className="size-4" /> : <Mic className="size-4" />}
         {busy ? "Listening to your message..." : recorder.recording ? `Stop recording (${recorder.seconds}s)` : "Speak your symptoms"}
       </button>
-      {(error || recorder.error) && <p role="alert" className="text-xs text-[#BA2D0B] mt-2">{error || recorder.error}</p>}
+      {(error || recorder.error) && <p role="alert" className="text-xs text-rose-600 mt-2">{error || recorder.error}</p>}
       {result && (
         <div className="mt-3 text-sm text-slate-700 space-y-1" data-testid="voice-symptom-result">
           <p className="italic">"{result.transcript}"</p>

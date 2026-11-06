@@ -14,7 +14,7 @@ export const WARD_COHORT = [
   adhDetail: "Fraction 14 Done · Step 15 Due Today",
   tier: null,
   severity: 0.76,
-  avatarColor: "bg-[#DBFE87] text-black border-[#c4e872]",
+  avatarColor: "bg-sky-50 text-[#0369A1] border-sky-200",
 },
 {
   token: "PT-RURAL-4421",
@@ -30,7 +30,7 @@ export const WARD_COHORT = [
   adhDetail: "Tier 1 SMS/WhatsApp Sent · Cycle 3 Labs Pending",
   tier: "TIER_1_SMS",
   severity: 0.82,
-  avatarColor: "bg-[#F19941]/30 text-[#BA2D0B] border-[#F19941]",
+  avatarColor: "bg-slate-100 text-slate-800 border-slate-200",
 },
 {
   token: "PT-RURAL-1102",
@@ -46,7 +46,7 @@ export const WARD_COHORT = [
   adhDetail: "Tier 3 ASHA Ticket Dispatched · Home Visit Active",
   tier: "TIER_3_ASHA",
   severity: 0.94,
-  avatarColor: "bg-[#BA2D0B]/20 text-[#BA2D0B] border-[#BA2D0B]",
+  avatarColor: "bg-pink-50 text-[#9D174D] border-pink-200",
 },
 {
   token: "PT-RURAL-9034",
@@ -62,7 +62,7 @@ export const WARD_COHORT = [
   adhDetail: "CBC/RFT Verified · Fraction 1 Scheduled",
   tier: null,
   severity: 0.68,
-  avatarColor: "bg-[#90C3CB]/40 text-black border-[#90C3CB]",
+  avatarColor: "bg-sky-50 text-[#0369A1] border-sky-200",
 },
 {
   token: "PT-PREC-202",
@@ -78,6 +78,6 @@ export const WARD_COHORT = [
   adhDetail: "Follow-up due March 2027",
   tier: null,
   severity: 0.35,
-  avatarColor: "bg-[#DBFE87] text-black border-[#c4e872]",
+  avatarColor: "bg-pink-50 text-[#9D174D] border-pink-200",
 },
 ];

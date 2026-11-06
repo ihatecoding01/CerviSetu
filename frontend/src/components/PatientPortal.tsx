@@ -54,7 +54,7 @@ function formatDay(iso: string, lang: Lang, t: TFn, today?: string): string {
 
 const EVENT_ICON: Record<string, React.ReactNode> = {
   COMPLETED: <CheckCircle2 className="size-5 text-emerald-700" aria-hidden="true" />,
-  MISSED: <XCircle className="size-5 text-[#BA2D0B]" aria-hidden="true" />,
+  MISSED: <XCircle className="size-5 text-rose-600" aria-hidden="true" />,
   APPROVED_PAUSE: <PauseCircle className="size-5 text-slate-600" aria-hidden="true" />,
   FACILITY_DOWNTIME: <Wrench className="size-5 text-slate-600" aria-hidden="true" />,
   PLANNED_REST: <CircleSlash className="size-5 text-slate-500" aria-hidden="true" />,
@@ -158,7 +158,7 @@ export const PatientPortal: React.FC<Props> = ({ token, onRequireLogin, onOpenOw
     const forbidden = state.kind === "forbidden";
     return shell(
       <div role="alert" className="bg-white border border-slate-200 rounded-2xl p-6 text-center space-y-3">
-        <AlertTriangle className="size-8 text-[#BA2D0B] mx-auto" aria-hidden="true" />
+        <AlertTriangle className="size-8 text-rose-600 mx-auto" aria-hidden="true" />
         <h1 className="text-lg font-bold">{forbidden ? t("portal.forbidden.title") : t("portal.error.title")}</h1>
         <p className="text-sm text-slate-700">{forbidden ? t("portal.forbidden.body") : t("portal.error.body")}</p>
         <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
@@ -188,10 +188,10 @@ export const PatientPortal: React.FC<Props> = ({ token, onRequireLogin, onOpenOw
   const welcome = (
     <div className="space-y-3">
       {o.synthetic_patient && (
-        <div role="note" className="bg-white border-2 border-dashed border-[#BA2D0B]/40 rounded-2xl p-4 flex gap-3">
-          <Info className="size-5 text-[#BA2D0B] shrink-0 mt-0.5" aria-hidden="true" />
+        <div role="note" className="bg-white border-2 border-dashed border-rose-300 rounded-2xl p-4 flex gap-3">
+          <Info className="size-5 text-rose-600 shrink-0 mt-0.5" aria-hidden="true" />
           <div>
-            <p className="text-sm font-bold text-[#BA2D0B]">{t("portal.synthetic.badge")}</p>
+            <p className="text-sm font-bold text-rose-700">{t("portal.synthetic.badge")}</p>
             <p className="text-sm text-slate-700">{t("portal.synthetic.body")}</p>
           </div>
         </div>
@@ -233,7 +233,7 @@ export const PatientPortal: React.FC<Props> = ({ token, onRequireLogin, onOpenOw
           </>
         )}
       </dl>
-      {o.abha_sandbox_id_masked && <p className="text-xs font-semibold text-[#BA2D0B] mt-2">{t("portal.info.abhaLabel")}</p>}
+      {o.abha_sandbox_id_masked && <p className="text-xs font-semibold text-teal-700 mt-2">{t("portal.info.abhaLabel")}</p>}
       <p className="text-xs text-slate-600 mt-2">{t("portal.info.privacy")}</p>
     </Section>
   );
@@ -312,7 +312,7 @@ export const PatientPortal: React.FC<Props> = ({ token, onRequireLogin, onOpenOw
         {onTrack ? (
           <CheckCircle2 className="size-6 text-emerald-700 shrink-0" aria-hidden="true" />
         ) : (
-          <AlertTriangle className="size-6 text-[#BA2D0B] shrink-0" aria-hidden="true" />
+          <AlertTriangle className="size-6 text-rose-600 shrink-0" aria-hidden="true" />
         )}
         <div>
           {knownStatus && (
@@ -323,7 +323,7 @@ export const PatientPortal: React.FC<Props> = ({ token, onRequireLogin, onOpenOw
           )}
           {c.missed_sessions > 0 && <p className="text-sm text-slate-700 mt-2">{t("portal.missed", { n: c.missed_sessions })}</p>}
           {c.consecutive_missed_sessions > 0 && (
-            <p className="text-sm font-semibold text-[#BA2D0B] mt-1">{t("portal.missedRecent", { n: c.consecutive_missed_sessions })}</p>
+            <p className="text-sm font-semibold text-rose-600 mt-1">{t("portal.missedRecent", { n: c.consecutive_missed_sessions })}</p>
           )}
         </div>
       </div>
@@ -349,7 +349,7 @@ export const PatientPortal: React.FC<Props> = ({ token, onRequireLogin, onOpenOw
         <p className="text-xs text-slate-600">{formatDay(date, lang, t, type === "UPCOMING" ? today : undefined)}</p>
       </div>
       {synthetic && (
-        <span className="text-[11px] font-semibold text-[#BA2D0B] border border-[#BA2D0B]/30 rounded-full px-2 py-0.5 whitespace-nowrap">
+        <span className="text-[11px] font-semibold text-rose-700 border border-rose-200 bg-rose-50 rounded-full px-2 py-0.5 whitespace-nowrap">
           {t("portal.journey.syntheticTag")}
         </span>
       )}

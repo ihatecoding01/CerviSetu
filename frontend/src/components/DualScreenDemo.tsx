@@ -1,4 +1,4 @@
-import { Sym } from "./icons/Sym";
+﻿import { Sym } from "./icons/Sym";
 import React, { useState, useEffect } from "react";
 import { CerviSetuLogo } from "./icons/CerviSetuLogo";
 import {

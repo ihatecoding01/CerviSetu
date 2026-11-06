@@ -13,8 +13,8 @@ interface Props {
 }
 
 const DEMO_ROLES: { role: StaffRole; label: string; hint: string; icon: typeof User; color: string }[] = [
-  { role: "DOCTOR", label: "Doctor", hint: "Chemo clearance, discharge sign-off", icon: Stethoscope, color: "#000000" },
-  { role: "NURSE", label: "Nurse", hint: "Ward board, clocks, nursing logs", icon: User, color: "#BA2D0B" },
+  { role: "DOCTOR", label: "Doctor", hint: "Chemo clearance, discharge sign-off", icon: Stethoscope, color: "#0F172A" },
+  { role: "NURSE", label: "Nurse", hint: "Ward board, clocks, nursing logs", icon: User, color: "#0D9488" },
   { role: "ASHA", label: "ASHA Worker", hint: "Home visits and field follow-up", icon: HeartHandshake, color: "#0F766E" },
   { role: "ADMIN", label: "Administrator", hint: "Everything, plus the audit ledger", icon: UserCog, color: "#475569" },
 ];
@@ -140,7 +140,7 @@ export function StaffSignIn({ preferredRole, sessionEnded, onSignedIn, onBack }:
                 />
               </label>
               {error && (
-                <p role="alert" className="text-xs text-[#BA2D0B]">
+                <p role="alert" className="text-xs text-rose-600">
                   {error}
                 </p>
               )}

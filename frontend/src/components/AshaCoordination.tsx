@@ -41,6 +41,7 @@ export function AshaCoordination({}: Props) {
   const [selectedRootCause, setSelectedRootCause] = useState<string>("FEAR_OF_PROCEDURE");
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
   const [audioPlaying, setAudioPlaying] = useState<boolean>(false);
+  const [filterCohort, setFilterCohort] = useState<"ALL" | "COHORT_1" | "COHORT_2">("ALL");
 
   useEffect(() => {
     loadTickets();
@@ -89,6 +90,14 @@ export function AshaCoordination({}: Props) {
       // Offline fallback
     }
   };
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelectedTicket(null);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
 
   const handleTicketResolution = async (outcome: "TRAVELING_TOMORROW" | "ESCORT_NEEDED") => {
     if (!selectedTicket) return;
@@ -171,30 +180,72 @@ export function AshaCoordination({}: Props) {
 
       {/* SECTION 1: STIGMA-SAFE FRONTLINE MOBILE TICKETS */}
       <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h2 className="text-base font-bold text-black flex items-center gap-2">
-              <HeartHandshake className="size-4.5 text-[#BA2D0B]" />
-              <span>Active Frontline Home-Visit Tickets (Tier 3 Follow-Up)</span>
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <HeartHandshake className="size-4.5 text-teal-600" />
+              <span>Active Frontline Home-Visit & Follow-Up Tasks</span>
             </h2>
-            <p className="text-xs text-gray-500">
-              Dispatched when patient misses &ge; 2 fractions &middot; Stigma-safe neutral health labels used in villages
+            <p className="text-xs text-slate-500">
+              Covers Cohort 1 vaccine vial readiness & overdue visits, and Cohort 2 14-day symptom check-ins.
             </p>
           </div>
-          <Badge variant="neutral" size="sm">{tickets.length} Active Field Tickets</Badge>
+
+          {/* Cohort Filter Chips */}
+          <div className="inline-flex p-1 rounded-lg bg-slate-100 border border-slate-200 text-xs">
+            <button
+              type="button"
+              onClick={() => setFilterCohort("ALL")}
+              className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
+                filterCohort === "ALL" ? "bg-white text-teal-900 shadow-2xs" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              All ({tickets.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterCohort("COHORT_1")}
+              className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
+                filterCohort === "COHORT_1" ? "bg-white text-teal-900 shadow-2xs" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Cohort 1: Vaccines
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterCohort("COHORT_2")}
+              className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
+                filterCohort === "COHORT_2" ? "bg-white text-teal-900 shadow-2xs" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Cohort 2: 14d Check-ins
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {tickets.map((t) => (
-            <Card key={t.ticket_id} className="bg-white border-gray-200 shadow-2xs hover:border-[#BA2D0B] transition-all">
-              <CardHeader className="pb-3 border-b border-gray-100">
+          {tickets
+            .filter((t) => {
+              if (filterCohort === "COHORT_1") {
+                const s = `${t.stigma_safe_category || ""} ${t.notes || ""} ${t.ticket_id}`.toLowerCase();
+                return s.includes("vaccin") || s.includes("hpv") || s.includes("dose") || s.includes("vial");
+              }
+              if (filterCohort === "COHORT_2") {
+                const s = `${t.stigma_safe_category || ""} ${t.notes || ""} ${t.ticket_id}`.toLowerCase();
+                return s.includes("check-in") || s.includes("benign") || s.includes("tertiary") || s.includes("referral") || s.includes("escort");
+              }
+              return true;
+            })
+            .map((t) => (
+            <Card key={t.ticket_id} className="bg-white border-slate-200 shadow-2xs hover:border-teal-400 transition-all">
+              <CardHeader className="pb-3 border-b border-slate-100">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     {/* Stigma-Safe Header */}
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#DBFE87]/40 text-black font-bold text-xs border border-[#DBFE87]">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-teal-50 text-teal-800 font-bold text-xs border border-teal-200">
                       <span>{t.stigma_safe_category}</span>
                     </div>
-                    <div className="text-xs font-mono text-gray-500 mt-1">Ticket: {t.ticket_id}</div>
+                    <div className="text-xs font-mono text-slate-500 mt-1">Ticket: {t.ticket_id}</div>
                   </div>
                   <Badge
                     variant={t.status === "TRAVELING_TOMORROW" ? "success" : t.status === "ESCORT_NEEDED" ? "destructive" : "warning"}
@@ -207,19 +258,19 @@ export function AshaCoordination({}: Props) {
 
               <CardContent className="pt-4 flex flex-col gap-3">
                 {/* Household Navigation Box */}
-                <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 text-xs">
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
                   <div className="flex items-start gap-2">
-                    <Navigation className="size-4 text-[#BA2D0B] shrink-0 mt-0.5" />
+                    <Navigation className="size-4 text-teal-600 shrink-0 mt-0.5" />
                     <div>
-                      <div className="font-bold text-black text-sm">
+                      <div className="font-bold text-slate-900 text-sm">
                         मरीज: {t.patient_name} {t.guardian_name ? `(पति: ${t.guardian_name})` : ""}
                       </div>
-                      <div className="text-gray-600 mt-0.5 font-medium flex items-center gap-1">
-                        <MapPin className="size-3 text-gray-400" />
+                      <div className="text-slate-600 mt-0.5 font-medium flex items-center gap-1">
+                        <MapPin className="size-3 text-slate-400" />
                         <span>{t.village}</span>
                       </div>
                       {t.landmark && (
-                        <div className="text-gray-500 mt-0.5">
+                        <div className="text-slate-500 mt-0.5">
                           पहचान: {t.landmark}
                         </div>
                       )}
@@ -227,11 +278,11 @@ export function AshaCoordination({}: Props) {
                   </div>
                 </div>
 
-                <div className="text-xs text-gray-700 bg-rose-50/60 p-2.5 rounded-lg border border-rose-200 flex items-center justify-between">
+                <div className="text-xs text-slate-700 bg-rose-50/60 p-2.5 rounded-lg border border-rose-200 flex items-center justify-between">
                   <span className="font-semibold text-rose-950">
                     Day +{t.days_overdue} Missed &middot; {t.notes || "Urgent adherence check required"}
                   </span>
-                  <span className="font-mono text-xs text-[#BA2D0B] font-bold">{t.patient_token}</span>
+                  <span className="font-mono text-xs text-rose-700 font-bold">{t.patient_token}</span>
                 </div>
 
                 {t.arrival_watch_active ? (
@@ -243,11 +294,11 @@ export function AshaCoordination({}: Props) {
                   <div className="flex items-center gap-2 pt-1">
                     <Button
                       variant="obsidian"
-                      size="xs"
+                      size="sm"
                       onClick={() => setSelectedTicket(t)}
-                      className="flex-1 bg-black hover:bg-black/85 text-white text-xs font-semibold py-2"
+                      className="flex-1 min-h-[44px] bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-semibold py-2.5 rounded-xl cursor-pointer shadow-xs active:scale-98"
                     >
-                      Complete Home Visit &rarr;
+                      Complete Home Visit (गृह भेंट दर्ज करें) &rarr;
                     </Button>
                   </div>
                 )}
@@ -296,32 +347,37 @@ export function AshaCoordination({}: Props) {
 
       {/* TICKET COMPLETION MODAL */}
       {selectedTicket && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-200">
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-xs"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedTicket(null);
+          }}
+        >
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
             {/* Stigma-Safe Modal Header */}
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-bold bg-[#DBFE87] text-black px-2.5 py-0.5 rounded-full border border-[#c4e872]">
+              <span className="text-xs font-bold bg-teal-50 text-teal-800 px-2.5 py-0.5 rounded-full border border-teal-200">
                 {selectedTicket.stigma_safe_category}
               </span>
             </div>
-            <h3 className="text-lg font-bold text-black">
+            <h3 className="text-lg font-bold text-slate-900">
               Frontline Home Visit Resolution: {selectedTicket.patient_name}
             </h3>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-slate-500 mt-1">
               Location: {selectedTicket.village} &middot; Landmark: {selectedTicket.landmark}
             </p>
 
             {/* Indic Reassurance Counseling Audio Button */}
-            <div className="mt-4 p-3.5 bg-[#90C3CB]/20 border border-[#90C3CB]/50 rounded-xl flex items-center justify-between">
+            <div className="mt-4 p-3.5 bg-teal-50 border border-teal-200 rounded-xl flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-900">
-                <Volume2 className="size-4 text-[#BA2D0B]" />
+                <Volume2 className="size-4 text-teal-700" />
                 <span>मातृभाषा परामर्श ऑडियो (Play Hindi Counseling)</span>
               </div>
               <Button
                 variant="obsidian"
                 size="xs"
                 onClick={playVernacularAudio}
-                className="bg-black text-white text-xs gap-1"
+                className="bg-slate-900 hover:bg-slate-800 text-white text-xs gap-1 min-h-[36px] px-3 rounded-lg"
               >
                 {audioPlaying ? "Playing..." : "Play Reassurance"}
               </Button>
@@ -329,13 +385,13 @@ export function AshaCoordination({}: Props) {
 
             {/* Delay Root Cause Selection */}
             <div className="mt-4">
-              <label className="text-xs font-bold text-gray-800 block mb-1.5">
+              <label className="text-xs font-bold text-slate-800 block mb-1.5">
                 Delay Root Cause Identified (देरी का मुख्य कारण)
               </label>
               <select
                 value={selectedRootCause}
                 onChange={(e) => setSelectedRootCause(e.target.value)}
-                className="w-full text-xs p-2.5 rounded-lg border border-gray-300 bg-white font-medium focus:outline-none"
+                className="w-full text-xs p-2.5 rounded-lg border border-slate-300 bg-white font-medium focus:outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
               >
                 <option value="FEAR_OF_PROCEDURE">दर्द / सिकाई का डर (Fear of radiation / procedure pain)</option>
                 <option value="ACCOMMODATION_ANXIETY">रहने व भोजन की चिंता (Fear of staying away from home)</option>
@@ -350,7 +406,7 @@ export function AshaCoordination({}: Props) {
                 variant="obsidian"
                 size="sm"
                 onClick={() => handleTicketResolution("TRAVELING_TOMORROW")}
-                className="w-full bg-[#BA2D0B] hover:bg-[#a02609] text-white text-xs font-bold py-2.5 flex items-center justify-center gap-2"
+                className="w-full min-h-[44px] bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-xs cursor-pointer active:scale-98"
               >
                 <Clock className="size-4" />
                 <span>कल आ रही हैं (Traveling Tomorrow &middot; Activate 24h Watch)</span>
@@ -360,7 +416,7 @@ export function AshaCoordination({}: Props) {
                 variant="outline"
                 size="sm"
                 onClick={() => handleTicketResolution("ESCORT_NEEDED")}
-                className="w-full border-rose-300 text-rose-800 hover:bg-rose-50 text-xs font-bold py-2.5 flex items-center justify-center gap-2"
+                className="w-full min-h-[44px] border-rose-300 text-rose-800 hover:bg-rose-50 text-xs sm:text-sm font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 cursor-pointer active:scale-98"
               >
                 <Ambulance className="size-4" />
                 <span>एम्बुलेंस / सरकारी सहायता चाहिए (Escalate to Tier 4 CMO Escort)</span>
@@ -370,7 +426,7 @@ export function AshaCoordination({}: Props) {
                 variant="ghost"
                 size="sm"
                 onClick={() => setSelectedTicket(null)}
-                className="text-xs text-gray-500 hover:text-black mt-1"
+                className="min-h-[40px] text-xs text-slate-500 hover:text-slate-900 mt-1 cursor-pointer font-medium"
               >
                 Cancel
               </Button>

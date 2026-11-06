@@ -10,6 +10,7 @@ import { Badge } from "./careui/badge";
 import { Alert, AlertTitle, AlertDescription } from "./careui/alert";
 import { Separator } from "./careui/separator";
 import { DocumentWorkspace } from "./DocumentWorkspace";
+import { WhoTargetsProtocolElement } from "./WhoTargetsProtocolElement";
 import {
   FileText,
   AlertCircle,
@@ -20,6 +21,8 @@ import {
   Check,
   CheckCircle2,
   FileCheck2,
+  Syringe,
+  Activity,
 } from "lucide-react";
 
 interface Props {
@@ -54,8 +57,28 @@ const SAMPLE_CERVICAL_CCRT = {
   days_overdue: 0,
 };
 
+const SAMPLE_GIRL_VACCINE = {
+  patient_name: "Ananya Kumari",
+  phone: "+91 97210 33419",
+  village: "Kalyanpur, Ward 2",
+  district: "Mirzapur, Uttar Pradesh",
+  raw_text: "14 yr F, adolescent routine school health camp checkup. No prior HPV vaccination documented. Evaluated under WHO Target 1 national HPV drive (Cervavac). Requires scheduled Dose 1 vaccination.",
+  days_overdue: 0,
+};
+
+const SAMPLE_WOMAN_SCREENING = {
+  patient_name: "Sunita Devi",
+  phone: "+91 96112 44901",
+  village: "Pipra Block 1",
+  district: "Mirzapur, Uttar Pradesh",
+  raw_text: "38 yr F, community screening camp attendance. Parity 3, asymptomatic. No prior cervical screening in last 5 years. Recommended for WHO Target 2 high-performance HPV DNA typing and Visual Inspection with Acetic Acid (VIA).",
+  days_overdue: 0,
+};
+
 export function ClinicalIntake({ onCaseSubmitted }: Props) {
   const [form, setForm] = useState(SAMPLE_CERVICAL_CCRT);
+  const [showWhoGuard, setShowWhoGuard] = useState(false);
+  const [whoAge, setWhoAge] = useState(14);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -207,14 +230,40 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setForm(SAMPLE_GIRL_VACCINE);
+              setWhoAge(14);
+              setShowWhoGuard(true);
+            }}
+            className="text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200"
+          >
+            <Syringe className="size-3 mr-1 text-teal-600" />
+            Girl 13–15Y Vaccine
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setForm(SAMPLE_WOMAN_SCREENING);
+              setWhoAge(38);
+              setShowWhoGuard(true);
+            }}
+            className="text-xs font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200"
+          >
+            <Activity className="size-3 mr-1 text-amber-600" />
+            Woman 35–45Y Screening
+          </Button>
           <Button
             variant="secondary"
             size="sm"
             onClick={() => setForm(SAMPLE_CERVICAL_CCRT)}
             className="text-xs font-medium"
           >
-            Cervical CCRT Preset
+            CCRT Preset
           </Button>
           <Button
             variant="secondary"
@@ -222,7 +271,7 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
             onClick={() => setForm(SAMPLE_ORAL)}
             className="text-xs font-medium"
           >
-            Oral Biopsy Preset
+            Oral Preset
           </Button>
           <Button
             variant="secondary"
@@ -230,9 +279,31 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
             onClick={() => setForm(SAMPLE_CERVICAL)}
             className="text-xs font-medium"
           >
-            Cervical VIA Preset
+            VIA Preset
           </Button>
         </div>
+      </div>
+
+      {/* WHO 90-70-90 Prevention & Screening Protocol Guard (Collapsible / Dynamic) */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setShowWhoGuard(!showWhoGuard)}
+            className="text-xs font-bold text-teal-700 hover:underline flex items-center gap-1.5 cursor-pointer"
+          >
+            <ShieldCheck className="size-4" />
+            <span>{showWhoGuard ? "Hide WHO 90-70-90 Age-Cohort Protocol Guard ▲" : "View WHO 90-70-90 Age-Cohort Protocol Guard (13–15Y & 35–45Y) ▼"}</span>
+          </button>
+        </div>
+
+        {showWhoGuard && (
+          <WhoTargetsProtocolElement
+            compact={true}
+            initialName={form.patient_name}
+            initialAge={whoAge}
+          />
+        )}
       </div>
 
       {error && (
@@ -257,12 +328,12 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
             <div className="flex items-center gap-2">
               <span className={`size-6 rounded-full flex items-center justify-center font-bold text-[11px] ${
                 s.status === "Completed"
-                  ? "bg-[#DBFE87] text-black"
+                  ? "bg-teal-600 text-white"
                   : s.status === "Active"
                   ? "bg-black text-white"
                   : "bg-gray-100 text-gray-400"
               }`}>
-                {s.status === "Completed" ? <Check className="size-3 text-black" /> : s.step}
+                {s.status === "Completed" ? <Check className="size-3 text-white" /> : s.step}
               </span>
               <div>
                 <div className="font-semibold text-gray-900 leading-tight">{s.name}</div>
@@ -282,7 +353,7 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-base font-bold text-black flex items-center gap-2">
-                  <FileText className="size-4 text-[#BA2D0B]" />
+                  <FileText className="size-4 text-teal-600" />
                   Patient Clinical Registration
                 </CardTitle>
                 <CardDescription className="text-xs text-gray-500">
@@ -430,7 +501,7 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-[#BA2D0B] hover:bg-[#a02609] text-white shadow-xs font-semibold gap-2 h-11"
+                className="w-full bg-teal-600 hover:bg-teal-700 text-white shadow-xs font-semibold gap-2 h-11"
               >
                 {loading ? (
                   "Synthesizing Diagnostic Graph..."
@@ -451,7 +522,7 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-base font-bold text-black flex items-center gap-2">
-                  <Microscope className="size-4 text-[#BA2D0B]" />
+                  <Microscope className="size-4 text-teal-600" />
                   Diagnostic Synthesis &amp; Triage Dossier
                 </CardTitle>
                 <CardDescription className="text-xs text-gray-500">
@@ -483,7 +554,7 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
                   <div className="flex items-center gap-2.5">
                     <ShieldCheck className="size-4 text-black" />
                     <span className="text-xs text-gray-600 font-medium">De-Identified ID:</span>
-                    <span className="font-mono text-xs font-bold text-[#BA2D0B] bg-[#BA2D0B]/10 px-2 py-0.5 rounded border border-[#BA2D0B]/20">
+                    <span className="font-mono text-xs font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
                       {result.patient_token}
                     </span>
                   </div>
@@ -500,8 +571,8 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
                 </div>
 
                 {/* Primary Clinical Impression */}
-                <div className="p-4 rounded-xl bg-[#DBFE87]/15 border border-[#DBFE87]/40">
-                  <span className="text-xs font-bold text-[#BA2D0B] uppercase tracking-wider block mb-1">
+                <div className="p-4 rounded-xl bg-teal-50/50 border border-teal-200">
+                  <span className="text-xs font-bold text-teal-800 uppercase tracking-wider block mb-1">
                     Primary Clinical Impression
                   </span>
                   <h3 className="text-base font-bold text-[#111418]">
@@ -527,9 +598,9 @@ export function ClinicalIntake({ onCaseSubmitted }: Props) {
 
                 {/* Sarvam AI Extraction & Draft Messages (clinician must approve) */}
                 {result.diagnostic_synthesis?.ai_generated ? (
-                  <div className="p-4 rounded-xl bg-white border border-[#BA2D0B]/25 flex flex-col gap-3">
+                  <div className="p-4 rounded-xl bg-white border border-teal-200 flex flex-col gap-3">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-bold text-[#BA2D0B] uppercase tracking-wider">
+                      <span className="text-xs font-bold text-teal-700 uppercase tracking-wider">
                         Sarvam AI Clinical Summary
                       </span>
                       <Badge variant="warning" size="xs">Draft · Needs Clinician Approval</Badge>

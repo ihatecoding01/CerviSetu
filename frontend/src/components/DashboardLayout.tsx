@@ -14,10 +14,8 @@ import {
   Plus,
   ChevronRight,
   LogOut,
-  Tablet,
   Building2,
   Stethoscope,
-  HeartHandshake,
   Bell,
   PanelLeft,
   Home,
@@ -26,15 +24,14 @@ import {
 } from "lucide-react";
 
 export type Tab =
+  | "prevention-tab"
+  | "asha-tab"
+  | "specialist-tab"
+  | "overview-tab"
+  | "encounter-tab"
   | "intake-tab"
   | "tracker-tab"
-  | "privacy-tab"
-  | "asha-tab"
-  | "overview-tab"
-  | "patient-tab"
-  | "dual-tab"
-  | "encounter-tab"
-  | "prevention-tab";
+  | "privacy-tab";
 
 interface Props {
   activeTab: Tab;
@@ -54,14 +51,13 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: "overview-tab", label: "Dashboard", icon: Home, category: "home" },
-  { id: "prevention-tab", label: "Prevention & Screening", icon: ShieldPlus, category: "clinical" },
-  { id: "encounter-tab", label: "Clinical Encounter", icon: Stethoscope, category: "clinical" },
-  { id: "patient-tab", label: "Patient Portal", icon: HeartHandshake, category: "clinical" },
-  { id: "dual-tab", label: "Dual-Screen View", icon: Tablet, category: "clinical" },
+  { id: "prevention-tab", label: "Prevention & Immunization", icon: ShieldPlus, category: "home" },
+  { id: "asha-tab", label: "ASHA Field Network", icon: Users, category: "coordination" },
+  { id: "specialist-tab", label: "Specialist Review Portal", icon: Stethoscope, category: "clinical" },
+  { id: "overview-tab", label: "Ward & Population Overview", icon: Home, category: "home" },
+  { id: "encounter-tab", label: "Clinical Encounter", icon: Activity, category: "clinical" },
   { id: "intake-tab", label: "Clinical Intake", icon: ClipboardList, category: "diagnostics" },
-  { id: "tracker-tab", label: "Rural Tracker", icon: Activity, category: "diagnostics" },
-  { id: "asha-tab", label: "ASHA Network", icon: Users, category: "coordination" },
+  { id: "tracker-tab", label: "Rural Tracker", icon: Building2, category: "diagnostics" },
   { id: "privacy-tab", label: "Security & Audit", icon: ShieldCheck, category: "coordination" },
 ];
 
@@ -102,339 +98,342 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
 
   return (
     <div className={`flex h-screen w-screen overflow-hidden bg-[#FAFAFA] text-black font-sans antialiased`}>
-      {/* 1. Far-Left Slim Icon Rail (Inspired by Sarvam Voice Agents Left Rail) */}
-      <aside className="w-14 min-w-14 h-full bg-white border-r border-slate-200/90 flex flex-col justify-between items-center py-4 z-30 select-none">
-        {/* Top Brand Hexagon */}
-        <div className="flex flex-col items-center gap-3">
-          <div
-            onClick={() => onTabChange("overview-tab")}
-            className="size-9 rounded-xl bg-white border border-[#0F766E]/30 flex items-center justify-center shadow-xs cursor-pointer hover:opacity-90 transition-opacity p-0.5"
-            title="CerviSetu Clinical Platform"
-          >
-            <CerviSetuLogo size={30} />
-          </div>
-
-          <div className="w-7 h-px bg-slate-200/90 my-1" />
-
-          {/* Quick Clinical Task Shortcuts (Task-relevant oncology icons) */}
-          <div className="flex flex-col items-center gap-1.5 text-slate-500">
-            <button
-              onClick={() => onTabChange("overview-tab")}
-              className={`p-2 rounded-xl transition-colors cursor-pointer ${
-                activeTab === "overview-tab" ? "bg-slate-100 text-black" : "hover:bg-slate-50 hover:text-black"
-              }`}
-              title="Overview Dashboard"
-            >
-              <LayoutDashboard className="size-4.5" />
-            </button>
-
-            <button
-              onClick={() => onTabChange("prevention-tab")}
-              className={`p-2 rounded-xl transition-colors cursor-pointer ${
-                activeTab === "prevention-tab" ? "bg-slate-100 text-[#BA2D0B]" : "hover:bg-slate-50 hover:text-black"
-              }`}
-              title="Prevention & Screening"
-            >
-              <ShieldPlus className="size-4.5" />
-            </button>
-
-            <button
-              onClick={() => onTabChange("encounter-tab")}
-              className={`p-2 rounded-xl transition-colors cursor-pointer ${
-                activeTab === "encounter-tab" ? "bg-slate-100 text-[#BA2D0B]" : "hover:bg-slate-50 hover:text-black"
-              }`}
-              title="Clinical Encounter"
-            >
-              <Stethoscope className="size-4.5" />
-            </button>
-
-            <button
-              onClick={() => onTabChange("intake-tab")}
-              className={`p-2 rounded-xl transition-colors cursor-pointer ${
-                activeTab === "intake-tab" ? "bg-slate-100 text-black" : "hover:bg-slate-50 hover:text-black"
-              }`}
-              title="Clinical Intake & OCR"
-            >
-              <ClipboardList className="size-4.5" />
-            </button>
-
-            <button
-              onClick={() => onTabChange("patient-tab")}
-              className={`p-2 rounded-xl transition-colors cursor-pointer ${
-                activeTab === "patient-tab" ? "bg-slate-100 text-[#BA2D0B]" : "hover:bg-slate-50 hover:text-black"
-              }`}
-              title="Patient Care Portal"
-            >
-              <HeartHandshake className="size-4.5" />
-            </button>
-
-            <button
-              onClick={() => onTabChange("dual-tab")}
-              className={`p-2 rounded-xl transition-colors cursor-pointer ${
-                activeTab === "dual-tab" ? "bg-slate-100 text-[#F19941]" : "hover:bg-slate-50 hover:text-black"
-              }`}
-              title="Dual-Screen View"
-            >
-              <Tablet className="size-4.5" />
-            </button>
-
-            <button
-              onClick={() => onTabChange("tracker-tab")}
-              className={`p-2 rounded-xl transition-colors cursor-pointer ${
-                activeTab === "tracker-tab" ? "bg-slate-100 text-[#BA2D0B]" : "hover:bg-slate-50 hover:text-black"
-              }`}
-              title="Rural Adherence Tracker"
-            >
-              <Activity className="size-4.5" />
-            </button>
-
-            <button
-              onClick={() => onTabChange("asha-tab")}
-              className={`p-2 rounded-xl transition-colors cursor-pointer ${
-                activeTab === "asha-tab" ? "bg-slate-100 text-black" : "hover:bg-slate-50 hover:text-black"
-              }`}
-              title="ASHA Coordination Network"
-            >
-              <Users className="size-4.5" />
-            </button>
-
-            <button
-              onClick={() => onTabChange("privacy-tab")}
-              className={`p-2 rounded-xl transition-colors cursor-pointer ${
-                activeTab === "privacy-tab" ? "bg-slate-100 text-black" : "hover:bg-slate-50 hover:text-black"
-              }`}
-              title="Security & Audit Ledger"
-            >
-              <ShieldCheck className="size-4.5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Bottom Avatar & Status */}
-        <div className="flex flex-col items-center gap-3">
-          {onLogoutToGateway && (
-            <button
-              onClick={onLogoutToGateway}
-              className="p-2 rounded-xl text-slate-400 hover:text-black hover:bg-slate-100 transition-colors cursor-pointer"
-              title="Return to CARE Gateway"
-            >
-              <Building2 className="size-4.5" />
-            </button>
-          )}
-
-          {onSignOut && (
-            <button
-              onClick={onSignOut}
-              className="p-2 rounded-xl text-slate-400 hover:text-[#BA2D0B] hover:bg-slate-100 transition-colors cursor-pointer"
-              title="Sign out"
-              aria-label="Sign out"
-              data-testid="staff-sign-out"
-            >
-              <LogOut className="size-4.5" />
-            </button>
-          )}
-
-          {/* User Initial Avatar with Lime Active Dot */}
-          <div
-            className="relative cursor-default"
-            title={staff ? `${staff.name} · ${staff.role_label} · ${staff.facility}` : "Signed in"}
-            data-testid="staff-avatar"
-          >
-            <div className="size-8 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center">
-              {initials}
-            </div>
-            <span className="absolute bottom-0 right-0 size-2.5 rounded-full bg-[#DBFE87] border-2 border-white" />
-          </div>
-        </div>
-      </aside>
-
-      {/* 2. Main Navigation Panel with Generous Whitespace (Collapsible) */}
+      {/* Mobile Drawer Backdrop */}
       {!collapsed && (
-        <aside className="max-md:fixed max-md:left-14 max-md:top-0 max-md:shadow-xl w-60 min-w-60 h-full bg-white border-r border-slate-200/90 flex flex-col justify-between p-4 z-20 select-none">
-          <div className="overflow-y-auto pr-1">
-            {/* Header: Title + Plan + Collapse Toggle */}
-            <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
-              <div>
-                <h1 className="font-bold text-base text-black tracking-tight leading-none">
-                  CerviSetu
-                </h1>
-                <span className="text-xs text-slate-500 font-medium block mt-1">
-                  District Spoke Clinic
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setCollapsed(true)}
-                className="p-1 rounded-lg text-slate-400 hover:text-black hover:bg-slate-100 transition-colors cursor-pointer"
-                title="Collapse sidebar"
-              >
-                <PanelLeft className="size-4" />
-              </button>
-            </div>
-
-            {/* Quick Search Ctrl+K */}
-            <div className="mb-5">
-              <div className="relative flex items-center">
-                <Search className="absolute left-3 size-3.5 text-slate-400" />
-                <input
-                  ref={searchBox}
-                  type="text"
-                  placeholder="Search"
-                  value={search}
-                  data-testid="nav-search"
-                  onChange={(e) => setSearch(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape") setSearch("");
-                    const first = NAV_ITEMS.find(matches);
-                    if (e.key === "Enter" && search.trim() && first) goTo(first.id);
-                  }}
-                  className="w-full pl-8.5 pr-12 py-2 text-xs bg-slate-50/80 border border-slate-200/80 rounded-xl text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-black transition-colors"
-                />
-                <span className="absolute right-2.5 px-1.5 py-0.5 text-xs font-mono text-slate-400 bg-white border border-slate-200 rounded">
-                  Ctrl+K
-                </span>
-              </div>
-            </div>
-
-            {/* Home Navigation */}
-            <div className="mb-4">
-              <button
-                onClick={() => onTabChange("overview-tab")}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-semibold transition-colors cursor-pointer ${
-                  activeTab === "overview-tab"
-                    ? "bg-slate-100 text-black"
-                    : "text-slate-600 hover:text-black hover:bg-slate-50"
-                }`}
-              >
-                <Home className="size-4" />
-                <span>Home</span>
-              </button>
-            </div>
-
-            {/* Group 1: Clinical Care */}
-            <div className="mb-5">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 px-3 block mb-1.5">
-                Clinical Care
-              </span>
-              <div className="space-y-0.5">
-                {clinicalItems.map((item) => {
-                  const isActive = activeTab === item.id;
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => goTo(item.id)}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors cursor-pointer ${
-                        isActive
-                          ? "bg-slate-100 text-black font-semibold"
-                          : "text-slate-600 hover:text-black hover:bg-slate-50 font-medium"
-                      }`}
-                    >
-                      <Icon className={`size-4 shrink-0 ${isActive ? "text-[#BA2D0B]" : "text-slate-400"}`} />
-                      <span className="truncate">{item.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Group 2: Diagnostics & AI */}
-            <div className="mb-5">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 px-3 block mb-1.5">
-                Diagnostics & AI
-              </span>
-              <div className="space-y-0.5">
-                {diagnosticItems.map((item) => {
-                  const isActive = activeTab === item.id;
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => goTo(item.id)}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors cursor-pointer ${
-                        isActive
-                          ? "bg-slate-100 text-black font-semibold"
-                          : "text-slate-600 hover:text-black hover:bg-slate-50 font-medium"
-                      }`}
-                    >
-                      <Icon className={`size-4 shrink-0 ${isActive ? "text-[#F19941]" : "text-slate-400"}`} />
-                      <span className="truncate">{item.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Group 3: Coordination */}
-            <div className="mb-4">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 px-3 block mb-1.5">
-                Coordination
-              </span>
-              <div className="space-y-0.5">
-                {coordinationItems.map((item) => {
-                  const isActive = activeTab === item.id;
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => goTo(item.id)}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-colors cursor-pointer ${
-                        isActive
-                          ? "bg-slate-100 text-black font-semibold"
-                          : "text-slate-600 hover:text-black hover:bg-slate-50 font-medium"
-                      }`}
-                    >
-                      <Icon className={`size-4 shrink-0 ${isActive ? "text-[#90C3CB]" : "text-slate-400"}`} />
-                      <span className="truncate">{item.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* What's New Item */}
-            <div className="pt-2 mb-2">
-              <button
-                type="button"
-                onClick={() => setPanel("whats-new")}
-                data-testid="whats-new"
-                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Bell className="size-4 text-[#F19941]" />
-                  <span>What's new</span>
-                </div>
-                <span className="text-xs font-bold bg-[#DBFE87] text-black px-2 py-0.5 rounded-full">
-                  New
-                </span>
-              </button>
-            </div>
-          </div>
-
-          {/* Bottom Panel Status & Switcher */}
-          <div className="border-t border-slate-100 pt-3 flex flex-col gap-2">
-            <div className="flex items-center justify-between px-2 py-1">
-              <div className="flex items-center gap-2">
-                <span className="size-2 rounded-full bg-[#DBFE87] ring-2 ring-[#DBFE87]/50" />
-                <span className="text-xs font-semibold text-slate-700">Mirzapur Spoke</span>
-              </div>
-              <span className="text-xs font-bold bg-[#DBFE87] text-black px-2 py-0.5 rounded-full">
-                Active
-              </span>
-            </div>
-
-            {onLogoutToGateway && (
-              <button
-                onClick={onLogoutToGateway}
-                className="flex items-center gap-2 text-xs text-slate-500 hover:text-black hover:bg-slate-50 px-2 py-1.5 rounded-lg transition-colors cursor-pointer font-medium"
-              >
-                <LogOut className="size-3.5" />
-                <span>Switch to Gateway</span>
-              </button>
-            )}
-          </div>
-        </aside>
+        <div
+          className="md:hidden fixed inset-0 bg-black/40 z-20 backdrop-blur-xs transition-opacity"
+          onClick={() => setCollapsed(true)}
+          aria-hidden="true"
+        />
       )}
+
+      {/* Unified Single Responsive Navigation Sidebar */}
+      <aside
+        className={`h-full bg-white border-r border-slate-200/90 flex flex-col justify-between z-30 select-none transition-all duration-200 ease-in-out ${
+          collapsed
+            ? "w-16 min-w-16 items-center py-4 px-2"
+            : "w-64 min-w-64 p-4 max-md:fixed max-md:left-0 max-md:top-0 max-md:h-screen max-md:shadow-2xl"
+        }`}
+      >
+        {collapsed ? (
+          /* ================= Collapsed Icon-Only Mode ================= */
+          <>
+            <div className="flex flex-col items-center gap-3 w-full">
+              {/* Brand Logo & Expand toggle */}
+              <div className="flex flex-col items-center gap-2">
+                <div
+                  onClick={() => onTabChange("overview-tab")}
+                  className="size-10 rounded-xl bg-white border border-teal-600/30 flex items-center justify-center shadow-xs cursor-pointer hover:bg-slate-50 transition-colors p-1"
+                  title="CerviSetu Clinical Platform"
+                >
+                  <CerviSetuLogo size={28} />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCollapsed(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
+                  title="Expand navigation (Ctrl+K)"
+                  aria-label="Expand sidebar"
+                >
+                  <PanelLeft className="size-4" />
+                </button>
+              </div>
+
+              <div className="w-8 h-px bg-slate-200 my-1" />
+
+              {/* Quick Nav Icons */}
+              <div className="flex flex-col items-center gap-1.5 w-full">
+                {NAV_ITEMS.map((item) => {
+                  const isActive = activeTab === item.id;
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => goTo(item.id)}
+                      className={`p-2.5 rounded-xl transition-all cursor-pointer relative ${
+                        isActive
+                          ? "bg-teal-50 text-teal-700 shadow-xs"
+                          : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                      }`}
+                      title={item.label}
+                      aria-label={item.label}
+                    >
+                      <Icon className="size-5" />
+                      {isActive && (
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-teal-600 rounded-r-full" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Collapsed Footer: Gateway, Sign Out, Avatar */}
+            <div className="flex flex-col items-center gap-2.5 w-full pt-3 border-t border-slate-100">
+              {onLogoutToGateway && (
+                <button
+                  onClick={onLogoutToGateway}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
+                  title="Return to CARE Gateway"
+                  aria-label="Return to CARE Gateway"
+                >
+                  <Building2 className="size-4.5" />
+                </button>
+              )}
+
+              {onSignOut && (
+                <button
+                  onClick={onSignOut}
+                  className="p-2 rounded-xl text-rose-700 hover:bg-rose-50 hover:text-rose-800 transition-colors cursor-pointer"
+                  title="Sign out"
+                  aria-label="Sign out"
+                  data-testid="staff-sign-out"
+                >
+                  <LogOut className="size-4.5" />
+                </button>
+              )}
+
+              <div
+                className="relative cursor-default"
+                title={staff ? `${staff.name} · ${staff.role_label} · ${staff.facility}` : "Signed in"}
+                data-testid="staff-avatar"
+              >
+                <div className="size-8 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center">
+                  {initials}
+                </div>
+                <span className="absolute bottom-0 right-0 size-2.5 rounded-full bg-emerald-500 border-2 border-white" />
+              </div>
+            </div>
+          </>
+        ) : (
+          /* ================= Expanded Navigation Mode ================= */
+          <>
+            <div className="overflow-y-auto pr-1 flex-1 flex flex-col">
+              {/* Header */}
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => goTo("overview-tab")}>
+                  <div className="size-8 rounded-lg bg-teal-50 border border-teal-600/30 flex items-center justify-center p-1">
+                    <CerviSetuLogo size={22} />
+                  </div>
+                  <div>
+                    <h1 className="font-bold text-sm text-slate-900 tracking-tight leading-none">
+                      CerviSetu
+                    </h1>
+                    <span className="text-[11px] text-slate-500 font-medium block mt-0.5">
+                      District Spoke Clinic
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCollapsed(true)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
+                  title="Collapse sidebar"
+                  aria-label="Collapse sidebar"
+                >
+                  <PanelLeft className="size-4" />
+                </button>
+              </div>
+
+              {/* Quick Search */}
+              <div className="mb-4">
+                <div className="relative flex items-center">
+                  <Search className="absolute left-3 size-3.5 text-slate-400" />
+                  <input
+                    ref={searchBox}
+                    type="text"
+                    placeholder="Search workflows..."
+                    value={search}
+                    data-testid="nav-search"
+                    onChange={(e) => setSearch(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") setSearch("");
+                      const first = NAV_ITEMS.find(matches);
+                      if (e.key === "Enter" && search.trim() && first) goTo(first.id);
+                    }}
+                    className="w-full pl-8.5 pr-12 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-teal-600 transition-colors"
+                  />
+                  <span className="absolute right-2 px-1.5 py-0.5 text-[10px] font-mono text-slate-400 bg-white border border-slate-200 rounded">
+                    Ctrl+K
+                  </span>
+                </div>
+              </div>
+
+              {/* Home */}
+              <div className="mb-3">
+                <button
+                  onClick={() => goTo("overview-tab")}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                    activeTab === "overview-tab"
+                      ? "bg-teal-50 text-teal-800"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                  }`}
+                >
+                  <Home className={`size-4 shrink-0 ${activeTab === "overview-tab" ? "text-teal-600" : "text-slate-400"}`} />
+                  <span>Ward Dashboard</span>
+                </button>
+              </div>
+
+              {/* Group 1: Clinical Care */}
+              <div className="mb-3">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 block mb-1">
+                  Clinical Care
+                </span>
+                <div className="space-y-0.5">
+                  {clinicalItems.map((item) => {
+                    const isActive = activeTab === item.id;
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => goTo(item.id)}
+                        className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
+                          isActive
+                            ? "bg-teal-50 text-teal-800 font-semibold"
+                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium"
+                        }`}
+                      >
+                        <Icon className={`size-4 shrink-0 ${isActive ? "text-teal-600" : "text-slate-400"}`} />
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Group 2: Diagnostics & AI */}
+              <div className="mb-3">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 block mb-1">
+                  Diagnostics & AI
+                </span>
+                <div className="space-y-0.5">
+                  {diagnosticItems.map((item) => {
+                    const isActive = activeTab === item.id;
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => goTo(item.id)}
+                        className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
+                          isActive
+                            ? "bg-teal-50 text-teal-800 font-semibold"
+                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium"
+                        }`}
+                      >
+                        <Icon className={`size-4 shrink-0 ${isActive ? "text-teal-600" : "text-slate-400"}`} />
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Group 3: Coordination */}
+              <div className="mb-3">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-3 block mb-1">
+                  Coordination
+                </span>
+                <div className="space-y-0.5">
+                  {coordinationItems.map((item) => {
+                    const isActive = activeTab === item.id;
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => goTo(item.id)}
+                        className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
+                          isActive
+                            ? "bg-teal-50 text-teal-800 font-semibold"
+                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-medium"
+                        }`}
+                      >
+                        <Icon className={`size-4 shrink-0 ${isActive ? "text-teal-600" : "text-slate-400"}`} />
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* What's New Item */}
+              <div className="mt-auto pt-2 mb-2">
+                <button
+                  type="button"
+                  onClick={() => setPanel("whats-new")}
+                  data-testid="whats-new"
+                  className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Bell className="size-3.5 text-amber-500" />
+                    <span>What's new</span>
+                  </div>
+                  <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                    New
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Expanded Footer: Status, Gateway, Profile & Sign Out */}
+            <div className="border-t border-slate-100 pt-3 flex flex-col gap-2">
+              <div className="flex items-center justify-between px-2 py-1 bg-slate-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20" />
+                  <span className="text-xs font-semibold text-slate-700">Mirzapur Spoke</span>
+                </div>
+                <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                  Online
+                </span>
+              </div>
+
+              {onLogoutToGateway && (
+                <button
+                  onClick={onLogoutToGateway}
+                  className="flex items-center gap-2 text-xs text-slate-500 hover:text-slate-900 hover:bg-slate-50 px-2 py-1.5 rounded-lg transition-colors cursor-pointer font-medium"
+                >
+                  <Building2 className="size-3.5" />
+                  <span>Switch to Gateway</span>
+                </button>
+              )}
+
+              {/* Profile Card & Sign out */}
+              <div className="flex items-center justify-between px-2 pt-1 border-t border-slate-100">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div
+                    className="relative cursor-default"
+                    title={staff ? `${staff.name} · ${staff.role_label} · ${staff.facility}` : "Signed in"}
+                    data-testid="staff-avatar"
+                  >
+                    <div className="size-7 rounded-full bg-slate-900 text-white font-bold text-[11px] flex items-center justify-center shrink-0">
+                      {initials}
+                    </div>
+                    <span className="absolute bottom-0 right-0 size-2 rounded-full bg-emerald-500 border border-white" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-slate-900 truncate leading-tight">
+                      {staff ? staff.name : "Staff User"}
+                    </p>
+                    <p className="text-[10px] text-slate-500 truncate leading-tight">
+                      {staff ? staff.role_label : "Clinical Officer"}
+                    </p>
+                  </div>
+                </div>
+                {onSignOut && (
+                  <button
+                    onClick={onSignOut}
+                    className="p-1.5 rounded-lg text-rose-700 hover:bg-rose-50 hover:text-rose-800 transition-colors cursor-pointer"
+                    title="Sign out"
+                    aria-label="Sign out"
+                    data-testid="staff-sign-out"
+                  >
+                    <LogOut className="size-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </aside>
 
       {/* 3. Main Workspace Area */}
       <div className="flex-1 h-full overflow-hidden flex flex-col bg-[#FAFAFA]">
@@ -474,7 +473,7 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
                 </span>
                 <span className="font-semibold text-slate-800 max-w-40 truncate">{staff.name}</span>
                 <span className="text-slate-500">{staff.role_label}</span>
-                {staff.offline && <span className="text-[10px] text-[#F19941] font-semibold">offline</span>}
+                {staff.offline && <span className="text-[10px] text-amber-600 font-semibold">offline</span>}
               </div>
             )}
             <LanguageSwitch className="max-sm:w-[88px] max-sm:[&>select]:w-full" />
@@ -484,7 +483,7 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
               data-testid="ask-genie"
               className="flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-800 whitespace-nowrap transition-colors cursor-pointer"
             >
-              <Sparkles className="size-3.5 text-[#F19941]" />
+              <Sparkles className="size-3.5 text-amber-500" />
               <span>Ask Genie</span>
             </button>
 
@@ -502,10 +501,10 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
 
         {/* Tab Viewport with Adaptive Layout (Full-bleed for clinical encounter) */}
         <main className={`staff-main flex-1 h-[calc(100vh-3.5rem)] overflow-y-auto overflow-x-hidden ${
-          activeTab === "encounter-tab" || activeTab === "dual-tab" ? "p-0" : "p-4 sm:p-8 lg:p-10"
+          activeTab === "encounter-tab" ? "p-0" : "p-4 sm:p-8 lg:p-10"
         }`}>
           <div className={`w-full ${
-            activeTab === "encounter-tab" || activeTab === "dual-tab" ? "h-full" : "max-w-5xl mx-auto"
+            activeTab === "encounter-tab" ? "h-full" : "max-w-5xl mx-auto"
           }`}>
             {children}
           </div>
@@ -514,7 +513,7 @@ export function DashboardLayout({ activeTab, onTabChange, onLogoutToGateway, sta
       <ErrorBoundary
         name="genie"
         fallback={
-          <button type="button" onClick={() => window.location.reload()} data-testid="genie-failed" className="fixed bottom-4 right-4 z-50 rounded-full bg-white border border-[#BA2D0B]/40 px-4 py-2.5 text-sm font-semibold text-[#BA2D0B] shadow-lg cursor-pointer">
+          <button type="button" onClick={() => window.location.reload()} data-testid="genie-failed" className="fixed bottom-4 right-4 z-50 rounded-full bg-white border border-rose-300 px-4 py-2.5 text-sm font-semibold text-rose-700 shadow-lg cursor-pointer">
             Genie stopped. Reload
           </button>
         }

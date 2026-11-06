@@ -9,8 +9,7 @@ import { AuditLedger } from "./components/AuditLedger";
 import { CareGateway, PATIENT_LOGIN_FLAG } from "./components/CareGateway";
 import { PatientPortal } from "./components/PatientPortal";
 import { PatientSessionRedirect } from "./components/PatientSessionRedirect";
-import { PatientCompanion } from "./components/PatientCompanion";
-import { DualScreenDemo } from "./components/DualScreenDemo";
+import { SpecialistReviewPortal } from "./components/SpecialistReviewPortal";
 import { ClinicianEncounter } from "./components/ClinicianEncounter";
 import { PreventionScreening } from "./components/PreventionScreening";
 import { LandingPage } from "./components/LandingPage";
@@ -152,9 +151,8 @@ export default function App() {
   if (currentRoute.view === "landing") {
     return (
       <LandingPage
-        onLaunchWorkstation={() => navigate({ view: "staff", tab: "overview-tab" })}
+        onLaunchWorkstation={() => navigate({ view: "staff", tab: "prevention-tab" })}
         onOpenPatientCompanion={() => navigate("/patient")}
-        onOpenDualView={() => navigate("/demo")}
         onOpenGateway={() => navigate("/gateway")}
       />
     );
@@ -168,17 +166,16 @@ export default function App() {
           // Always show the sign-in screen from the gateway, even if a session is still open.
           await staffApi.logout();
           setStaff(null);
-          navigate({ view: "staff", tab: "overview-tab" });
+          navigate({ view: "staff", tab: "prevention-tab" });
         }}
         onLoginAsha={async () => {
           await staffApi.logout();
           setStaff(null);
-          navigate({ view: "staff", tab: "asha-tab" });
+          navigate({ view: "staff", tab: "prevention-tab" });
         }}
         onLoginPatient={(token) => {
           if (token) navigate(`/patient/${token}`);
         }}
-        onOpenDualView={() => navigate("/demo")}
         onOpenLanding={() => navigate("/landing")}
       />
     );
@@ -207,18 +204,8 @@ export default function App() {
     );
   }
 
-  // 3. Dual-Screen Demo View (URL: /demo or /dual)
-  if (currentRoute.view === "dual") {
-    return (
-      <DualScreenDemo
-        onBackToStaff={() => navigate({ view: "staff", tab: "overview-tab" })}
-        onBackToGateway={() => navigate("/")}
-      />
-    );
-  }
-
-  // 4. Staff Workstation View (URL: /staff or /staff/:tab), only after staff sign-in
-  const currentTab: Tab = currentRoute.tab || "overview-tab";
+  // 3. Staff Workstation View (URL: /staff or /staff/:tab), only after staff sign-in
+  const currentTab: Tab = currentRoute.tab || "prevention-tab";
 
   if (staff === undefined) {
     return (
@@ -267,13 +254,11 @@ export default function App() {
       )}
 
       {currentTab === "prevention-tab" && (
-        staff?.role === "ASHA" ? (
-          <p className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600" data-testid="role-notice">
-            Prevention and screening records are open to doctors, nurses and administrators. Your field work is in ASHA Network.
-          </p>
-        ) : (
-          <PreventionScreening />
-        )
+        <PreventionScreening />
+      )}
+
+      {currentTab === "specialist-tab" && (
+        <SpecialistReviewPortal />
       )}
 
       {currentTab === "encounter-tab" && (
@@ -281,22 +266,8 @@ export default function App() {
           patientToken={selectedPatientToken}
           cases={cases}
           onSelectPatient={(token) => setSelectedPatientToken(token)}
-          onBackToDashboard={() => navigate({ view: "staff", tab: "overview-tab" })}
+          onBackToDashboard={() => navigate({ view: "staff", tab: "prevention-tab" })}
           onOpenPatientCompanion={(token) => navigate(`/patient/${token}`)}
-        />
-      )}
-
-      {currentTab === "patient-tab" && (
-        <div className="w-full max-w-6xl mx-auto py-2">
-          <PatientCompanion patientToken={selectedPatientToken || "PT-RURAL-7891"} />
-        </div>
-      )}
-
-      {currentTab === "dual-tab" && (
-        <DualScreenDemo
-          onBackToStaff={() => navigate({ view: "staff", tab: "overview-tab" })}
-          onBackToGateway={() => navigate("/")}
-          isInsideDashboard={true}
         />
       )}
 

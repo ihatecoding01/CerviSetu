@@ -18,33 +18,33 @@ const badgeVariants = cva(
     variants: {
       variant: {
         primary:
-          "border-[#BA2D0B]/30 bg-[#BA2D0B]/10 text-[#BA2D0B]",
+          "border-pink-300 bg-pink-100 text-[#9D174D] font-heading font-bold",
         success:
-          "border-[#DBFE87] bg-[#DBFE87]/30 text-black",
+          "border-sky-300 bg-sky-50 text-[#0369A1] font-heading font-bold",
         warning:
-          "border-[#F19941]/40 bg-[#F19941]/15 text-[#BA2D0B]",
+          "border-slate-300 bg-slate-100 text-slate-800 font-heading font-bold",
         info:
-          "border-[#90C3CB]/40 bg-[#90C3CB]/20 text-slate-900",
+          "border-sky-300 bg-sky-100 text-[#0369A1] font-heading font-bold",
         destructive:
-          "border-[#BA2D0B]/30 bg-[#BA2D0B]/10 text-[#BA2D0B]",
+          "border-pink-400 bg-pink-50 text-[#831843] font-heading font-bold",
         neutral:
-          "border-gray-200 bg-gray-100 text-gray-700",
+          "border-black/15 bg-white text-slate-800 font-heading",
         red:
-          "border-[#BA2D0B]/30 bg-[#BA2D0B]/10 text-[#BA2D0B]",
+          "border-pink-300 bg-pink-100 text-[#9D174D] font-heading font-bold",
         orange:
-          "border-[#F19941]/40 bg-[#F19941]/20 text-black",
+          "border-pink-300 bg-pink-50 text-[#9D174D] font-heading font-bold",
         amber:
-          "border-[#F19941]/40 bg-[#F19941]/20 text-black",
+          "border-slate-300 bg-slate-100 text-slate-800 font-heading font-bold",
         yellow:
-          "border-[#DBFE87] bg-[#DBFE87]/30 text-black",
+          "border-slate-300 bg-slate-100 text-slate-800 font-heading font-bold",
         green:
-          "border-[#DBFE87] bg-[#DBFE87]/30 text-black",
+          "border-sky-300 bg-sky-50 text-[#0369A1] font-heading font-bold",
         blue:
-          "border-[#90C3CB]/40 bg-[#90C3CB]/20 text-slate-900",
+          "border-sky-300 bg-sky-100 text-[#0369A1] font-heading font-bold",
         indigo:
-          "border-[#90C3CB]/40 bg-[#90C3CB]/20 text-slate-900",
+          "border-sky-300 bg-sky-100 text-[#0369A1] font-heading font-bold",
         purple:
-          "border-slate-200 bg-slate-100 text-black",
+          "border-pink-300 bg-pink-50 text-[#9D174D] font-heading font-bold",
       },
       solid: {
         true: "",
@@ -65,27 +65,27 @@ const badgeVariants = cva(
       {
         variant: "primary",
         solid: true,
-        className: "bg-emerald-600 border-emerald-500 text-white",
+        className: "bg-[#9D174D] border-[#9D174D] text-white",
       },
       {
         variant: "success",
         solid: true,
-        className: "bg-green-600 border-green-500 text-white",
+        className: "bg-[#0284C7] border-[#0284C7] text-white",
       },
       {
         variant: "warning",
         solid: true,
-        className: "bg-amber-600 border-amber-500 text-white",
+        className: "bg-slate-700 border-slate-700 text-white",
       },
       {
         variant: "info",
         solid: true,
-        className: "bg-indigo-600 border-indigo-500 text-white",
+        className: "bg-[#0284C7] border-[#0284C7] text-white",
       },
       {
         variant: "destructive",
         solid: true,
-        className: "bg-red-600 border-red-500 text-white",
+        className: "bg-[#9D174D] border-[#9D174D] text-white",
       },
       { counter: true, size: "xs", className: "min-w-4 px-1" },
       { counter: true, size: "sm", className: "min-w-5 px-1" },

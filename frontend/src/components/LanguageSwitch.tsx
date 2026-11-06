@@ -14,7 +14,7 @@ export const LanguageSwitch: React.FC<{ className?: string }> = ({ className = "
       <select
         value={lang}
         onChange={(e) => setLang(e.target.value as SiteLang)}
-        className="min-h-9 appearance-none bg-slate-100 border border-slate-200 rounded-full pl-7 pr-7 text-xs font-semibold text-slate-800 hover:bg-slate-200 cursor-pointer focus-visible:outline-2 focus-visible:outline-black"
+        className="min-h-8.5 appearance-none bg-white/90 border border-black/15 rounded-md pl-7 pr-7 text-xs font-heading font-semibold text-slate-800 hover:bg-white hover:border-black/30 cursor-pointer shadow-2xs focus-visible:outline-2 focus-visible:outline-black transition-all"
       >
         {SITE_LANGS.map((l) => (
           <option key={l.code} value={l.code} lang={l.code}>

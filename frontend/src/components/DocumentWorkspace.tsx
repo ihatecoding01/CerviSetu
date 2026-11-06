@@ -103,11 +103,11 @@ export function DocumentWorkspace({ onUseInIntake }: Props) {
         </label>
       </div>
 
-      {error && <p role="alert" className="text-xs text-[#BA2D0B]">{error}</p>}
+      {error && <p role="alert" className="text-xs text-rose-600 font-medium">{error}</p>}
       {doc?.status === "QUALITY_REJECTED" && (
-        <p role="alert" className="text-xs text-[#BA2D0B]">{doc.quality?.reasons.join(" ") || "This photo cannot be read. Please retake it."}</p>
+        <p role="alert" className="text-xs text-rose-600 font-medium">{doc.quality?.reasons.join(" ") || "This photo cannot be read. Please retake it."}</p>
       )}
-      {doc && STATUS_MESSAGE[doc.status] && <p role="alert" className="text-xs text-[#BA2D0B]">{STATUS_MESSAGE[doc.status]}</p>}
+      {doc && STATUS_MESSAGE[doc.status] && <p role="alert" className="text-xs text-rose-600 font-medium">{STATUS_MESSAGE[doc.status]}</p>}
       {doc?.quality?.warnings.map((w) => <p key={w} className="text-xs text-amber-700">{w}</p>)}
 
       {doc?.status === "COMPLETED" && (
@@ -154,7 +154,7 @@ export function DocumentWorkspace({ onUseInIntake }: Props) {
                       className={`text-left p-2 rounded-lg border cursor-pointer ${l.abnormal ? "border-red-300 bg-red-50" : "border-gray-200"}`}
                     >
                       <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-900">
-                        {l.abnormal ? <AlertTriangle className="size-3.5 text-[#BA2D0B]" /> : <CheckCircle2 className="size-3.5 text-[#0F766E]" />}
+                        {l.abnormal ? <AlertTriangle className="size-3.5 text-rose-600" /> : <CheckCircle2 className="size-3.5 text-teal-700" />}
                         {l.name}: {l.value} {l.unit}
                       </span>
                       <span className="block text-[11px] text-gray-600 mt-0.5">{l.note}</span>
@@ -172,7 +172,7 @@ export function DocumentWorkspace({ onUseInIntake }: Props) {
                   <div key={f.key} onClick={() => f.block_id && setActive(f.block_id)} className={`p-1.5 ${rowClass(f.block_id)}`}>
                     <label className="text-[11px] font-semibold text-gray-600 flex items-center gap-1.5">
                       {f.label}
-                      {!f.found_in_document && <span className="text-[#BA2D0B]">Not matched to the document, please check</span>}
+                      {!f.found_in_document && <span className="text-rose-600">Not matched to the document, please check</span>}
                     </label>
                     <input
                       value={values[f.key] ?? ""}

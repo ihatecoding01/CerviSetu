@@ -628,8 +628,8 @@ export const PatientCompanion: React.FC<Props> = ({
       <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-7 mb-7 shadow-xs">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
           <div className="flex items-start sm:items-center gap-4">
-            <div className="size-12 rounded-2xl bg-[#BA2D0B]/10 text-[#BA2D0B] flex items-center justify-center shrink-0 border border-[#BA2D0B]/20">
-              <Heart className="size-6 text-[#BA2D0B]" />
+            <div className="size-12 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center shrink-0 border border-teal-200">
+              <Heart className="size-6 text-teal-600" />
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
@@ -639,15 +639,15 @@ export const PatientCompanion: React.FC<Props> = ({
                 <span className="font-mono font-bold text-black bg-slate-100 px-2.5 py-0.5 rounded-lg text-sm border border-slate-200">
                   {patientToken}
                 </span>
-                <span className="text-xs bg-[#DBFE87] text-black border border-[#c6ea6d] px-2.5 py-0.5 rounded-full font-bold">
+                <span className="text-xs bg-teal-50 text-teal-800 border border-teal-200 px-2.5 py-0.5 rounded-full font-bold">
                   {profile?.synthetic_patient && profile.stage ? `Stage ${profile.stage} Cervical` : t.stageBadge}
                 </span>
                 {profile?.synthetic_patient && (
-                  <span className="text-xs bg-[#BA2D0B]/10 text-[#BA2D0B] border border-[#BA2D0B]/30 px-2.5 py-0.5 rounded-full font-bold">
+                  <span className="text-xs bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full font-bold">
                     SAMPLE RECORD
                   </span>
                 )}
-                <span className="text-xs bg-[#90C3CB]/20 text-slate-800 border border-[#90C3CB]/50 px-2.5 py-0.5 rounded-full font-semibold">
+                <span className="text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full font-semibold">
                   {t.dpdpBadge}
                 </span>
               </div>
@@ -660,7 +660,7 @@ export const PatientCompanion: React.FC<Props> = ({
                 </p>
               )}
               {profile?.synthetic_patient && (
-                <p className="text-xs text-[#BA2D0B] bg-[#BA2D0B]/5 border border-[#BA2D0B]/20 rounded-lg px-2.5 py-1.5 mt-2">
+                <p className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-2.5 py-1.5 mt-2">
                   Sample patient: treatment history, clock and escalations are generated, not real
                   clinical records. ABHA shown is a {profile.abha_label}.
                 </p>
@@ -684,7 +684,7 @@ export const PatientCompanion: React.FC<Props> = ({
 
             <a
               href="tel:1075"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#BA2D0B] bg-[#BA2D0B]/10 hover:bg-[#BA2D0B]/15 border border-[#BA2D0B]/30 px-3.5 py-1.5 rounded-full transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3.5 py-1.5 rounded-full transition-colors cursor-pointer"
               title="National Health Helpline"
             >
               <Phone className="size-3.5" />
@@ -729,7 +729,7 @@ export const PatientCompanion: React.FC<Props> = ({
         >
           <Clock className="size-3.5" />
           <span>{t.tabs.clock}</span>
-          <span className="bg-[#DBFE87] text-black text-xs px-2 py-0.5 rounded-full font-bold">
+          <span className="bg-teal-100 text-teal-800 text-xs px-2 py-0.5 rounded-full font-bold">
             {clock.total_steps_completed}/29
           </span>
         </button>
@@ -772,7 +772,7 @@ export const PatientCompanion: React.FC<Props> = ({
           <Bus className="size-3.5" />
           <span>{t.tabs.travel}</span>
           {passData.slot_confirmed_by_doctor === 1 && (
-            <span className="bg-[#DBFE87] text-black text-xs px-2 py-0.5 rounded-full font-bold">
+            <span className="bg-teal-100 text-teal-800 text-xs px-2 py-0.5 rounded-full font-bold">
               <Sym n="check" />
             </span>
           )}
@@ -784,18 +784,18 @@ export const PatientCompanion: React.FC<Props> = ({
         <div
           className={`p-5 rounded-2xl mb-7 text-sm border transition-all shadow-xs ${
             notificationMsg.type === "alert"
-              ? "bg-[#BA2D0B]/10 border-[#BA2D0B]/30 text-[#BA2D0B]"
+              ? "bg-rose-50 border-rose-200 text-rose-700"
               : notificationMsg.type === "info"
-              ? "bg-[#90C3CB]/15 border-[#90C3CB]/40 text-slate-900"
-              : "bg-[#DBFE87]/30 border-[#c4e872] text-black"
+              ? "bg-teal-50 border-teal-200 text-slate-900"
+              : "bg-emerald-50 border-emerald-200 text-emerald-950"
           }`}
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3">
               {notificationMsg.type === "alert" ? (
-                <AlertTriangle className="size-5 text-[#BA2D0B] shrink-0 mt-0.5" />
+                <AlertTriangle className="size-5 text-rose-600 shrink-0 mt-0.5" />
               ) : notificationMsg.type === "info" ? (
-                <Info className="size-5 text-[#90C3CB] shrink-0 mt-0.5" />
+                <Info className="size-5 text-teal-600 shrink-0 mt-0.5" />
               ) : (
                 <CheckCircle2 className="size-5 text-black shrink-0 mt-0.5" />
               )}
@@ -821,7 +821,7 @@ export const PatientCompanion: React.FC<Props> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 mb-7 border-b border-slate-100 gap-4">
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-black bg-[#DBFE87] px-2.5 py-0.5 rounded-full">
+                <span className="text-xs font-bold uppercase tracking-wider text-teal-800 bg-teal-100 px-2.5 py-0.5 rounded-full">
                   {t.clockTag}
                 </span>
                 <span className="text-xs text-slate-500 font-semibold">{t.clockStandard}</span>
@@ -846,15 +846,15 @@ export const PatientCompanion: React.FC<Props> = ({
             {/* Step 1: External Beam Radiation (EBRT) */}
             <div className="flex items-start gap-4 relative">
               <div className="flex flex-col items-center">
-                <div className="size-7 rounded-full bg-[#DBFE87] border-2 border-black flex items-center justify-center shrink-0">
-                  <Check className="size-3.5 text-black stroke-[3]" />
+                <div className="size-7 rounded-full bg-teal-500 border-2 border-teal-600 flex items-center justify-center shrink-0">
+                  <Check className="size-3.5 text-white stroke-[3]" />
                 </div>
                 <div className="w-0.5 h-12 bg-slate-200 mt-1" />
               </div>
               <div className="flex-1 pb-2">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold text-black">{t.milestone1Title}</h3>
-                  <span className="text-xs font-bold text-black bg-[#DBFE87] px-2 py-0.5 rounded-full">
+                  <span className="text-xs font-bold text-teal-800 bg-teal-100 px-2 py-0.5 rounded-full">
                     14 / 25 {t.progressCompleted}
                   </span>
                 </div>
@@ -867,7 +867,7 @@ export const PatientCompanion: React.FC<Props> = ({
             {/* Step 2: Day-21 PAC Clearance Gate */}
             <div className="flex items-start gap-4 relative">
               <div className="flex flex-col items-center">
-                <div className="size-7 rounded-full bg-[#F19941] text-white flex items-center justify-center shrink-0 shadow-xs">
+                <div className="size-7 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
                   <CircleDot className="size-4 animate-pulse" />
                 </div>
                 <div className="w-0.5 h-12 bg-slate-200 mt-1" />
@@ -885,7 +885,7 @@ export const PatientCompanion: React.FC<Props> = ({
                       Advance to Frac 15
                     </button>
                   ) : (
-                    <span className="text-xs font-bold text-black bg-[#DBFE87] px-2.5 py-0.5 rounded-full">
+                    <span className="text-xs font-bold text-teal-800 bg-teal-100 px-2.5 py-0.5 rounded-full">
                       Gate Cleared <Sym n="check" />
                     </span>
                   )}
@@ -935,11 +935,11 @@ export const PatientCompanion: React.FC<Props> = ({
                     title={`Fraction ${fractionNum}`}
                     className={`h-9 rounded-xl border flex items-center justify-center transition-colors ${
                       isDone
-                        ? "bg-[#DBFE87] border-[#c4e872] text-black font-bold"
+                        ? "bg-teal-600 border-teal-600 text-white font-bold"
                         : isCurrent
-                        ? "bg-[#F19941] border-[#F19941] text-white font-bold ring-2 ring-[#F19941] ring-offset-2"
+                        ? "bg-amber-500 border-amber-500 text-white font-bold ring-2 ring-amber-400 ring-offset-2"
                         : isMilestone15
-                        ? "bg-[#F19941]/15 border-[#F19941]/40 text-[#BA2D0B] font-bold"
+                        ? "bg-amber-50 border-amber-200 text-amber-800 font-bold"
                         : "bg-white border-slate-200 text-slate-400 font-normal"
                     }`}
                   >
@@ -952,7 +952,7 @@ export const PatientCompanion: React.FC<Props> = ({
 
           {/* Biological Timeline Metric Cards (Generous Whitespace & Coded Colors) */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-[#DBFE87]/20 border border-[#c4e872] p-4 rounded-2xl flex items-center gap-3">
+            <div className="bg-teal-50 border border-teal-200 p-4 rounded-2xl flex items-center gap-3">
               <Clock className="size-5 text-black shrink-0" />
               <div>
                 <span className="text-xs text-slate-700 font-semibold block">
@@ -980,7 +980,7 @@ export const PatientCompanion: React.FC<Props> = ({
               </div>
             </div>
 
-            <div className="bg-[#90C3CB]/20 border border-[#90C3CB]/50 p-4 rounded-2xl flex items-center gap-3">
+            <div className="bg-teal-50 border border-teal-200 p-4 rounded-2xl flex items-center gap-3">
               <Building2 className="size-5 text-slate-800 shrink-0" />
               <div>
                 <span className="text-xs text-slate-800 font-semibold block">
@@ -1001,8 +1001,8 @@ export const PatientCompanion: React.FC<Props> = ({
         <div className="bg-white rounded-3xl border border-slate-200/90 p-7 sm:p-8 mb-8 shadow-xs">
           <div className="flex items-start justify-between pb-5 mb-5 border-b border-slate-100">
             <div className="flex items-center gap-3">
-              <div className="size-10 rounded-xl bg-[#90C3CB]/20 text-slate-800 flex items-center justify-center border border-[#90C3CB]/40">
-                <Heart className="size-5 text-[#BA2D0B]" />
+              <div className="size-10 rounded-xl bg-teal-50 text-teal-800 flex items-center justify-center border border-teal-200">
+                <Heart className="size-5 text-teal-600" />
               </div>
               <div>
                 <h3 className="text-base font-bold text-black">
@@ -1013,13 +1013,13 @@ export const PatientCompanion: React.FC<Props> = ({
                 </span>
               </div>
             </div>
-            <span className="text-xs font-bold bg-[#DBFE87] text-black border border-[#c4e872] px-3 py-1 rounded-full">
+            <span className="text-xs font-bold bg-teal-100 text-teal-800 border border-teal-200 px-3 py-1 rounded-full">
               eGFR Safe
             </span>
           </div>
 
           {/* Instruction Box in Aqua Accent */}
-          <div className="bg-[#90C3CB]/15 rounded-2xl p-5 border border-[#90C3CB]/30 text-black mb-6 text-sm font-medium leading-relaxed">
+          <div className="bg-teal-50/50 rounded-2xl p-5 border border-teal-200 text-black mb-6 text-sm font-medium leading-relaxed">
             {t.hydrationQuote}
           </div>
 
@@ -1027,7 +1027,7 @@ export const PatientCompanion: React.FC<Props> = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
               <div className="flex items-center gap-2 mb-2">
-                <CheckCircle2 className="size-4.5 text-[#BA2D0B] shrink-0" />
+                <CheckCircle2 className="size-4.5 text-teal-600 shrink-0" />
                 <span className="text-xs font-bold text-black">{t.hydrationPoint1Title}</span>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">{t.hydrationPoint1Desc}</p>
@@ -1035,7 +1035,7 @@ export const PatientCompanion: React.FC<Props> = ({
 
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
               <div className="flex items-center gap-2 mb-2">
-                <CheckCircle2 className="size-4.5 text-[#F19941] shrink-0" />
+                <CheckCircle2 className="size-4.5 text-amber-500 shrink-0" />
                 <span className="text-xs font-bold text-black">{t.hydrationPoint2Title}</span>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">{t.hydrationPoint2Desc}</p>
@@ -1117,13 +1117,13 @@ export const PatientCompanion: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => handleReportSymptom("DIARRHEA", 1)}
-              className="p-4 bg-slate-50 hover:bg-[#90C3CB]/20 border border-slate-200 hover:border-[#90C3CB] rounded-2xl text-left transition-colors cursor-pointer group"
+              className="p-4 bg-slate-50 hover:bg-teal-50 border border-slate-200 hover:border-teal-300 rounded-2xl text-left transition-colors cursor-pointer group"
             >
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-sm font-bold text-black">
                   <Sym n="droplet" /> {t.symp1Title}
                 </span>
-                <span className="text-xs font-bold text-slate-800 bg-[#90C3CB]/40 px-2 py-0.5 rounded">
+                <span className="text-xs font-bold text-teal-800 bg-teal-100 px-2 py-0.5 rounded">
                   {t.symp1Grade}
                 </span>
               </div>
@@ -1135,18 +1135,18 @@ export const PatientCompanion: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => handleReportSymptom("DIARRHEA_SEVERE", 2)}
-              className="p-4 bg-[#BA2D0B]/10 hover:bg-[#BA2D0B]/15 border border-[#BA2D0B]/30 hover:border-[#BA2D0B] rounded-2xl text-left transition-colors cursor-pointer group"
+              className="p-4 bg-rose-50 hover:bg-rose-100 border border-rose-200 hover:border-rose-400 rounded-2xl text-left transition-colors cursor-pointer group"
             >
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-sm font-bold text-[#BA2D0B] flex items-center gap-1.5">
-                  <AlertTriangle className="size-4 text-[#BA2D0B]" />
+                <span className="text-sm font-bold text-rose-700 flex items-center gap-1.5">
+                  <AlertTriangle className="size-4 text-rose-600" />
                   <Sym n="alert" /> {t.symp2Title}
                 </span>
-                <span className="text-xs font-bold text-white bg-[#BA2D0B] px-2 py-0.5 rounded">
+                <span className="text-xs font-bold text-white bg-rose-600 px-2 py-0.5 rounded">
                   {t.symp2Grade}
                 </span>
               </div>
-              <p className="text-xs text-[#BA2D0B]/90 leading-normal">
+              <p className="text-xs text-rose-800 leading-normal">
                 {t.symp2Desc}
               </p>
             </button>
@@ -1154,13 +1154,13 @@ export const PatientCompanion: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => handleReportSymptom("PELVIC_BURNING", 1)}
-              className="p-4 bg-slate-50 hover:bg-[#F19941]/15 border border-slate-200 hover:border-[#F19941] rounded-2xl text-left transition-colors cursor-pointer group"
+              className="p-4 bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 rounded-2xl text-left transition-colors cursor-pointer group"
             >
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-sm font-bold text-black">
                   <Sym n="flame" /> {t.symp3Title}
                 </span>
-                <span className="text-xs font-bold text-slate-900 bg-[#F19941]/30 px-2 py-0.5 rounded">
+                <span className="text-xs font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded">
                   {t.symp3Grade}
                 </span>
               </div>
@@ -1202,7 +1202,7 @@ export const PatientCompanion: React.FC<Props> = ({
           <div className="bg-white rounded-3xl border border-slate-200/90 p-7 sm:p-8 shadow-xs">
             <div className="flex items-start justify-between pb-5 mb-5 border-b border-slate-100">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-black bg-[#F19941] px-2.5 py-0.5 rounded-full">
+                <span className="text-xs font-bold uppercase tracking-wider text-black bg-amber-500 px-2.5 py-0.5 rounded-full">
                   {t.brachyMilestoneTag}
                 </span>
                 <h3 className="text-base font-bold text-black mt-2">
@@ -1216,8 +1216,8 @@ export const PatientCompanion: React.FC<Props> = ({
               <span
                 className={`text-xs px-3 py-1 rounded-full font-bold border ${
                   clock.total_steps_completed >= 15
-                    ? "bg-[#DBFE87] text-black border-[#c4e872]"
-                    : "bg-[#F19941]/20 text-slate-900 border-[#F19941]/40"
+                    ? "bg-teal-100 text-teal-800 border-teal-200"
+                    : "bg-amber-50 text-amber-900 border-amber-200"
                 }`}
               >
                 {clock.total_steps_completed >= 15 ? t.step15Active : t.step15Pending}
@@ -1228,17 +1228,13 @@ export const PatientCompanion: React.FC<Props> = ({
             <div className="bg-black text-white rounded-2xl p-5 mb-5 shadow-xs">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="size-10 rounded-xl bg-[#F19941] text-white flex items-center justify-center">
+                  <div className="size-10 rounded-xl bg-teal-600 text-white flex items-center justify-center">
                     <Volume2 className="size-5 text-black" />
                   </div>
                   <div>
                     <span className="text-sm font-bold text-white block">
                       {language === "en"
                         ? currentTrack.id === "brachy_reassurance"
-                          ? "Brachytherapy Procedure & Pain Relief Reassurance"
-                          : currentTrack.id === "cisplatin_hydration"
-                          ? "Pre-Chemotherapy Hydration Guidelines"
-                          : "Treatment Pathway & Healing Clock Introduction"
                         : currentTrack.title_hi}
                     </span>
                     <span className="text-xs text-slate-400">
@@ -1250,7 +1246,7 @@ export const PatientCompanion: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={() => toggleAudioTrack(currentTrack.id)}
-                  className="size-10 rounded-full bg-[#F19941] hover:bg-[#e08933] text-black flex items-center justify-center shadow-md cursor-pointer transition-transform active:scale-95"
+                  className="size-10 rounded-full bg-teal-500 hover:bg-teal-600 text-white flex items-center justify-center shadow-md cursor-pointer transition-transform active:scale-95"
                 >
                   {isPlayingAudio ? (
                     <Pause className="size-4.5 fill-current" />
@@ -1264,7 +1260,7 @@ export const PatientCompanion: React.FC<Props> = ({
               {isPlayingAudio && (
                 <div className="w-full bg-slate-800 rounded-full h-1.5 mb-4 overflow-hidden">
                   <div
-                    className="bg-[#DBFE87] h-1.5 rounded-full transition-all duration-300"
+                    className="bg-teal-400 h-1.5 rounded-full transition-all duration-300"
                     style={{ width: `${audioProgress}%` }}
                   />
                 </div>
@@ -1332,12 +1328,12 @@ export const PatientCompanion: React.FC<Props> = ({
               </div>
 
               {passData.slot_confirmed_by_doctor === 1 ? (
-                <span className="text-xs bg-[#DBFE87] text-black border border-[#c4e872] px-3 py-1 rounded-full font-bold flex items-center gap-1.5">
+                <span className="text-xs bg-teal-100 text-teal-800 border border-teal-200 px-3 py-1 rounded-full font-bold flex items-center gap-1.5">
                   <CheckCircle2 className="size-3.5 text-black" />
                   {t.approvedDay41}
                 </span>
               ) : (
-                <span className="text-xs bg-[#F19941]/20 text-slate-900 border border-[#F19941]/40 px-3 py-1 rounded-full font-bold">
+                <span className="text-xs bg-amber-50 text-amber-900 border border-amber-200 px-3 py-1 rounded-full font-bold">
                   {clock.total_steps_completed >= 15 ? t.hubAwaiting : t.hubStep15Req}
                 </span>
               )}
@@ -1348,7 +1344,7 @@ export const PatientCompanion: React.FC<Props> = ({
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-              <div className="p-4.5 bg-[#90C3CB]/15 rounded-2xl border border-[#90C3CB]/30">
+              <div className="p-4.5 bg-teal-50/50 rounded-2xl border border-teal-200">
                 <div className="flex items-center gap-2 mb-1.5">
                   <Bus className="size-4.5 text-slate-800" />
                   <span className="text-xs font-bold text-black">{t.busTitle}</span>
@@ -1361,7 +1357,7 @@ export const PatientCompanion: React.FC<Props> = ({
                 </span>
               </div>
 
-              <div className="p-4.5 bg-[#F19941]/15 rounded-2xl border border-[#F19941]/30">
+              <div className="p-4.5 bg-amber-50/50 rounded-2xl border border-amber-200">
                 <div className="flex items-center gap-2 mb-1.5">
                   <Home className="size-4.5 text-slate-800" />
                   <span className="text-xs font-bold text-black">{t.roomTitle}</span>
@@ -1397,7 +1393,7 @@ export const PatientCompanion: React.FC<Props> = ({
       <div className="bg-white rounded-3xl border border-slate-200/90 p-7 sm:p-8 shadow-xs mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-4 border-b border-slate-100 gap-2">
           <div className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-[#DBFE87] ring-2 ring-[#DBFE87]/50" />
+            <span className="size-2 rounded-full bg-teal-500 ring-2 ring-teal-200" />
             <span className="text-xs font-bold uppercase tracking-wider text-black font-mono">
               {t.evaluatorHeader}
             </span>
@@ -1417,13 +1413,13 @@ export const PatientCompanion: React.FC<Props> = ({
               type="button"
               onClick={handleAdvanceToFraction15}
               disabled={loadingAction === "advance"}
-              className="py-3 px-5 bg-[#BA2D0B] hover:bg-[#a02609] text-white rounded-full text-xs font-semibold shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="py-3 px-5 bg-teal-600 hover:bg-teal-700 text-white rounded-full text-xs font-semibold shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              <Sparkles className="size-4 text-[#DBFE87]" />
+              <Sparkles className="size-4 text-white" />
               <span>{t.demo1Pending}</span>
             </button>
           ) : (
-            <div className="py-3 px-5 bg-[#DBFE87]/30 border border-[#c4e872] text-black rounded-full text-xs font-bold flex items-center justify-center gap-2">
+            <div className="py-3 px-5 bg-teal-50 border border-teal-200 text-teal-900 rounded-full text-xs font-bold flex items-center justify-center gap-2">
               <Check className="size-4 text-black" />
               <span>{t.demo1Done}</span>
             </div>
@@ -1436,11 +1432,11 @@ export const PatientCompanion: React.FC<Props> = ({
               disabled={loadingAction === "confirm"}
               className="py-3 px-5 bg-black hover:bg-black/85 text-white rounded-full text-xs font-semibold shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              <Building2 className="size-4 text-[#90C3CB]" />
+              <Building2 className="size-4 text-teal-400" />
               <span>{t.demo2Pending}</span>
             </button>
           ) : (
-            <div className="py-3 px-5 bg-[#90C3CB]/25 border border-[#90C3CB] text-black rounded-full text-xs font-bold flex items-center justify-center gap-2">
+            <div className="py-3 px-5 bg-teal-50 border border-teal-200 text-teal-900 rounded-full text-xs font-bold flex items-center justify-center gap-2">
               <Check className="size-4 text-black" />
               <span>{t.demo2Done}</span>
             </div>
@@ -1454,7 +1450,7 @@ export const PatientCompanion: React.FC<Props> = ({
           <div className="bg-white rounded-3xl max-w-md w-full p-7 text-black shadow-2xl border border-slate-200 relative animate-in zoom-in-95 duration-150">
             <div className="flex justify-between items-center mb-5">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-black bg-[#DBFE87] border border-[#c4e872] px-2.5 py-0.5 rounded-full">
+                <span className="text-xs font-bold uppercase tracking-wider text-teal-900 bg-teal-100 border border-teal-200 px-2.5 py-0.5 rounded-full">
                   {t.modalBadge}
                 </span>
                 <h3 className="text-base font-bold mt-1.5 text-black">

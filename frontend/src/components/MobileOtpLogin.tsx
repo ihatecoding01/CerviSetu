@@ -131,9 +131,9 @@ export const MobileOtpLogin: React.FC<Props> = ({ onVerified, onRegister }) => {
 
   const primary =
     "w-full min-h-12 py-3 bg-black hover:bg-black/85 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-full shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black";
-  const demoTag = <span className="text-xs text-black bg-[#DBFE87] px-2 py-0.5 rounded font-mono font-bold">{t("otp.demoAuth")}</span>;
+  const demoTag = <span className="text-xs text-teal-800 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded font-mono font-bold">{t("otp.demoAuth")}</span>;
   const errorLine = error ? (
-    <div role="alert" className="text-sm text-[#BA2D0B] bg-[#BA2D0B]/5 border border-[#BA2D0B]/20 rounded-xl px-3 py-2">
+    <div role="alert" className="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">
       {errorText(t, error)}
       {errorCode === "MOBILE_NOT_REGISTERED" && (
         <button type="button" onClick={onRegister} className="block mt-1 font-semibold underline text-black cursor-pointer">
@@ -143,7 +143,7 @@ export const MobileOtpLogin: React.FC<Props> = ({ onVerified, onRegister }) => {
     </div>
   ) : null;
   const notice = (
-    <div className="bg-[#DBFE87]/20 border border-[#DBFE87] rounded-xl p-3 text-xs text-black flex items-start gap-2">
+    <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 text-xs text-teal-950 flex items-start gap-2">
       <ShieldCheck className="size-4 text-black shrink-0 mt-0.5" aria-hidden="true" />
       <div>
         <span className="font-bold">{txnId ? t("otp.sandboxTitle") : `${t("otp.demoAuth")}:`}</span>

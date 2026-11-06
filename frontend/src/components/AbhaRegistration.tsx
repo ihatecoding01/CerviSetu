@@ -210,8 +210,8 @@ export const AbhaRegistration: React.FC<Props> = ({ onVerified, onUseMobileLogin
     "w-full min-h-12 py-3 bg-black hover:bg-black/85 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-full shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black";
 
   const note = (title: string, body: React.ReactNode) => (
-    <div className="bg-[#DBFE87]/20 border border-[#DBFE87] rounded-xl p-3 text-xs text-black flex items-start gap-2">
-      <ShieldCheck className="size-4 text-black shrink-0 mt-0.5" aria-hidden="true" />
+    <div className="bg-emerald-50/60 border border-emerald-200 rounded-xl p-3 text-xs text-slate-900 flex items-start gap-2">
+      <ShieldCheck className="size-4 text-emerald-700 shrink-0 mt-0.5" aria-hidden="true" />
       <div>
         <span className="font-bold">{title}</span>
         <p className="text-xs text-slate-700 mt-0.5">{body}</p>
@@ -251,7 +251,7 @@ export const AbhaRegistration: React.FC<Props> = ({ onVerified, onUseMobileLogin
                     i === stepIndex
                       ? "bg-black text-white"
                       : done
-                        ? "bg-[#DBFE87] text-black hover:bg-[#cdf26f] cursor-pointer"
+                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 cursor-pointer"
                         : "bg-slate-100 text-slate-500"
                   } disabled:cursor-default`}
                 >
@@ -261,7 +261,7 @@ export const AbhaRegistration: React.FC<Props> = ({ onVerified, onUseMobileLogin
             );
           })}
         </ol>
-        <span className="text-xs text-black bg-[#DBFE87] px-2 py-0.5 rounded font-mono font-bold whitespace-nowrap">{t("abha.sandboxTag")}</span>
+        <span className="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-mono font-bold whitespace-nowrap">{t("abha.sandboxTag")}</span>
       </div>
       <div>
         <h4 className="text-base font-bold text-slate-900">
@@ -275,7 +275,7 @@ export const AbhaRegistration: React.FC<Props> = ({ onVerified, onUseMobileLogin
   const hint = (text: string) => <p className="text-xs text-slate-600 text-center -mt-2">{text}</p>;
 
   const errorLine = error ? (
-    <div role="alert" className="text-sm text-[#BA2D0B] bg-[#BA2D0B]/5 border border-[#BA2D0B]/20 rounded-xl px-3 py-2">
+    <div role="alert" className="text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">
       {errorText(t, error)}
       {errorCode === "ALREADY_REGISTERED" && onUseMobileLogin && (
         <button type="button" onClick={onUseMobileLogin} className="block mt-1 font-semibold underline text-black cursor-pointer">
@@ -301,9 +301,9 @@ export const AbhaRegistration: React.FC<Props> = ({ onVerified, onUseMobileLogin
             <h5 className="font-bold text-slate-900 flex items-center gap-1.5">
               <CheckCircle2 className="size-4 text-black" aria-hidden="true" /> {card.returning ? t("abha.welcomeBack") : t("abha.card")}
             </h5>
-            <span className="text-xs text-black bg-[#DBFE87] px-2 py-0.5 rounded font-bold">{t("abha.sandboxTag")}</span>
+            <span className="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-bold">{t("abha.sandboxTag")}</span>
           </div>
-          <p className="text-xs font-semibold text-[#BA2D0B]">{t("abha.cardLabel")}</p>
+          <p className="text-xs font-semibold text-rose-700">{t("abha.cardLabel")}</p>
           <dl>
             {rows
               .filter(([, v]) => v)
@@ -396,7 +396,7 @@ export const AbhaRegistration: React.FC<Props> = ({ onVerified, onUseMobileLogin
             <label
               key={k}
               className={`flex items-start gap-2.5 text-sm leading-snug cursor-pointer rounded-xl p-2.5 border transition-colors ${
-                consents[k] ? "border-[#c6ea6d] bg-[#DBFE87]/15 text-slate-900" : "border-transparent hover:bg-slate-50 text-slate-700"
+                consents[k] ? "border-teal-500/30 bg-teal-50 text-slate-900" : "border-transparent hover:bg-slate-50 text-slate-700"
               }`}
             >
               <input
@@ -476,9 +476,9 @@ export const AbhaRegistration: React.FC<Props> = ({ onVerified, onUseMobileLogin
           aria-invalid={!!idCheck.error}
           aria-describedby="abha-id-hint"
           placeholder={mode === "GENERATE" ? t("abha.id.placeholder.generate") : t("abha.id.placeholder.link")}
-          className={`${input} font-mono tracking-wider ${idCheck.error ? "border-[#BA2D0B]" : ""}`}
+          className={`${input} font-mono tracking-wider ${idCheck.error ? "border-rose-400 focus:border-rose-500" : ""}`}
         />
-        <p id="abha-id-hint" aria-live="polite" className={`text-xs mt-1 flex items-center gap-1 ${idCheck.ok ? "text-black" : idCheck.error ? "text-[#BA2D0B]" : "text-slate-600"}`}>
+        <p id="abha-id-hint" aria-live="polite" className={`text-xs mt-1 flex items-center gap-1 ${idCheck.ok ? "text-teal-700 font-medium" : idCheck.error ? "text-rose-600 font-medium" : "text-slate-600"}`}>
           {idCheck.ok && <CheckCircle2 className="size-3" aria-hidden="true" />} {idCheck.key ? t(idCheck.key, idCheck.vars) : ""}
         </p>
       </div>
@@ -492,9 +492,9 @@ export const AbhaRegistration: React.FC<Props> = ({ onVerified, onUseMobileLogin
           inputMode="tel"
           placeholder={t("mobile.placeholder")}
           aria-invalid={!mobileOk}
-          className={`${input} font-mono ${!mobileOk ? "border-[#BA2D0B]" : ""}`}
+          className={`${input} font-mono ${!mobileOk ? "border-rose-400 focus:border-rose-500" : ""}`}
         />
-        {!mobileOk && <p className="text-xs mt-1 text-[#BA2D0B]">{t("err.INVALID_MOBILE")}</p>}
+        {!mobileOk && <p className="text-xs mt-1 text-rose-600 font-medium">{t("err.INVALID_MOBILE")}</p>}
       </div>
       {mode === "LINK" && (
         <div>

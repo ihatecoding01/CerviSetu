@@ -14,7 +14,7 @@ const ICONS = {
   home: Home,
 };
 
-const DOTS = { green: "#16A34A", amber: "#F59E0B", red: "#DC2626", grey: "#94A3B8" };
+const DOTS = { green: "#0284C7", amber: "#64748B", red: "#9D174D", grey: "#94A3B8" };
 
 const inline = { width: "1em", height: "1em", display: "inline-block", verticalAlign: "-0.14em" } as const;
 

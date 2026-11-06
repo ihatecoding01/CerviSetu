@@ -11,28 +11,30 @@ import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-1.5 px-3 whitespace-nowrap rounded-lg border border-transparent bg-clip-padding text-sm font-medium outline-0 select-none shrink-0 transition touch-action-manipulation [-webkit-tap-highlight-color:transparent] group/button [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#BA2D0B] aria-invalid:outline-2 aria-invalid:outline-offset-2 aria-invalid:outline-destructive cursor-pointer",
+  "inline-flex items-center justify-center gap-1.5 px-3 whitespace-nowrap rounded-md border border-transparent bg-clip-padding text-sm font-medium outline-0 select-none shrink-0 transition touch-action-manipulation [-webkit-tap-highlight-color:transparent] group/button [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9D174D] aria-invalid:outline-2 aria-invalid:outline-offset-2 aria-invalid:outline-destructive cursor-pointer font-heading",
   {
     variants: {
       variant: {
         default:
-          "bg-[#BA2D0B] text-white shadow-xs hover:bg-[#a02609] active:bg-[#851e06]",
+          "bg-[#0F172A] text-white shadow-xs hover:bg-slate-800 active:bg-slate-900 font-semibold",
+        "primary-pink":
+          "bg-[#9D174D] text-white shadow-xs hover:bg-[#831843] active:bg-[#701a3c] font-semibold",
         secondary:
-          "border border-gray-200 bg-white text-gray-800 shadow-2xs hover:bg-gray-50 active:bg-gray-100",
+          "border border-black/15 bg-white text-slate-800 shadow-2xs hover:bg-pink-50/50 active:bg-pink-100",
         tertiary:
-          "bg-gray-100 text-gray-800 hover:bg-gray-200",
+          "bg-slate-100 text-slate-800 hover:bg-slate-200",
         outline:
-          "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 shadow-2xs",
+          "border border-black/20 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-2xs font-medium",
         obsidian:
-          "bg-black text-white shadow-xs hover:bg-neutral-800 active:bg-neutral-900",
+          "bg-[#0F172A] text-white shadow-xs hover:bg-slate-800 active:bg-slate-900 font-semibold",
         ghost:
-          "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+          "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
         link:
-          "text-[#BA2D0B] underline underline-offset-4 hover:underline hover:text-[#a02609]",
+          "text-[#9D174D] underline underline-offset-4 hover:underline hover:text-[#831843]",
         destructive:
-          "border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 active:bg-red-200",
+          "border border-pink-300 bg-pink-50 text-[#831843] hover:bg-pink-100 active:bg-pink-200 font-semibold",
         "destructive-solid":
-          "border border-[#BA2D0B] bg-[#BA2D0B] text-white shadow-xs hover:bg-[#a02609] active:bg-[#851e06]",
+          "border border-[#9D174D] bg-[#9D174D] text-white shadow-xs hover:bg-[#831843] active:bg-[#701a3c] font-semibold",
       },
       size: {
         default: "h-10 px-4 text-sm",

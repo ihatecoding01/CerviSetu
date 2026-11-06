@@ -8,17 +8,30 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+export type CardVariant = "default" | "pink" | "blue" | "warm" | "subtle" | "table";
+
 function Card({
   className,
   size = "default",
+  variant = "default",
   ...props
-}: React.ComponentProps<"div"> & { size?: "default" | "sm" }) {
+}: React.ComponentProps<"div"> & { size?: "default" | "sm"; variant?: CardVariant }) {
+  const variantClasses = {
+    default: "bg-white/95 border-black/15 shadow-2xs",
+    pink: "card-gradient-pink border-black/15 shadow-2xs",
+    blue: "card-gradient-blue border-black/15 shadow-2xs",
+    warm: "card-gradient-warm border-black/15 shadow-2xs",
+    subtle: "card-gradient-subtle border-black/15 shadow-2xs",
+    table: "card-gradient-table border-black/15 shadow-2xs",
+  };
+
   return (
     <div
       data-slot="card"
       data-size={size}
       className={cn(
-        "group/card bg-white border border-gray-200 text-gray-900 flex flex-col gap-5 overflow-hidden rounded-xl py-5 text-sm shadow-xs has-[>img:first-child]:pt-0 data-[size=sm]:gap-3.5 data-[size=sm]:py-3.5",
+        "group/card border text-slate-900 flex flex-col gap-5 overflow-hidden rounded-lg py-4 text-sm has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3",
+        variantClasses[variant],
         className
       )}
       {...props}
@@ -31,7 +44,7 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-header"
       className={cn(
-        "group/card-header flex flex-col gap-1 px-5 group-data-[size=sm]/card:px-4",
+        "group/card-header flex flex-col gap-1 px-4 group-data-[size=sm]/card:px-3.5",
         className
       )}
       {...props}
@@ -44,7 +57,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-title"
       className={cn(
-        "text-base leading-snug font-semibold tracking-tight text-[#111418] group-data-[size=sm]/card:text-sm",
+        "font-heading text-base leading-snug font-bold tracking-tight text-slate-900 group-data-[size=sm]/card:text-sm",
         className
       )}
       {...props}
@@ -56,7 +69,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-description"
-      className={cn("text-gray-500 text-xs", className)}
+      className={cn("text-slate-500 text-xs", className)}
       {...props}
     />
   );

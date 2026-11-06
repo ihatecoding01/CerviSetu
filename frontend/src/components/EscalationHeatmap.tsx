@@ -108,16 +108,17 @@ export function EscalationHeatmap({ canReview = true, cases, lastSim, onSimulate
             <Card
               key={t.tier}
               size="sm"
-              className="bg-white border-gray-200 shadow-2xs hover:border-black transition-all"
+              variant={idx === 4 ? "pink" : idx === 3 ? "pink" : idx === 2 ? "blue" : "subtle"}
+              className="card-base hover:border-black transition-all"
             >
               <CardHeader className="pb-1.5">
                 <div className="flex items-center justify-between">
-                  <div className={`size-7 rounded-lg flex items-center justify-center ${
-                    idx === 4 ? "bg-[#BA2D0B]/10 text-[#BA2D0B]" :
-                    idx === 3 ? "bg-[#F19941]/20 text-[#BA2D0B]" :
-                    idx === 2 ? "bg-[#90C3CB]/20 text-slate-800" :
-                    idx === 1 ? "bg-[#DBFE87]/40 text-black" :
-                    "bg-gray-100 text-gray-600"
+                  <div className={`size-7 rounded-md flex items-center justify-center ${
+                    idx === 4 ? "bg-pink-100 text-[#9D174D]" :
+                    idx === 3 ? "bg-pink-50 text-[#9D174D]" :
+                    idx === 2 ? "bg-sky-100 text-[#0369A1]" :
+                    idx === 1 ? "bg-sky-50 text-[#0284C7]" :
+                    "bg-slate-100 text-slate-700"
                   }`}>
                     <Icon className="size-3.5" />
                   </div>
@@ -125,11 +126,11 @@ export function EscalationHeatmap({ canReview = true, cases, lastSim, onSimulate
                     Day {t.days}
                   </Badge>
                 </div>
-                <CardTitle className="text-sm font-bold text-black mt-1.5">{t.tier}</CardTitle>
+                <CardTitle className="text-sm font-heading font-bold text-slate-900 mt-1.5">{t.tier}</CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="text-xl font-bold text-black mb-1">{count} Cases</div>
-                <p className="text-xs text-gray-500 leading-tight">{t.desc}</p>
+                <div className="text-xl font-heading font-black text-slate-900 mb-1">{count} Cases</div>
+                <p className="text-xs text-slate-500 leading-tight">{t.desc}</p>
               </CardContent>
             </Card>
           );
@@ -137,23 +138,23 @@ export function EscalationHeatmap({ canReview = true, cases, lastSim, onSimulate
       </div>
 
       {/* Timeline Matrix Grid */}
-      <Card className="bg-white border-gray-200 shadow-2xs">
-        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+      <Card variant="table" className="card-base">
+        <CardHeader className="pb-3 flex flex-row items-center justify-between border-b border-black/10">
           <div>
-            <CardTitle className="text-base font-bold text-black">Follow-Up Surveillance Matrix</CardTitle>
-            <CardDescription className="text-xs text-gray-500">Cross-strata risk distribution across overdue timelines</CardDescription>
+            <CardTitle className="text-base font-heading font-bold text-slate-900">Follow-Up Surveillance Matrix</CardTitle>
+            <CardDescription className="text-xs text-slate-500">Cross-strata risk distribution across overdue timelines</CardDescription>
           </div>
-          <div className="flex items-center gap-3 text-xs text-gray-600">
-            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#DBFE87] border border-[#c4e872]"></span> On Schedule</span>
-            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#F19941]"></span> In Transit</span>
-            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#BA2D0B]"></span> Overdue Directive</span>
+          <div className="flex items-center gap-3 text-xs text-slate-600 font-heading">
+            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#0284C7]"></span> On Schedule</span>
+            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-slate-400"></span> In Transit</span>
+            <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-[#9D174D]"></span> Overdue Directive</span>
           </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-gray-200 text-gray-500 font-semibold bg-gray-50/80">
+                <tr className="border-b border-black/10 text-slate-600 font-semibold bg-slate-50/80">
                   <th className="py-2.5 px-3 text-left">Clinical Risk Stratum</th>
                   <th className="py-2.5 px-3 text-center">Day 0 (On-Time)</th>
                   <th className="py-2.5 px-3 text-center">Day 1-2 (SMS)</th>
@@ -162,20 +163,20 @@ export function EscalationHeatmap({ canReview = true, cases, lastSim, onSimulate
                   <th className="py-2.5 px-3 text-center">Day 8+ (Authority)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 text-gray-800">
+              <tbody className="divide-y divide-black/5 text-slate-800">
                 {[
                   { stratum: "Stage IV Metastatic (Critical)", d0: "12/12", d1: "10/11", d2: "8/9", d3: "3/3", d4: "1/1", activeCol: 4 },
                   { stratum: "Stage III Regional (Severe)", d0: "18/18", d1: "14/15", d2: "11/12", d3: "4/5", d4: "2/2", activeCol: 3 },
                   { stratum: "Stage II Localized (Moderate)", d0: "24/24", d1: "21/22", d2: "15/16", d3: "5/6", d4: "0/0", activeCol: 2 },
                   { stratum: "Stage I / In-Situ (Early)", d0: "30/30", d1: "28/28", d2: "18/20", d3: "2/3", d4: "0/0", activeCol: 1 },
                 ].map((row, rIdx) => (
-                  <tr key={rIdx} className="hover:bg-gray-50/60">
-                    <td className="py-3 px-3 font-medium text-gray-900">{row.stratum}</td>
-                    <td className="py-3 px-3 text-center bg-emerald-50/40 text-emerald-900 font-mono">{row.d0}</td>
-                    <td className="py-3 px-3 text-center bg-blue-50/30 text-blue-900 font-mono">{row.d1}</td>
-                    <td className="py-3 px-3 text-center bg-amber-50/30 text-amber-900 font-mono">{row.d2}</td>
-                    <td className="py-3 px-3 text-center bg-orange-50/40 text-orange-900 font-mono font-semibold">{row.d3}</td>
-                    <td className="py-3 px-3 text-center bg-rose-50/50 text-rose-900 font-mono font-bold bg-hatch">{row.d4}</td>
+                  <tr key={rIdx} className="hover:bg-slate-50/60">
+                    <td className="py-3 px-3 font-medium text-slate-900">{row.stratum}</td>
+                    <td className="py-3 px-3 text-center bg-sky-50/40 text-[#0369A1] font-mono">{row.d0}</td>
+                    <td className="py-3 px-3 text-center bg-sky-50/30 text-[#0369A1] font-mono">{row.d1}</td>
+                    <td className="py-3 px-3 text-center bg-slate-50/50 text-slate-800 font-mono">{row.d2}</td>
+                    <td className="py-3 px-3 text-center bg-pink-50/40 text-[#9D174D] font-mono font-semibold">{row.d3}</td>
+                    <td className="py-3 px-3 text-center bg-pink-100/50 text-[#9D174D] font-mono font-bold">{row.d4}</td>
                   </tr>
                 ))}
               </tbody>
@@ -252,9 +253,9 @@ export function EscalationHeatmap({ canReview = true, cases, lastSim, onSimulate
                 step="1"
                 value={days}
                 onChange={(e) => setDays(parseInt(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#BA2D0B]"
+                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#9D174D]"
               />
-              <div className="flex justify-between text-xs text-gray-500 font-mono">
+              <div className="flex justify-between text-xs text-slate-500 font-mono">
                 <span>Day 0 (Routine)</span>
                 <span>Day 1-2 (SMS)</span>
                 <span>Day 3-5 (IVR)</span>
@@ -266,7 +267,7 @@ export function EscalationHeatmap({ canReview = true, cases, lastSim, onSimulate
             <Button
               onClick={handleSimulate}
               disabled={loading}
-              className="w-full bg-[#BA2D0B] hover:bg-[#a02609] text-white shadow-xs font-semibold h-10 gap-2"
+              className="w-full bg-[#0F172A] hover:bg-black text-white shadow-xs font-semibold h-10 gap-2 cursor-pointer"
             >
               <Send className="size-4" />
               <span>{loading ? "Evaluating Escalation Protocols..." : "Simulate Escalation Engine"}</span>
@@ -275,15 +276,15 @@ export function EscalationHeatmap({ canReview = true, cases, lastSim, onSimulate
         </Card>
 
         {/* Right: Dispatched Directives and Dossiers */}
-        <Card className="bg-white border-gray-200 shadow-2xs flex flex-col min-h-[440px]">
+        <Card className="bg-white border-black/15 shadow-2xs flex flex-col min-h-[440px]">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-base font-bold text-black flex items-center gap-2">
-                  <ShieldAlert className="size-4 text-[#BA2D0B]" />
+                <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <ShieldAlert className="size-4 text-[#0369A1]" />
                   Dispatched Directives &amp; Dossiers
                 </CardTitle>
-                <CardDescription className="text-xs text-gray-500">Generated channel payload and district alert logs</CardDescription>
+                <CardDescription className="text-xs text-slate-500">Generated channel payload and district alert logs</CardDescription>
               </div>
               {lastSim && (
                 <Badge variant="primary" size="sm">{lastSim.active_tier}</Badge>
@@ -292,14 +293,14 @@ export function EscalationHeatmap({ canReview = true, cases, lastSim, onSimulate
           </CardHeader>
           <CardContent className="flex-1 flex flex-col justify-center">
             {!lastSim ? (
-              <div className="text-center py-16 text-gray-400 flex flex-col items-center gap-2">
-                <ShieldAlert className="size-8 text-gray-300" />
+              <div className="text-center py-16 text-slate-400 flex flex-col items-center gap-2">
+                <ShieldAlert className="size-8 text-slate-300" />
                 <p className="text-xs">Adjust the timeline slider and trigger the simulation to inspect payloads.</p>
               </div>
             ) : lastSim.dispatched_notifications.length === 0 ? (
-              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100 flex flex-col gap-1">
-                <span className="text-xs font-bold text-emerald-800">Within Acceptable Checkup Window (Day {lastSim.days_overdue})</span>
-                <p className="text-xs text-emerald-700">
+              <div className="p-4 rounded-xl bg-sky-50 border border-sky-200 flex flex-col gap-1">
+                <span className="text-xs font-bold text-[#0369A1]">Within Acceptable Checkup Window (Day {lastSim.days_overdue})</span>
+                <p className="text-xs text-[#0369A1]">
                   No critical overdue triggers active. Standard automated appointment checkup scheduled.
                 </p>
               </div>

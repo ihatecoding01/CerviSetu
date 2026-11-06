@@ -38,7 +38,7 @@ function Input({
       autoComplete="off"
       data-slot="input"
       className={cn(
-        "h-10 w-full min-w-0 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 shadow-2xs transition-[color,box-shadow] outline-none focus-visible:border-[#BA2D0B] focus-visible:ring-2 focus-visible:ring-[#BA2D0B]/20 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+        "h-10 w-full min-w-0 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 shadow-2xs transition-[color,box-shadow] outline-none focus-visible:border-teal-600 focus-visible:ring-2 focus-visible:ring-teal-600/20 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
       onBeforeInput={handleBeforeInput}

@@ -341,6 +341,83 @@ export interface PrecancerEpisode {
   created_at?: string;
 }
 
+export interface AdolescentBeneficiary {
+  beneficiary_id: string;
+  patient_token: string;
+  full_name: string;
+  age: number;
+  dob?: string | null;
+  guardian_name: string;
+  guardian_phone: string;
+  village: string;
+  school_or_camp: string;
+  prior_vaccine_audit: string;
+  dose_count: 0 | 1 | 2;
+  status: "UNVACCINATED" | "PARTIALLY_VACCINATED" | "FULLY_IMMUNIZED";
+  dose_1_date?: string | null;
+  dose_1_batch?: string | null;
+  dose_1_site?: string | null;
+  dose_1_center?: string | null;
+  dose_2_due_date?: string | null;
+  dose_2_date?: string | null;
+  dose_2_batch?: string | null;
+  dose_2_site?: string | null;
+  dose_2_center?: string | null;
+  aefi_reported: number | boolean;
+  aefi_notes?: string | null;
+  pre_due_alert_sent: number | boolean;
+  overdue_alert_count: number;
+  last_alert_date?: string | null;
+  abdm_logged: number | boolean;
+  created_at?: string;
+}
+
+export interface ScreeningCase {
+  case_id: string;
+  patient_token: string;
+  patient_name: string;
+  age: number;
+  screening_type: "VIA" | "PAP_SMEAR" | "COMBINED";
+  test_date: string;
+  findings_classification: string;
+  uploaded_image_or_doc?: string | null;
+  symptom_notes?: string | null;
+  triage_track: "ROUTINE_3_5Y_RECALL" | "ASHA_COMMUNITY_MANAGEMENT" | "TERTIARY_SPECIALIST_REFERRAL";
+  care_action_status: "RESOLVED" | "14_DAY_CHECKIN_PENDING" | "REFERRED_TO_TERTIARY" | "SPECIALIST_REVIEWED";
+  prescribed_local_therapy?: string | null;
+  fourteen_day_milestone_date?: string | null;
+  checkin_outcome?: string | null;
+  tertiary_facility?: string | null;
+  specialist_doctor_notes?: string | null;
+  created_at?: string;
+}
+
+export interface ProtocolEvaluation {
+  status: string;
+  cohort: string;
+  target_pillar: string;
+  target_title: string;
+  is_girl_13_15: boolean;
+  is_woman_35_45: boolean;
+  recommendation: "CONTINUE" | "SCHEDULE_VACCINATION" | "SCHEDULE_SCREENING";
+  protocol_status: "VACCINATED_PROTECTED" | "VACCINATION_REQUIRED" | "SCREENED_PROTECTED" | "SCREENING_REQUIRED" | "ROUTINE_MONITORING";
+  badge_variant: "success" | "destructive" | "warning" | "neutral";
+  directive: string;
+  action_required: boolean;
+  suggested_action?: string;
+  suggested_vaccine?: string;
+  suggested_modality?: string;
+  rule: string;
+}
+
+export interface ProtocolScheduleResult {
+  status: string;
+  action_type: string;
+  message: string;
+  appointment_date: string;
+  record: any;
+}
+
 export interface ChemoClearance {
   clearance_id: string;
   patient_token: string;
@@ -932,6 +1009,159 @@ export const api = {
 
   async getPrecancerSurveillance(): Promise<{ surveillance_list: PrecancerEpisode[]; total: number }> {
     return await request<{ surveillance_list: PrecancerEpisode[]; total: number }>("/api/prevention/precancer-surveillance");
+  },
+
+  async evaluateProtocol(payload: {
+    age: number;
+    gender?: string;
+    patient_name?: string;
+    patient_token?: string;
+    hpv_vaccinated?: boolean;
+    screened?: boolean;
+  }): Promise<ProtocolEvaluation> {
+    return await request<ProtocolEvaluation>("/api/prevention/protocol-evaluate", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async scheduleProtocolAction(payload: {
+    patient_token?: string;
+    patient_name: string;
+    age: number;
+    gender?: string;
+    action_type: "SCHEDULE_VACCINATION" | "SCHEDULE_SCREENING";
+    vaccine_brand?: string;
+    dose_number?: number;
+    test_type?: string;
+    appointment_date?: string;
+    center?: string;
+    notes?: string;
+    dispatch_outreach?: boolean;
+  }): Promise<ProtocolScheduleResult> {
+    return await request<ProtocolScheduleResult>("/api/prevention/protocol-schedule", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  // Multi-Cohort Prevention Engine APIs
+  async getAdolescents(status?: string): Promise<{
+    status: string;
+    beneficiaries: AdolescentBeneficiary[];
+    total: number;
+    dose_counts: { unvaccinated_0_2: number; partially_vaccinated_1_2: number; fully_immunized_2_2: number };
+  }> {
+    const q = status ? `?status=${encodeURIComponent(status)}` : "";
+    return await request(`/api/prevention/adolescents${q}`);
+  },
+
+  async registerAdolescent(payload: {
+    full_name: string;
+    age: number;
+    dob?: string;
+    guardian_name: string;
+    guardian_phone: string;
+    village: string;
+    school_or_camp: string;
+    prior_vaccine_audit?: string;
+  }): Promise<{ status: string; beneficiary: AdolescentBeneficiary }> {
+    return await request<{ status: string; beneficiary: AdolescentBeneficiary }>("/api/prevention/adolescents", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async recordAdolescentDose(
+    beneficiary_id: string,
+    payload: {
+      dose_number: number;
+      batch_number?: string;
+      admin_site?: string;
+      center?: string;
+      administered_date?: string;
+      aefi_reported?: boolean;
+      aefi_notes?: string;
+    }
+  ): Promise<{ status: string; beneficiary: AdolescentBeneficiary }> {
+    return await request<{ status: string; beneficiary: AdolescentBeneficiary }>(`/api/prevention/adolescents/${encodeURIComponent(beneficiary_id)}/dose`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async sendAdolescentCadenceAlert(
+    beneficiary_id: string,
+    payload: {
+      alert_type: "14_DAY_PRE_DUE" | "14_DAY_OVERDUE";
+      notes?: string;
+    }
+  ): Promise<{ status: string; message: string; beneficiary: AdolescentBeneficiary }> {
+    return await request<{ status: string; message: string; beneficiary: AdolescentBeneficiary }>(`/api/prevention/adolescents/${encodeURIComponent(beneficiary_id)}/cadence-alert`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async recordScreeningTriage(payload: {
+    patient_name: string;
+    age: number;
+    screening_type: "VIA" | "PAP_SMEAR" | "COMBINED";
+    test_date?: string;
+    findings_classification: string;
+    uploaded_image_or_doc?: string;
+    symptom_notes?: string;
+    prescribed_local_therapy?: string;
+    tertiary_facility?: string;
+  }): Promise<{ status: string; case: ScreeningCase; triage_track: string; care_action_status: string }> {
+    return await request<{ status: string; case: ScreeningCase; triage_track: string; care_action_status: string }>("/api/prevention/screening/triage", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getScreeningCases(triage_track?: string, care_action_status?: string): Promise<{
+    status: string;
+    cases: ScreeningCase[];
+    total: number;
+    summary: { routine_recall: number; asha_community_management: number; tertiary_referral: number };
+  }> {
+    const params = new URLSearchParams();
+    if (triage_track) params.append("triage_track", triage_track);
+    if (care_action_status) params.append("care_action_status", care_action_status);
+    const qs = params.toString() ? `?${params.toString()}` : "";
+    return await request(`/api/prevention/screening/cases${qs}`);
+  },
+
+  async submitCommunityCheckin(payload: {
+    case_id: string;
+    outcome: "SYMPTOMS_RESOLVED" | "PERSISTENT_REFERRED";
+    checkin_notes?: string;
+  }): Promise<{ status: string; case: ScreeningCase }> {
+    return await request<{ status: string; case: ScreeningCase }>("/api/prevention/screening/community-checkin", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getSpecialistQueue(): Promise<{
+    status: string;
+    queue: ScreeningCase[];
+    total: number;
+  }> {
+    return await request<{ status: string; queue: ScreeningCase[]; total: number }>("/api/prevention/specialist/queue");
+  },
+
+  async submitSpecialistReview(payload: {
+    case_id: string;
+    oncologist_id: string;
+    clinical_assessment: string;
+    treatment_plan: string;
+  }): Promise<{ status: string; case: ScreeningCase }> {
+    return await request<{ status: string; case: ScreeningCase }>("/api/prevention/specialist/review", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
   },
 
   // ==========================================

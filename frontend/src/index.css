@@ -4,47 +4,50 @@
   color-scheme: light;
   --font-size-scale: 1;
 
-  /* User Specified Palette (health_hack) */
-  --color-primary: #BA2D0B;        /* Primary: Burnt Terracotta Crimson */
-  --color-secondary: #F19941;      /* Secondary: Warm Amber Orange */
-  --color-accent-aqua: #90C3CB;    /* Accent 1: Soft Calming Aqua */
-  --color-accent-lime: #DBFE87;    /* Accent 2: Vibrant Electric Lime */
-  --color-black: #000000;          /* Black */
-  --color-white: #FFFFFF;          /* White */
+  /* CerviSetu Luminous Pink & Blue Clinical Palette (Ref: Neue Montreal / updated_UI) */
+  --color-primary: #2B66E4;        /* Vibrant Medical Blue */
+  --color-primary-glow: #60A5FA;   /* Blue Glow Accent */
+  --color-primary-light: #EFF6FF;  /* Soft Blue Canvas Tint */
+  --color-pink: #F43F5E;           /* Cervical Health Rose/Pink */
+  --color-pink-glow: #FB7185;      /* Pink Glow Accent */
+  --color-pink-light: #FFF1F2;     /* Soft Rose/Pink Tint */
+  --color-secondary: #0EA5E9;      /* Sky Accent */
+  --color-black: #111418;          /* Neue Montreal Deep Slate */
+  --color-white: #FFFFFF;          /* Pure White */
 
   /* Surface & Canvas System */
-  --background: #FAFAFA;
+  --background: #FAFAFC;
   --card: #FFFFFF;
-  --card-foreground: #000000;
+  --card-foreground: #111418;
   --popover: #FFFFFF;
-  --popover-foreground: #000000;
+  --popover-foreground: #111418;
 
-  --foreground: #000000;
-  --muted: #F3F4F6;
-  --muted-foreground: #6B7280;
-  --subtle-foreground: #374151;
+  --foreground: #111418;
+  --muted: #F8FAFC;
+  --muted-foreground: #64748B;
+  --subtle-foreground: #334155;
 
   /* Component Tokens */
-  --primary: #BA2D0B;
+  --primary: #2B66E4;
   --primary-foreground: #FFFFFF;
-  --secondary: #F19941;
-  --secondary-foreground: #000000;
-  --accent: #F9FAFB;
-  --accent-foreground: #000000;
-  --destructive: #BA2D0B;
+  --secondary: #F43F5E;
+  --secondary-foreground: #FFFFFF;
+  --accent: #EFF6FF;
+  --accent-foreground: #1E40AF;
+  --destructive: #E11D48;
   --destructive-foreground: #FFFFFF;
 
-  --border: #E5E7EB;
-  --input: #E5E7EB;
-  --ring: rgba(186, 45, 11, 0.25);
-  --radius: 1rem;
+  --border: rgba(17, 20, 24, 0.08);
+  --input: rgba(17, 20, 24, 0.10);
+  --ring: rgba(43, 102, 228, 0.25);
+  --radius: 1rem; /* 16px: Soft pillowy rounding */
 
   /* Sidebar Tokens */
   --sidebar: #FFFFFF;
-  --sidebar-foreground: #000000;
-  --sidebar-primary: #000000;
+  --sidebar-foreground: #111418;
+  --sidebar-primary: #111418;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-border: #E5E7EB;
+  --sidebar-border: rgba(17, 20, 24, 0.08);
 }
 
 body {
@@ -52,15 +55,95 @@ body {
   padding: 0;
   background-color: var(--background);
   color: var(--foreground);
-  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Landing Page Design Skill Design Tokens */
+/* Typography Pairing Utility Classes */
+.font-heading {
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Strictly NON-ITALIC clean serif for prominent editorial subheads only */
+.font-subtitle-playfair {
+  font-family: 'Playfair Display', serif;
+  font-style: normal;
+}
+
+/* Blurred Out Effect Backdrop (No CSS gradient background; ambient depth) */
+.blurred-backdrop-container {
+  position: relative;
+  background-color: #E2E8F0;
+}
+
+.blurred-backdrop-scrim {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.blurred-backdrop-scrim::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: rgba(241, 245, 249, 0.72);
+  backdrop-filter: blur(16px);
+}
+
+/* Cards with Minimal-to-Medium Rounding (8px-10px) and Subtle Gradients */
+.card-base {
+  border-radius: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  box-shadow: 0 2px 10px -2px rgba(15, 23, 42, 0.06);
+}
+
+.card-gradient-pink {
+  background: linear-gradient(145deg, #FFFFFF 0%, #FFF2F6 45%, #FCE7F3 100%);
+}
+
+.card-gradient-blue {
+  background: linear-gradient(145deg, #FFFFFF 0%, #F0F9FF 45%, #E0F2FE 100%);
+}
+
+.card-gradient-warm {
+  background: linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 45%, #FDF2F8 100%);
+}
+
+.card-gradient-subtle {
+  background: linear-gradient(160deg, #FFFFFF 0%, #FDF2F8 30%, #F0F9FF 70%, #FFFFFF 100%);
+}
+
+.card-gradient-table {
+  background: linear-gradient(180deg, #FFFFFF 0%, #FCF8FA 45%, #F8FAFC 100%);
+}
+
+/* Concentric / Radial Glowing Orbs */
+@keyframes pulse-subtle {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.03); opacity: 1; }
+}
+
+.animate-pulse-glow {
+  animation: pulse-subtle 3s ease-in-out infinite;
+}
+
+.glowing-orb {
+  background: radial-gradient(circle, #F43F5E 0%, #EC4899 35%, #F472B6 60%, rgba(251, 207, 232, 0.3) 80%, transparent 100%);
+  box-shadow: 0 0 24px -2px rgba(236, 72, 153, 0.45);
+}
+
+.glowing-orb-blue {
+  background: radial-gradient(circle, #0284C7 0%, #38BDF8 40%, #BAE6FD 70%, transparent 100%);
+  box-shadow: 0 0 22px -2px rgba(56, 189, 248, 0.4);
+}
+
+/* Clinical & Telemetry Monospace Data Font */
 .font-mono-data {
-  font-family: 'Geist Mono', monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-feature-settings: "tnum" 1, "zero" 1;
 }
 
 /* B1 Named Typography Styles */

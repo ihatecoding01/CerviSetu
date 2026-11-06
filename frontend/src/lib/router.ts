@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Tab } from "../components/DashboardLayout";
 
-export type ViewType = "landing" | "gateway" | "staff" | "patient" | "dual";
+export type ViewType = "landing" | "gateway" | "staff" | "patient";
 
 export interface AppRoute {
   view: ViewType;
@@ -15,36 +15,36 @@ export interface AppRoute {
 }
 
 const TAB_PATH_MAP: Record<string, Tab> = {
-  overview: "overview-tab",
   prevention: "prevention-tab",
+  immunization: "prevention-tab",
+  overview: "overview-tab",
   encounter: "encounter-tab",
   intake: "intake-tab",
   tracker: "tracker-tab",
   asha: "asha-tab",
+  specialist: "specialist-tab",
+  referral: "specialist-tab",
   audit: "privacy-tab",
   privacy: "privacy-tab",
-  patient: "patient-tab",
-  dual: "dual-tab",
 };
 
 const TAB_TO_SLUG: Record<Tab, string> = {
-  "overview-tab": "overview",
   "prevention-tab": "prevention",
+  "asha-tab": "asha",
+  "specialist-tab": "specialist",
+  "overview-tab": "overview",
   "encounter-tab": "encounter",
   "intake-tab": "intake",
   "tracker-tab": "tracker",
-  "asha-tab": "asha",
   "privacy-tab": "audit",
-  "patient-tab": "patient",
-  "dual-tab": "dual",
 };
 
 export function parsePath(pathname: string): AppRoute {
   const cleanPath = pathname.trim().replace(/\/+$/, "") || "/";
 
-  // 1. Dual-Screen Demo Paths
+  // Redirect legacy demo path to prevention workstation
   if (cleanPath === "/demo" || cleanPath === "/dual") {
-    return { view: "dual", path: "/demo" };
+    return { view: "staff", tab: "prevention-tab", path: "/staff/prevention" };
   }
 
   // 2. Patient Companion Paths (/patient or /patient/:token)
@@ -103,8 +103,6 @@ export function useRouter() {
         targetPath = "/";
       } else if (target.view === "gateway") {
         targetPath = "/gateway";
-      } else if (target.view === "dual") {
-        targetPath = "/demo";
       } else if (target.view === "patient") {
         targetPath = target.token ? `/patient/${target.token}` : "/patient";
       } else if (target.view === "staff") {

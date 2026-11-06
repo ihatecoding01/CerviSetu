@@ -28,9 +28,9 @@ const TAB_NAMES: Partial<Record<Tab, string>> = {
   "encounter-tab": "Clinical Encounter",
   "tracker-tab": "Rural Tracker",
   "asha-tab": "ASHA Network",
-  "prevention-tab": "Prevention & Screening",
+  "prevention-tab": "Prevention & Immunization",
   "privacy-tab": "Security & Audit",
-  "patient-tab": "Patient Portal",
+  "specialist-tab": "Specialist Review Portal",
 };
 
 function siteLang() {
@@ -203,7 +203,7 @@ export function GeniePanel({ open, staffName, onClose, onOpenTab, onOpenPatient 
       className="fixed z-50 inset-0 sm:inset-auto sm:bottom-4 sm:right-4 sm:w-[400px] sm:h-[min(620px,calc(100vh-2rem))] bg-white sm:rounded-2xl sm:border border-slate-200 shadow-2xl overflow-hidden flex-col [&:not([hidden])]:flex"
     >
       <header className="flex items-center gap-2.5 px-4 h-14 shrink-0">
-        <span className="size-7 rounded-full bg-black text-[#DBFE87] flex items-center justify-center">
+        <span className="size-7 rounded-full bg-slate-900 text-teal-300 flex items-center justify-center">
           <Sparkles className="size-3.5" />
         </span>
         <h2 className="text-sm font-semibold flex-1">Genie</h2>
@@ -240,7 +240,7 @@ export function GeniePanel({ open, staffName, onClose, onOpenTab, onOpenPatient 
                 </div>
               ) : (
                 <div key={i} data-testid="genie-answer">
-                  <p translate="no" className={`notranslate text-[15px] leading-relaxed whitespace-pre-line break-words ${m.failed ? "text-[#BA2D0B]" : "text-slate-900"}`}>
+                  <p translate="no" className={`notranslate text-[15px] leading-relaxed whitespace-pre-line break-words ${m.failed ? "text-rose-600" : "text-slate-900"}`}>
                     <Reveal text={localizeDigits(m.text)} animate={i === messages.length - 1} onTick={scroll} />
                   </p>
                   {(!!m.patients?.length || (m.openTab && TAB_NAMES[m.openTab])) && (
@@ -262,9 +262,9 @@ export function GeniePanel({ open, staffName, onClose, onOpenTab, onOpenPatient 
               ),
             )}
             {(busy || hearing) && (
-              <div className="flex gap-1 py-2" aria-label="Thinking" data-testid="genie-thinking">
+              <div className="flex gap-1.5 py-2 items-center" aria-label="Thinking" data-testid="genie-thinking">
                 {[0, 150, 300].map((d) => (
-                  <span key={d} className="size-1.5 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: `${d}ms` }} />
+                  <span key={d} className="size-1.5 rounded-full bg-teal-600 animate-pulse" style={{ animationDelay: `${d}ms` }} />
                 ))}
               </div>
             )}
@@ -282,7 +282,7 @@ export function GeniePanel({ open, staffName, onClose, onOpenTab, onOpenPatient 
       </div>
 
       <div className="px-3 pb-3 pt-1 shrink-0">
-        {micError && <p role="alert" className="px-3 pb-1.5 text-xs text-[#BA2D0B]">{micError}</p>}
+        {micError && <p role="alert" className="px-3 pb-1.5 text-xs text-rose-600 font-semibold">{micError}</p>}
         <form
           className="rounded-3xl border border-slate-200 focus-within:border-slate-400 transition-colors p-2"
           onSubmit={(e: FormEvent) => {
@@ -292,7 +292,7 @@ export function GeniePanel({ open, staffName, onClose, onOpenTab, onOpenPatient 
         >
           {recorder.recording ? (
             <p className="px-2 py-1.5 text-sm text-slate-600 flex items-center gap-2">
-              <span className="size-2 rounded-full bg-[#BA2D0B] animate-pulse" /> Listening... {recorder.seconds}s
+              <span className="size-2 rounded-full bg-rose-600 animate-pulse" /> Listening... {recorder.seconds}s
             </p>
           ) : (
             <textarea
@@ -321,7 +321,7 @@ export function GeniePanel({ open, staffName, onClose, onOpenTab, onOpenPatient 
                 disabled={busy || hearing || recorder.starting}
                 aria-label={recorder.recording ? "Stop and send" : "Speak to Genie"}
                 data-testid="genie-mic"
-                className={`size-8 rounded-full flex items-center justify-center cursor-pointer disabled:opacity-40 ${recorder.recording ? "bg-[#BA2D0B] text-white" : "text-slate-600 hover:bg-slate-100"}`}
+                className={`size-8 rounded-full flex items-center justify-center cursor-pointer disabled:opacity-40 ${recorder.recording ? "bg-rose-600 text-white" : "text-slate-600 hover:bg-slate-100"}`}
               >
                 {recorder.recording ? <Square className="size-3 fill-current" /> : <Mic className="size-4" />}
               </button>

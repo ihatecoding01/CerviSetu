@@ -30,31 +30,27 @@ interface Props {
   onSelectCase?: (patientToken: string) => void;
 }
 
-// 12-column x 5-row Dot Matrix Sparkline component modeled directly on components2.png
-function DotMatrix({
-  pattern,
-  colorClass = "bg-[#BA2D0B]",
+// Clean, High-Contrast Clinical Telemetry Progress Bar
+function MetricSparkBar({
+  value,
+  max,
+  colorClass = "bg-[#0284C7]",
+  caption,
 }: {
-  pattern: number[]; // Array of 12 heights (1 to 5)
+  value: number;
+  max: number;
   colorClass?: string;
+  caption?: string;
 }) {
+  const pct = Math.min(100, Math.max(8, Math.round((value / Math.max(1, max)) * 100)));
   return (
-    <div className="grid grid-cols-12 gap-1.5 pt-3 w-full">
-      {pattern.slice(0, 12).map((height, colIndex) => (
-        <div key={colIndex} className="flex flex-col-reverse gap-1 items-center">
-          {[1, 2, 3, 4, 5].map((rowLevel) => {
-            const isActive = rowLevel <= height;
-            return (
-              <span
-                key={rowLevel}
-                className={`size-1.5 rounded-full transition-all ${
-                  isActive ? colorClass : "bg-gray-200"
-                }`}
-              />
-            );
-          })}
-        </div>
-      ))}
+    <div className="w-full pt-2">
+      <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full transition-all duration-300 ${colorClass}`} style={{ width: `${pct}%` }} />
+      </div>
+      {caption && (
+        <span className="text-[10px] text-slate-500 block mt-1 font-medium">{caption}</span>
+      )}
     </div>
   );
 }
@@ -105,7 +101,7 @@ function caseToRosterRow(c: PatientCase, plan?: WardBoardRow) {
     adhDetail: daysOverdue > 0 ? `Overdue Day +${daysOverdue}` : "New registration · No missed visits",
     tier,
     severity: Number(rec.severity_score ?? rec.cancer_severity_score ?? intake.severity_score ?? 0),
-    avatarColor: "bg-white text-[#BA2D0B] border-[#BA2D0B]/40",
+    avatarColor: "bg-white text-[#9D174D] border-pink-300",
     ...(plan ? clockColumns(plan) : {}),
   };
 }
@@ -282,21 +278,21 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
 
       {/* LINAC Maintenance Downtime Banner */}
       {downtime?.is_downtime_active && (
-        <div className="p-4 rounded-xl bg-amber-50 border-2 border-amber-400 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="p-4 rounded-xl bg-pink-50 border-2 border-pink-300 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-start gap-3">
-            <div className="size-9 rounded-lg bg-amber-500 text-white flex items-center justify-center shrink-0">
+            <div className="size-9 rounded-lg bg-[#9D174D] text-white flex items-center justify-center shrink-0">
               <PowerOff className="size-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-900 bg-amber-200/80 px-2 py-0.5 rounded">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#9D174D] bg-pink-100 px-2 py-0.5 rounded">
                   Spoke Machine Alert
                 </span>
-                <span className="text-sm font-bold text-amber-950">
+                <span className="text-sm font-bold text-slate-900">
                   Mirzapur Spoke LINAC-01 Under Scheduled Maintenance / Calibration
                 </span>
               </div>
-              <p className="text-xs text-amber-900 mt-1">
+              <p className="text-xs text-slate-700 mt-1">
                 Biological Healing Clocks Paused Spoke-Wide &middot; Acute Overdue Timers Suspended to Prevent False ASHA/IVR Dispatches. Reason: {downtime.reason || "Scheduled Calibration"}.
               </p>
             </div>
@@ -306,7 +302,7 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
             variant="outline"
             onClick={handleToggleDowntime}
             disabled={togglingDowntime}
-            className="shrink-0 bg-white border-amber-400 text-amber-900 hover:bg-amber-100 text-xs font-bold"
+            className="shrink-0 bg-white border-pink-300 text-[#9D174D] hover:bg-pink-100 text-xs font-bold"
           >
             Clear Downtime &amp; Resume Clock
           </Button>
@@ -322,133 +318,198 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
         </Alert>
       )}
 
+      {/* MULTI-COHORT PREVENTIVE ONCOLOGY SUMMARY CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-4 rounded-xl border border-black/15 card-base card-gradient-pink shadow-2xs">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#9D174D] flex items-center gap-1.5">
+              <ShieldCheck className="size-4 text-[#9D174D]" />
+              Cohort 1: Girls Under 14 Immunization
+            </span>
+            <Badge variant="primary" size="xs">90% Target</Badge>
+          </div>
+          <p className="text-xs text-slate-600 mb-3">
+            Adolescent HPV registry with 2-dose tracking (T0 to T0 + 6 months), 14-day pre-due vial readiness & overdue escalation.
+          </p>
+          <div className="grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="p-2 rounded bg-white border border-slate-100">
+              <span className="block font-bold text-slate-900 text-sm">4</span>
+              <span className="text-[10px] text-slate-500">Enrolled Girls</span>
+            </div>
+            <div className="p-2 rounded bg-white border border-slate-100">
+              <span className="block font-bold text-[#0284C7] text-sm">2</span>
+              <span className="text-[10px] text-slate-500">Partial (1/2)</span>
+            </div>
+            <div className="p-2 rounded bg-white border border-slate-100">
+              <span className="block font-bold text-[#9D174D] text-sm">1</span>
+              <span className="text-[10px] text-slate-500">Fully Immunized</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl border border-black/15 card-base card-gradient-blue shadow-2xs">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#0369A1] flex items-center gap-1.5">
+              <Stethoscope className="size-4 text-[#0369A1]" />
+              Cohort 2: Women 35–45 Screening & Triaging
+            </span>
+            <Badge variant="info" size="xs">70% Target</Badge>
+          </div>
+          <p className="text-xs text-slate-600 mb-3">
+            Point-of-care VIA & Pap smear with AI triage: Normal 3–5y recall, Benign local therapy (14d check-in) & Tertiary Specialist referral.
+          </p>
+          <div className="grid grid-cols-3 gap-2 text-center text-xs">
+            <div className="p-2 rounded bg-white border border-slate-100">
+              <span className="block font-bold text-[#0284C7] text-sm">1</span>
+              <span className="text-[10px] text-slate-500">Normal 3y Recall</span>
+            </div>
+            <div className="p-2 rounded bg-white border border-slate-100">
+              <span className="block font-bold text-[#0369A1] text-sm">1</span>
+              <span className="text-[10px] text-slate-500">14d Community Tx</span>
+            </div>
+            <div className="p-2 rounded bg-white border border-slate-100">
+              <span className="block font-bold text-[#9D174D] text-sm">1</span>
+              <span className="text-[10px] text-slate-500">Tertiary Referred</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* 4 KPI Metric Cards with 12x5 Dot-Matrix Sparklines */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Total Patients */}
-        <Card size="sm" className="bg-white border-gray-200 shadow-2xs">
+        <Card size="sm" className="bg-white border-black/15 shadow-2xs">
           <CardHeader className="pb-1">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <div className="size-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                <div className="size-8 rounded-lg bg-sky-50 border border-sky-100 flex items-center justify-center text-[#0284C7]">
                   <Users className="size-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-gray-600">Curative Cohort</div>
-                  <div className="text-[11px] font-medium text-emerald-600 flex items-center gap-0.5">
+                  <div className="text-xs font-semibold text-slate-700">Curative Cohort</div>
+                  <div className="text-[11px] font-medium text-[#0284C7] flex items-center gap-0.5">
                     <ArrowUpRight className="size-3" /> 100% on GEC-ESTRO
                   </div>
                 </div>
               </div>
-              <div className="min-w-0 shrink text-right text-xl font-bold text-[#111418] tracking-tight break-words">{patientRoster.length} Cases</div>
+              <div className="min-w-0 shrink text-right text-xl font-bold text-slate-900 tracking-tight break-words">{patientRoster.length} Cases</div>
             </div>
           </CardHeader>
           <CardContent className="pt-2">
-            <DotMatrix
-              pattern={[1, 1, 2, 1, 3, 2, 1, 2, 4, 3, 5, 4]}
-              colorClass="bg-emerald-500"
+            <MetricSparkBar
+              value={patientRoster.length}
+              max={patientRoster.length || 1}
+              colorClass="bg-[#0284C7]"
+              caption="All patients tracked in 56-day curative window"
             />
           </CardContent>
         </Card>
 
         {/* Card 2: Optimal Lane */}
-        <Card size="sm" className="bg-white border-gray-200 shadow-2xs">
+        <Card size="sm" className="bg-white border-black/15 shadow-2xs">
           <CardHeader className="pb-1">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <div className="size-8 rounded-lg bg-[#DBFE87]/50 border border-[#DBFE87] flex items-center justify-center text-black">
+                <div className="size-8 rounded-lg bg-sky-50 border border-sky-200 flex items-center justify-center text-[#0369A1]">
                   <ShieldCheck className="size-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-gray-600">Optimal Lane (&le;49d)</div>
-                  <div className="text-xs font-medium text-emerald-700">GEC-ESTRO Target</div>
+                  <div className="text-xs font-semibold text-slate-700">Optimal Lane (&le;49d)</div>
+                  <div className="text-xs font-medium text-[#0369A1]">GEC-ESTRO Target</div>
                 </div>
               </div>
-              <div className="text-2xl font-bold text-black tracking-tight">
+              <div className="text-2xl font-bold text-slate-900 tracking-tight">
                 {patientRoster.filter(p => p.lane === "optimal").length}
               </div>
             </div>
           </CardHeader>
           <CardContent className="pt-2">
-            <DotMatrix
-              pattern={[2, 1, 2, 3, 2, 4, 3, 2, 3, 4, 3, 2]}
-              colorClass="bg-emerald-500"
+            <MetricSparkBar
+              value={patientRoster.filter(p => p.lane === "optimal").length}
+              max={patientRoster.length || 1}
+              colorClass="bg-[#0284C7]"
+              caption="On track for curative completion"
             />
           </CardContent>
         </Card>
 
         {/* Card 3: Warning Lane */}
-        <Card size="sm" className="bg-white border-gray-200 shadow-2xs">
+        <Card size="sm" className="bg-white border-black/15 shadow-2xs">
           <CardHeader className="pb-1">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <div className="size-8 rounded-lg bg-[#F19941]/15 border border-[#F19941]/30 flex items-center justify-center text-[#BA2D0B]">
+                <div className="size-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
                   <Clock className="size-4" />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-gray-600">Warning Lane (50-56d)</div>
-                  <div className="text-xs font-medium text-amber-700">ABS Upper Margin</div>
+                  <div className="text-xs font-semibold text-slate-700">Warning Lane (50-56d)</div>
+                  <div className="text-xs font-medium text-slate-600">ABS Upper Margin</div>
                 </div>
               </div>
-              <div className="text-2xl font-bold text-black tracking-tight">
+              <div className="text-2xl font-bold text-slate-900 tracking-tight">
                 {patientRoster.filter(p => p.lane === "warning").length}
               </div>
             </div>
           </CardHeader>
           <CardContent className="pt-2">
-            <DotMatrix
-              pattern={[1, 2, 1, 3, 2, 2, 3, 2, 1, 4, 5, 3]}
-              colorClass="bg-[#F19941]"
+            <MetricSparkBar
+              value={patientRoster.filter(p => p.lane === "warning").length}
+              max={patientRoster.length || 1}
+              colorClass="bg-slate-500"
+              caption="Requires hub brachy scheduling lock"
             />
           </CardContent>
         </Card>
 
         {/* Card 4: Breach Risk Lane */}
-        <Card size="sm" className="bg-white border-gray-200 shadow-2xs">
+        <Card size="sm" className="bg-white border-black/15 shadow-2xs">
           <CardHeader className="pb-1">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-2">
-                <div className="size-8 rounded-lg bg-[#BA2D0B]/10 border border-[#BA2D0B]/30 flex items-center justify-center text-[#BA2D0B]">
-                  <Flame className="size-4 text-[#BA2D0B]" />
+                <div className="size-8 rounded-lg bg-pink-50 border border-pink-200 flex items-center justify-center text-[#9D174D]">
+                  <Flame className="size-4 text-[#9D174D]" />
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-gray-600">Breach Risk (&gt;56d)</div>
-                  <div className="text-xs font-medium text-[#BA2D0B]">ASHA Escalated</div>
+                  <div className="text-xs font-semibold text-slate-700">Breach Risk (&gt;56d)</div>
+                  <div className="text-xs font-medium text-[#9D174D]">ASHA Escalated</div>
                 </div>
               </div>
-              <div className="text-2xl font-bold text-[#BA2D0B] tracking-tight">
+              <div className="text-2xl font-bold text-[#9D174D] tracking-tight">
                 {patientRoster.filter(p => p.lane === "critical").length}
               </div>
             </div>
           </CardHeader>
           <CardContent className="pt-2">
-            <DotMatrix
-              pattern={[1, 2, 2, 3, 4, 3, 2, 4, 5, 4, 3, 2]}
-              colorClass="bg-[#BA2D0B]"
+            <MetricSparkBar
+              value={patientRoster.filter(p => p.lane === "critical").length}
+              max={patientRoster.length || 1}
+              colorClass="bg-[#9D174D]"
+              caption="Immediate field visit & transport needed"
             />
           </CardContent>
         </Card>
       </div>
 
       {/* Traffic-Light Ward Board */}
-      <Card className="bg-white border-gray-200 shadow-2xs">
+      <Card className="bg-white border-black/15 shadow-2xs">
         <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <CardTitle className="text-base font-bold text-[#111418]">
+              <CardTitle className="text-base font-bold text-slate-900">
                 Traffic-Light Curative Ward Board (NCG &amp; GEC-ESTRO 49/56-Day Biological Clock)
               </CardTitle>
             </div>
-            <CardDescription className="text-xs text-gray-500">
+            <CardDescription className="text-xs text-slate-500">
               Unmasked point-of-care identity for attending clinicians &middot; AES-256 tokenization maintained for external sync
             </CardDescription>
           </div>
 
           {/* 3-Lane Filter Tabs */}
-          <div className="flex items-center gap-1.5 p-1 bg-gray-100 rounded-lg">
+          <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-lg">
             <button
               onClick={() => setActiveLaneFilter("all")}
               className={`px-3 py-1 rounded text-xs font-semibold transition-all cursor-pointer ${
-                activeLaneFilter === "all" ? "bg-white text-black shadow-2xs" : "text-gray-600 hover:text-black"
+                activeLaneFilter === "all" ? "bg-white text-slate-900 shadow-2xs" : "text-slate-600 hover:text-slate-900"
               }`}
             >
               All Cases ({patientRoster.length})
@@ -456,7 +517,7 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
             <button
               onClick={() => setActiveLaneFilter("optimal")}
               className={`px-3 py-1 rounded text-xs font-semibold transition-all cursor-pointer ${
-                activeLaneFilter === "optimal" ? "bg-emerald-600 text-white shadow-2xs" : "text-emerald-700 hover:bg-emerald-50"
+                activeLaneFilter === "optimal" ? "bg-[#0284C7] text-white shadow-2xs font-bold" : "text-[#0284C7] hover:bg-sky-50"
               }`}
             >
               <Dot tone="green" /> Optimal (&le;49d)
@@ -464,7 +525,7 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
             <button
               onClick={() => setActiveLaneFilter("warning")}
               className={`px-3 py-1 rounded text-xs font-semibold transition-all cursor-pointer ${
-                activeLaneFilter === "warning" ? "bg-amber-500 text-white shadow-2xs" : "text-amber-800 hover:bg-amber-50"
+                activeLaneFilter === "warning" ? "bg-slate-700 text-white shadow-2xs font-bold" : "text-slate-700 hover:bg-slate-100"
               }`}
             >
               <Dot tone="amber" /> Warning (50-56d)
@@ -472,7 +533,7 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
             <button
               onClick={() => setActiveLaneFilter("critical")}
               className={`px-3 py-1 rounded text-xs font-semibold transition-all cursor-pointer ${
-                activeLaneFilter === "critical" ? "bg-[#BA2D0B] text-white shadow-2xs" : "text-[#BA2D0B] hover:bg-rose-50"
+                activeLaneFilter === "critical" ? "bg-[#9D174D] text-white shadow-2xs font-bold" : "text-[#9D174D] hover:bg-pink-50"
               }`}
             >
               <Dot tone="red" /> Breach Risk (&gt;56d)
@@ -507,10 +568,10 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
                     key={p.token}
                     className={`transition-colors ${
                       isCriticalRow
-                        ? "bg-rose-50/40 hover:bg-rose-50/70"
+                        ? "bg-pink-50/40 hover:bg-pink-50/70"
                         : isWarningRow
-                        ? "bg-amber-50/30 hover:bg-amber-50/60"
-                        : "hover:bg-gray-50/80"
+                        ? "bg-sky-50/30 hover:bg-sky-50/60"
+                        : "hover:bg-slate-50/80"
                     }`}
                   >
                     {/* Column 1: Unmasked POC Identity */}
@@ -521,11 +582,11 @@ export function OverviewPanel({ cases, loading, error, onRefresh, onSelectCase }
                         </div>
                         <div>
                           <div className="flex items-center gap-1.5">
-                            <span className="text-sm font-bold text-black">{p.name}</span>
-                            <span className="text-xs text-gray-500 font-medium">{p.age}</span>
+                            <span className="text-sm font-bold text-slate-900">{p.name}</span>
+                            <span className="text-xs text-slate-500 font-medium">{p.age}</span>
                           </div>
-                          <div className="text-xs text-gray-600 flex items-center gap-1.5 mt-0.5">
-                            <span className="font-mono text-xs text-[#BA2D0B] bg-[#BA2D0B]/10 px-1.5 py-0.2 rounded font-semibold border border-[#BA2D0B]/20">
+                          <div className="text-xs text-slate-600 flex items-center gap-1.5 mt-0.5">
+                            <span className="font-mono text-xs text-[#9D174D] bg-pink-50 px-1.5 py-0.2 rounded font-semibold border border-pink-200">
                               {p.token}
                             </span>
                             <span>&middot;</span>

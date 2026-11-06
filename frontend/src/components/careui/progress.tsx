@@ -49,7 +49,7 @@ function ProgressIndicator({
   return (
     <ProgressPrimitive.Indicator
       data-slot="progress-indicator"
-      className={cn("bg-emerald-500 h-full transition-all rounded-full", className)}
+      className={cn("bg-[#0284C7] h-full transition-all rounded-full", className)}
       {...props}
     />
   );

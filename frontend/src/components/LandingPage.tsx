@@ -5,7 +5,6 @@ import {
   SolarShieldKeyhole,
   SolarUsersGroup,
   SolarDocumentText,
-  SolarSmartphone,
   SolarArrowRight,
   SolarCheck,
   SolarCaretDown,
@@ -24,7 +23,7 @@ import { useTranslatedText } from "../i18n/pageTranslator";
 interface LandingPageProps {
   onLaunchWorkstation: () => void;
   onOpenPatientCompanion: () => void;
-  onOpenDualView: () => void;
+  onOpenDualView?: () => void;
   onOpenGateway?: () => void;
 }
 
@@ -34,56 +33,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onOpenDualView,
   onOpenGateway,
 }) => {
-  // Mobile drawer state
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  // Header compaction: translated labels vary a lot in width, so measure instead of
-  // relying on breakpoints. 0 = full nav, 1 = nav in menu, 2 = also hide pilot CTA.
-  const [headerRowEl, setHeaderRowEl] = useState<HTMLDivElement | null>(null);
-  const [headerLevel, setHeaderLevel] = useState(0);
-  const headerNeeded = useRef<number[]>([]);
-  useEffect(() => {
-    const el = headerRowEl;
-    if (!el) return;
-    const check = () => {
-      setHeaderLevel((level) => {
-        if (el.scrollWidth > el.clientWidth && level < 2) {
-          headerNeeded.current[level] = el.scrollWidth;
-          return level + 1;
-        }
-        if (level > 0 && el.clientWidth >= (headerNeeded.current[level - 1] ?? Infinity)) return level - 1;
-        return level;
-      });
-    };
-    const ro = new ResizeObserver(check);
-    ro.observe(el);
-    const onResize = () => check();
-    window.addEventListener("resize", onResize);
-    check();
-    // Text changes (language switch) invalidate stored widths: re-measure from full.
-    let timer = 0;
-    const mo = new MutationObserver(() => {
-      headerNeeded.current = [];
-      setHeaderLevel(0);
-      window.clearTimeout(timer);
-      timer = window.setTimeout(check, 60);
-    });
-    mo.observe(el, { subtree: true, childList: true, characterData: true });
-    return () => {
-      ro.disconnect();
-      mo.disconnect();
-      window.removeEventListener("resize", onResize);
-      window.clearTimeout(timer);
-    };
-  }, [headerRowEl]);
-  useEffect(() => {
-    const el = headerRowEl;
-    if (el && el.scrollWidth > el.clientWidth && headerLevel < 2) {
-      headerNeeded.current[headerLevel] = el.scrollWidth;
-      setHeaderLevel(headerLevel + 1);
-    }
-  }, [headerLevel, headerRowEl]);
-  const navInline = headerLevel === 0;
-
   // Interactive Hero Studio State
   const [activeStudioTab, setActiveStudioTab] = useState<"ivr" | "vault" | "timeline">("ivr");
   const [isMasked, setIsMasked] = useState(true);
@@ -92,7 +41,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   // Pilot signup form state
   const [pilotEmail, setPilotEmail] = useState("");
   const [districtName, setDistrictName] = useState("");
-  const [facilityType, setFacilityType] = useState("District Spoke Clinic");
+  const [facilityType, setFacilityType] = useState("Primary Health Centre (PHC/CHC)");
   const [leadConfirmationId, setLeadConfirmationId] = useState("");
   const [formStatus, setFormStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -104,7 +53,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const taglineRef = useRef<HTMLDivElement>(null);
   const [revealedWordCount, setRevealedWordCount] = useState<number>(0);
 
-  const taglineText = useTranslatedText("Every rural cancer patient deserves curative treatment completed within fifty six days without losing their identity or their dignity.");
+  const taglineText = useTranslatedText(
+    "Every young girl deserves HPV immunization protection, and every woman deserves timely screening to eliminate cervical cancer without losing their privacy or dignity."
+  );
   const tagWords = taglineText.split(" ");
 
   useEffect(() => {
@@ -157,345 +108,234 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
   const faqItems = [
     {
-      q: "Why is the fifty six day completion limit biologically critical for cervical cancer?",
-      a: "Curative chemoradiation requires completing external beam radiation and brachytherapy within fifty six days. Clinical trials demonstrate that each additional day of delay causes an estimated zero point eight to one point two percent loss in pelvic tumor control because clonogenic tumor cells repopulate rapidly.",
+      q: "Who is eligible for the HPV Preventive Vaccination cohort?",
+      a: "Adolescent girls aged 9 to 14 years. Frontline ASHA workers register beneficiaries through school enrollment records or community health drives, verify birth details, and audit any prior HPV doses received outside the system.",
     },
     {
-      q: "How does the platform protect patient identity during reasoning workflows?",
-      a: "All patient identifiers such as names, phone numbers, and village details are isolated inside an AES 256 GCM encrypted token vault. Clinical AI models and multi agent reasoning pipelines only ever process zero knowledge synthetic tokens such as PT RURAL 7891.",
+      q: "What is the 2-dose HPV immunization schedule and dosing logic?",
+      a: "Dose 1 is logged at baseline (T0) by local Primary Health Centres (PHCs). Dose 2 is automatically scheduled at the standard 6-month interval (T0 + 6 months, with an allowable window up to 12 months). CerviSetu tracks progress from Unvaccinated (0/2) to Partially Vaccinated (1/2) to Fully Immunized (2/2) with batch and AEFI logging.",
     },
     {
-      q: "How does the hub and spoke referral avoid travel delays for brachytherapy?",
-      a: "Investigations and pre anesthetic clearance begin at fraction ten instead of fraction twenty five. When the treating oncologist verifies tumor regression on fraction fifteen, travel tickets and tertiary hospital dorm passes are already confirmed for fraction twenty six.",
+      q: "How does the 14-day cadence alert engine prevent dose drop-outs?",
+      a: "The engine initiates notifications 14 days prior to the second-dose due date to alert parents and prompt the ASHA worker to confirm vaccine vial stock at the local sub-centre or PHC. If Dose 2 is overdue by 14 days, recurrent voice and SMS outreach pings are triggered until administration or drop-out reasons are documented.",
     },
     {
-      q: "What happens when a patient in a remote village misses a radiotherapy appointment?",
-      a: "The system triggers progressive escalation tiers. Day one sends a local language text message. Day two places an automated interactive voice call. Day three dispatches a village health worker directly to the home. Day five compiles an emergency dossier for district medical officer transport.",
+      q: "How are Point-of-Care Visual Inspection (VIA) and Pap smear reports triaged?",
+      a: "Frontline health workers capture VIA test images or lab slips directly on their mobile device. CerviSetu's clinical AI assists with digitization and symptom correlation, segregating normal findings from abnormal or suspicious lesions to guide appropriate clinical pathways.",
     },
     {
-      q: "Can treating doctors view unmasked patient details at the point of care?",
-      a: "Yes. Treating doctors and radiation nurses at authenticated treatment consoles see the verified patient name, photograph, and age. This prevents wrong patient radiation accidents while preserving zero knowledge privacy across cloud networks.",
+      q: "What is the Dual-Track Care Pathway for adult women (35–45)?",
+      a: "Track A (ASHA Community Management) manages benign infections or non-malignant cervicitis locally with prescribed medical therapies and 14-day symptom resolution check-ins. Track B (Tertiary Care Referral) immediately escalates persistent lesions, high-grade dysplasia, or suspicious bleeding to tertiary cancer specialists.",
     },
     {
-      q: "Does the system require hospital network overhaul or expensive hardware?",
-      a: "No. The entire platform runs through modern web browsers on existing hospital desktop computers and affordable tablets, with offline capable mobile companion views for field health workers.",
+      q: "How do tertiary cancer centre specialists review referred rural patients?",
+      a: "Specialist oncologists and gynecologists access the Specialist Review Portal, where uploaded visual captures, digitized test slips, and ASHA intake logs are organized into a comprehensive pre-arrival dossier before the patient travels to the hospital.",
     },
     {
-      q: "Is CerviSetu compliant with national privacy and medical device guidelines?",
-      a: "Yes. CerviSetu operates as an assistive workflow coordination platform aligned with the Digital Personal Data Protection Act of 2023, ABDM FHIR standards, and CDSCO non diagnostic SaMD regulatory boundaries.",
+      q: "How is patient privacy safeguarded under the DPDP Act and ABDM?",
+      a: "All patient identifiers are isolated in zero-knowledge AES-256 token vaults. External AI and cloud triaging workflows strictly process synthetic non-reversible tokens (e.g., PT-RURAL-7891), while authenticated clinical consoles display verified demographics to prevent medical mix-ups.",
     },
     {
-      q: "How does the ninety day district pilot work?",
-      a: "Selected public oncology daycare centers and regional cancer hubs receive full software access, staff onboarding, and integration support at zero license fee for three months with full hospital data ownership.",
+      q: "What infrastructure or hardware is required for rural Primary Health Centres?",
+      a: "None. CerviSetu runs seamlessly through standard modern web browsers on existing PHC desktop computers and low-bandwidth Android smartphones with offline-first synchronization for field health workers.",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-[#FFFFFF] text-[#000000] font-sans selection:bg-[#F19941] selection:text-[#000000] antialiased">
+    <div className="min-h-screen bg-slate-200/90 text-slate-900 font-sans selection:bg-pink-100 selection:text-[#9D174D] antialiased relative">
+      {/* Blurred Out Effect Backdrop (No CSS gradient background; authentic ambient depth) */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute -top-20 -left-20 size-[32rem] rounded-full bg-pink-300/20 blur-[72px]" />
+        <div className="absolute top-1/4 -right-20 size-[36rem] rounded-full bg-sky-300/20 blur-[72px]" />
+        <div className="absolute top-2/3 left-1/4 size-[30rem] rounded-full bg-sky-200/15 blur-[64px]" />
+        <div className="absolute -bottom-24 right-1/3 size-[32rem] rounded-full bg-pink-200/15 blur-[64px]" />
+        <div className="absolute inset-0 bg-slate-100/75 backdrop-blur-md" />
+      </div>
+
       {/* Skip to Content for Keyboard Accessibility */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 z-50 bg-[#000000] text-[#FFFFFF] px-4 py-2 rounded-lg border border-[#000000] text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#BA2D0B]"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 z-50 bg-[#0F172A] text-white px-4 py-2 rounded-md border border-black text-xs font-heading font-semibold focus:outline-none focus:ring-2 focus:ring-[#9D174D]"
       >
         Skip to main content
       </a>
 
       {/* ========================================================================= */}
-      {/* ARCHITECTURAL HEADER WITH EMBLEM & PRIMARY/SECONDARY BORDERS              */}
+      {/* HEALTHCARE STANDARD NAVBAR (Retaining Existing CerviSetu Logo)              */}
       {/* ========================================================================= */}
-      <header className="sticky top-0 z-40 w-full bg-[#FFFFFF]/95 backdrop-blur-md border-b-2 border-[#BA2D0B]/25">
-        <div ref={setHeaderRowEl} className="max-w-[1760px] mx-auto px-3 sm:px-8 py-4 flex items-center justify-between gap-2 sm:gap-4">
-          {/* Brand Logo with CerviSetu Caring Hands SVG Emblem */}
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 sm:shrink-0">
-            <div className="size-10 shrink-0 rounded-xl bg-white border border-[#0F766E]/30 flex items-center justify-center text-[#000000] shadow-xs p-1 transition-transform hover:scale-105">
-              <CerviSetuLogo size={30} />
+      <header className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-md border-b border-black/12 shadow-2xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
+          {/* Brand Logo & Name */}
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="size-10 shrink-0 rounded-lg bg-white border border-black/15 flex items-center justify-center p-1.5 shadow-2xs">
+              <CerviSetuLogo size={26} />
             </div>
-            <div className="flex flex-col min-w-0">
+            <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <span className="text-lg font-semibold tracking-tight text-[#000000]">CerviSetu</span>
-                <span className="hidden 2xl:inline text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#90C3CB]/40 text-[#000000] font-semibold border border-[#F19941] font-mono-data">
-                  Sovereign Health
+                <span className="font-heading font-extrabold text-lg tracking-tight text-slate-900 leading-none">
+                  CerviSetu
+                </span>
+                <span className="text-[10px] font-heading font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-pink-50 text-[#9D174D] border border-pink-200">
+                  Prevention AI
                 </span>
               </div>
-              <span className="hidden sm:block text-[11px] text-[#4B5563] tracking-normal whitespace-nowrap">
-                Rural Oncology Radiation Network
+              <span className="text-[11px] text-slate-500 font-sans mt-0.5">
+                HPV Immunization &amp; Rural Screening
               </span>
             </div>
           </div>
 
-          {/* Desktop Navigation Links — Spacious & Distinct */}
-          <nav aria-label="Desktop Navigation" className={`hidden ${navInline ? "xl:flex" : ""} flex-1 items-center justify-center gap-4 2xl:gap-7`}>
-            <a
-              href="#protocol"
-              className="text-sm font-medium whitespace-nowrap text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
-            >
-              56 Day Protocol
-            </a>
-            <a
-              href="#speech-studio"
-              className="text-sm font-medium whitespace-nowrap text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
-            >
-              Speech IVR
-            </a>
-            <a
-              href="#vision-ocr"
-              className="text-sm font-medium whitespace-nowrap text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
-            >
-              Vision OCR
-            </a>
-            <a
-              href="#agent-flow"
-              className="text-sm font-medium whitespace-nowrap text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
-            >
-              Agent Flow
-            </a>
-            <a
-              href="#impact-calculator"
-              className="text-sm font-medium whitespace-nowrap text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
-            >
-              Impact ROI
-            </a>
-            <a
-              href="#api-studio"
-              className="text-sm font-medium whitespace-nowrap text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
-            >
-              API Studio
-            </a>
-            <a
-              href="#faq"
-              className="text-sm font-medium whitespace-nowrap text-[#4B5563] hover:text-[#BA2D0B] transition-colors duration-200"
-            >
-              FAQ
-            </a>
+          {/* Desktop Navigation Links */}
+          <nav aria-label="Desktop Navigation" className="hidden lg:flex items-center gap-6 text-xs font-heading font-semibold text-slate-600">
+            <a href="#protocol" className="hover:text-[#9D174D] transition-colors">Protocol</a>
+            <a href="#speech-studio" className="hover:text-[#9D174D] transition-colors">Voice IVR</a>
+            <a href="#vision-ocr" className="hover:text-[#9D174D] transition-colors">Vision OCR</a>
+            <a href="#agent-flow" className="hover:text-[#9D174D] transition-colors">Agent Flow</a>
+            <a href="#architecture" className="hover:text-[#9D174D] transition-colors">Dual-Track</a>
+            <a href="#impact-calculator" className="hover:text-[#9D174D] transition-colors">Impact ROI</a>
+            <a href="#faq" className="hover:text-[#9D174D] transition-colors">FAQ</a>
           </nav>
 
-          {/* Header Action Buttons — Primary & Secondary Borders */}
-          <div className={`hidden sm:flex items-center gap-3 shrink-0 ${navInline ? "xl:pl-5 2xl:pl-6 xl:border-l" : ""} lg:border-[#E5E7EB]`}>
+          {/* Controls: Language, Login & Primary Action */}
+          <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
             <LanguageSwitch />
             <button
               onClick={(onOpenGateway ?? onLaunchWorkstation)}
               data-testid="header-login"
-              className="h-10 px-4 inline-flex items-center gap-2 whitespace-nowrap text-sm font-semibold text-white bg-black hover:bg-black/85 border border-black rounded-lg transition-colors duration-200 cursor-pointer active:scale-98"
+              className="h-9 px-3.5 sm:px-4 inline-flex items-center gap-1.5 sm:gap-2 whitespace-nowrap text-xs font-heading font-semibold text-slate-800 bg-white hover:bg-slate-50 border border-black/15 rounded-md transition-all cursor-pointer shadow-2xs active:scale-95"
             >
-              <LogIn className="size-4" />
-              Log in / Book
+              <LogIn className="size-3.5 text-[#0369A1]" />
+              <span>Log in</span>
             </button>
-            <a
-              href="#pilot-intake"
-              className={`h-10 px-4 ${headerLevel >= 2 ? "hidden" : "hidden md:inline-flex"} items-center whitespace-nowrap text-sm font-semibold text-[#FFFFFF] bg-[#BA2D0B] hover:bg-[#9E2407] border border-[#BA2D0B] rounded-lg transition-colors duration-200 cursor-pointer active:scale-98`}
+            <button
+              onClick={(onOpenGateway ?? onLaunchWorkstation)}
+              className="h-9 px-3.5 sm:px-5 inline-flex items-center whitespace-nowrap text-xs font-heading font-bold text-white bg-[#0F172A] hover:bg-slate-800 rounded-md transition-all cursor-pointer shadow-xs active:scale-95"
             >
-              Deploy Spoke Pilot
-            </a>
+              Book Screening
+            </button>
           </div>
-
-          {/* Mobile: direct Log in button next to the menu */}
-          <button
-            onClick={(onOpenGateway ?? onLaunchWorkstation)}
-            className="sm:hidden shrink-0 h-10 px-3 inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-black rounded-lg cursor-pointer"
-          >
-            <LogIn className="size-4" />
-            Log in
-          </button>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className={`${navInline ? "xl:hidden" : ""} shrink-0 p-2 text-[#000000] hover:bg-[#F4F5F7] rounded-lg border-2 border-[#F19941]`}
-            aria-label="Toggle mobile menu"
-          >
-            <div className="w-5 flex flex-col gap-1.5 items-end">
-              <span className={`h-0.5 bg-current transition-all duration-300 ${mobileMenuOpen ? "w-5 rotate-45 translate-y-2" : "w-5"}`} />
-              <span className={`h-0.5 bg-current transition-all duration-300 ${mobileMenuOpen ? "opacity-0" : "w-3.5"}`} />
-              <span className={`h-0.5 bg-current transition-all duration-300 ${mobileMenuOpen ? "w-5 -rotate-45 -translate-y-2" : "w-4"}`} />
-            </div>
-          </button>
         </div>
       </header>
 
-      {/* Mobile Drawer */}
-      {mobileMenuOpen && (
-        <div className={`fixed inset-0 z-30 bg-[#FFFFFF]/98 backdrop-blur-xl flex flex-col justify-center px-8 py-16 ${navInline ? "xl:hidden" : ""} border-b-2 border-[#BA2D0B]`}>
-          <div className="flex flex-col gap-6 max-w-sm mx-auto w-full">
-            <div className="flex items-center gap-3 pb-4 border-b border-[#F19941]/30">
-              <div className="size-9 rounded-lg bg-white border border-[#0F766E]/30 flex items-center justify-center p-1.5">
-                <CerviSetuLogo size={20} />
-              </div>
-              <span className="text-xs uppercase tracking-widest text-[#4B5563] font-mono-data">System Navigation</span>
-            </div>
-            <a
-              href="#protocol"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-xl font-semibold text-[#000000] hover:text-[#BA2D0B] py-2 border-b border-[#F19941]/20"
-            >
-              56 Day Curative Protocol
-            </a>
-            <a
-              href="#vault"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-xl font-semibold text-[#000000] hover:text-[#BA2D0B] py-2 border-b border-[#F19941]/20"
-            >
-              Zero ID Privacy Vault
-            </a>
-            <a
-              href="#accompaniment"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-xl font-semibold text-[#000000] hover:text-[#BA2D0B] py-2 border-b border-[#F19941]/20"
-            >
-              ASHA Field Coordination
-            </a>
-            <a
-              href="#architecture"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-xl font-semibold text-[#000000] hover:text-[#BA2D0B] py-2 border-b border-[#F19941]/20"
-            >
-              Hub and Spoke Architecture
-            </a>
-            <a
-              href="#faq"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-xl font-semibold text-[#000000] hover:text-[#BA2D0B] py-2 border-b border-[#F19941]/20"
-            >
-              Frequently Asked Questions
-            </a>
-
-            <div className="flex flex-col gap-3 mt-6">
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  (onOpenGateway ?? onLaunchWorkstation)();
-                }}
-                className="w-full py-3 text-sm font-semibold text-white bg-black rounded-lg text-center"
-              >
-                Log in / Book Appointment
-              </button>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onLaunchWorkstation();
-                }}
-                className="w-full py-3 text-sm font-semibold text-[#000000] bg-white border-2 border-[#F19941] rounded-lg text-center"
-              >
-                Launch Staff Workstation
-              </button>
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenPatientCompanion();
-                }}
-                className="w-full py-3 text-sm font-semibold text-[#FFFFFF] bg-[#BA2D0B] rounded-lg text-center"
-              >
-                Open Patient Mobile Companion
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Main Content Area */}
-      <main id="main-content" className="relative">
+      <main id="main-content" className="relative z-10">
         {/* ========================================================================= */}
-        {/* HERO SECTION WITH ARCHITECTURAL STUDIO & SECONDARY/PRIMARY BORDERS        */}
+        {/* HERO SECTION                                                              */}
         {/* ========================================================================= */}
-        <section className="relative pt-16 pb-20 border-b-2 border-[#BA2D0B]/20 overflow-hidden bg-[#FFFFFF]">
-          {/* Subtle Grid Lines Background */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#BA2D0B0a_1px,transparent_1px),linear-gradient(to_bottom,#F199410a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none" />
-
-          <div className="max-w-7xl mx-auto px-6 sm:px-8 relative z-10">
-            {/* Top Credential Pill with Primary Border */}
-            <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-[#DBFE87]/50 border-2 border-[#BA2D0B] mb-8 shadow-xs">
-              <div className="size-4">
+        <section className="relative pt-14 pb-20 border-b border-black/10 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            {/* Top Credential Pill */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/90 backdrop-blur-xs border border-black/15 mb-6 shadow-2xs">
+              <div className="size-4 text-[#9D174D]">
                 <CerviSetuLogo size={16} />
               </div>
-              <span className="text-xs font-bold text-[#000000]">
-                National Cancer Grid and GEC ESTRO Curative Standard
+              <span className="text-xs font-heading font-bold text-slate-800">
+                National Cervical Elimination Mission · <span className="text-[#9D174D]">Cohort 1 (HPV 9–14)</span> &amp; <span className="text-[#0369A1]">Cohort 2 (Screening 35–45)</span>
               </span>
             </div>
 
-            {/* Authoritative Main Headline */}
-            <div className="max-w-4xl mb-6">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-[#000000] leading-[1.1] text-balance">
-                Sovereign clinical infrastructure for fifty six day curative cancer care in rural districts
+            {/* Main Headline */}
+            <div className="max-w-4xl mb-3">
+              <h1 className="font-heading font-extrabold text-2xl sm:text-3xl lg:text-[2.25rem] tracking-tight text-slate-900 leading-[1.25]">
+                Sovereign <span className="inline-block">multi-cohort infrastructure</span> for{" "}
+                <span className="text-[#9D174D]">
+                  HPV vaccination
+                </span>{" "}
+                &amp; <span className="text-[#0369A1]">rural cancer screening</span>
               </h1>
             </div>
 
-            {/* Clear Subheadline */}
-            <p className="max-w-2xl text-base sm:text-lg text-[#4B5563] leading-relaxed mb-10 text-pretty">
-              Synchronize district radiotherapy daycare with tertiary brachytherapy hubs. Deploy automated vernacular voice outreach and village health teams to stop patient drop out before biological limits expire.
+            {/* Display Mission Subtitle in Non-Italic Playfair Display */}
+            <p className="font-subtitle-playfair text-sm sm:text-base font-semibold text-slate-700 max-w-2xl leading-relaxed mb-2">
+              Eliminating cervical cancer across rural districts with biological precision and zero unverified dropouts.
             </p>
 
-            {/* Dual Primary Call to Actions */}
-            <div className="flex flex-wrap items-center gap-4 mb-16">
-              <a
-                href="#pilot-intake"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[#BA2D0B] hover:bg-[#9E2407] border-2 border-[#BA2D0B] text-[#FFFFFF] text-sm font-semibold transition-all shadow-md active:scale-98 cursor-pointer"
+            {/* Subheadline in DM Sans */}
+            <p className="font-sans text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed mb-6 text-pretty">
+              Automate 2-dose HPV immunization tracking for adolescent girls (9–14) and point-of-care VIA screening with dual-track triage and 14-day alert cycles for adult women (35–45) across rural district networks.
+            </p>
+
+            {/* Dual Primary Call to Actions with Minimal-to-Medium Rounding */}
+            <div className="flex flex-wrap items-center gap-3 mb-10">
+              <button
+                onClick={(onOpenGateway ?? onLaunchWorkstation)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md bg-[#9D174D] hover:bg-[#831843] text-white text-xs sm:text-sm font-heading font-bold transition-all shadow-xs active:scale-98 cursor-pointer"
               >
                 <span>Deploy Spoke Pilot</span>
-                <SolarArrowRight size={16} />
-              </a>
-              <button
-                onClick={onOpenDualView}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-[#FFFFFF] hover:bg-[#F4F5F7] border-2 border-[#F19941] text-[#000000] text-sm font-semibold transition-all cursor-pointer shadow-xs active:scale-98"
-              >
-                <div className="size-5 rounded bg-[#90C3CB] border border-[#F19941] flex items-center justify-center text-[#000000]">
-                  <SolarSmartphone size={12} />
-                </div>
-                <span>Dual Screen Tablet & Phone Live View</span>
+                <SolarArrowRight size={15} />
               </button>
+              <button
+                onClick={onLaunchWorkstation}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-md bg-white hover:bg-slate-50 border border-black/15 text-slate-800 text-xs sm:text-sm font-heading font-bold transition-all cursor-pointer shadow-2xs active:scale-98"
+              >
+                <div className="size-4.5 rounded bg-sky-50 border border-sky-300 flex items-center justify-center text-[#0369A1]">
+                  <SolarShieldCheck size={12} />
+                </div>
+                <span>Launch Workstation</span>
+              </button>
+              {onOpenDualView && (
+                <button
+                  onClick={onOpenDualView}
+                  className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-md bg-white hover:bg-slate-50 border border-black/15 text-slate-700 text-xs sm:text-sm font-heading font-semibold transition-all cursor-pointer shadow-2xs active:scale-98"
+                >
+                  Dual-Screen Demo
+                </button>
+              )}
             </div>
 
             {/* ===================================================================== */}
-            {/* INTERACTIVE CLINICAL STUDIO (Primary #BA2D0B & Secondary #F19941 Borders)*/}
+            {/* INTERACTIVE CLINICAL STUDIO (Subtle Gradient Card with Medium Radius) */}
             {/* ===================================================================== */}
-            <div className="w-full bg-[#FFFFFF] border-2 border-[#BA2D0B] rounded-2xl overflow-hidden shadow-xl">
-              {/* Studio Header Toolbar with Secondary Border Divider */}
-              <div className="px-6 py-4 bg-[#F8F9FA] border-b-2 border-[#F19941]/40 flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="size-6 rounded-md bg-white border border-[#0F766E]/30 flex items-center justify-center p-1">
+            <div className="card-base card-gradient-subtle overflow-hidden">
+              {/* Studio Header Toolbar */}
+              <div className="px-5 py-3.5 bg-white/90 backdrop-blur-xs border-b border-black/12 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="size-6 rounded bg-white border border-black/15 flex items-center justify-center p-1 shadow-2xs">
                     <CerviSetuLogo size={16} />
                   </div>
-                  <span className="text-xs font-mono-data uppercase tracking-wider text-[#000000] font-bold">
+                  <span className="text-xs font-mono-data uppercase tracking-wider text-slate-800 font-bold">
                     Live Interactive Telemetry Studio
                   </span>
                 </div>
 
-                {/* Studio Mode Switcher with Secondary Border */}
-                <div className="flex items-center bg-[#FFFFFF] border-2 border-[#F19941]/60 rounded-lg p-1 gap-1">
+                {/* Studio Mode Switcher */}
+                <div className="flex items-center bg-slate-100 border border-black/12 rounded-md p-1 gap-1">
                   <button
                     onClick={() => setActiveStudioTab("ivr")}
-                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-md text-xs font-heading font-semibold transition-all cursor-pointer ${
                       activeStudioTab === "ivr"
-                        ? "bg-[#BA2D0B] text-[#FFFFFF] shadow-xs"
-                        : "text-[#4B5563] hover:text-[#000000]"
+                        ? "bg-[#0F172A] text-white shadow-xs"
+                        : "text-slate-600 hover:text-slate-900"
                     }`}
                   >
                     Vernacular Voice IVR
                   </button>
                   <button
                     onClick={() => setActiveStudioTab("vault")}
-                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-md text-xs font-heading font-semibold transition-all cursor-pointer ${
                       activeStudioTab === "vault"
-                        ? "bg-[#BA2D0B] text-[#FFFFFF] shadow-xs"
-                        : "text-[#4B5563] hover:text-[#000000]"
+                        ? "bg-[#0F172A] text-white shadow-xs"
+                        : "text-slate-600 hover:text-slate-900"
                     }`}
                   >
                     Zero ID Masking
                   </button>
                   <button
                     onClick={() => setActiveStudioTab("timeline")}
-                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-md text-xs font-heading font-semibold transition-all cursor-pointer ${
                       activeStudioTab === "timeline"
-                        ? "bg-[#BA2D0B] text-[#FFFFFF] shadow-xs"
-                        : "text-[#4B5563] hover:text-[#000000]"
+                        ? "bg-[#0F172A] text-white shadow-xs"
+                        : "text-slate-600 hover:text-slate-900"
                     }`}
                   >
-                    56 Day Timeline Guard
+                    14-Day Cadence Guard
                   </button>
                 </div>
               </div>
 
               {/* Studio Interactive Body */}
-              <div className="p-6 sm:p-8 bg-[#FFFFFF]">
-                {/* 1. Vernacular Voice IVR Playground (Full Showcase Engine) */}
+              <div className="p-5 sm:p-7">
+                {/* 1. Vernacular Voice IVR Playground */}
                 {activeStudioTab === "ivr" && (
                   <div id="speech-studio">
                     <VoiceStudio />
@@ -504,120 +344,120 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
                 {/* 2. Zero ID Masking Interactive */}
                 {activeStudioTab === "vault" && (
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
                     <div className="lg:col-span-7">
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="text-xs uppercase tracking-wider font-mono-data text-[#BA2D0B] font-bold">
+                      <div className="flex items-center gap-2 mb-2.5">
+                        <span className="text-[11px] uppercase tracking-wider font-mono-data text-[#0369A1] font-bold bg-sky-100 px-2 py-0.5 rounded border border-sky-300">
                           DPDP 2023 Shield
                         </span>
-                        <span className="text-xs text-[#F19941]">·</span>
-                        <span className="text-xs text-[#4B5563]">AES 256 GCM Token Vault</span>
+                        <span className="text-xs text-slate-400">·</span>
+                        <span className="text-xs text-slate-500 font-medium">AES-256-GCM Token Vault</span>
                       </div>
-                      <h3 className="text-2xl font-semibold text-[#000000] mb-3">
+                      <h3 className="font-heading font-bold text-xl sm:text-2xl text-slate-900 mb-2">
                         Point of Care Identity vs Zero Knowledge Reasoning
                       </h3>
-                      <p className="text-sm text-[#4B5563] leading-relaxed mb-6">
-                        Doctors at physical consoles view full patient names to prevent radiation mistakes. Meanwhile, all external reasoning models and cloud queues strictly process synthetic non reversible tokens.
+                      <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-5 font-sans">
+                        Doctors at authenticated physical consoles view full patient names to prevent clinical mistakes. Meanwhile, all external reasoning models and cloud queues strictly process synthetic non-reversible tokens.
                       </p>
 
-                      <div className="flex items-center gap-4 mb-6">
+                      <div className="flex items-center gap-3.5 mb-5 flex-wrap">
                         <button
                           onClick={() => setIsMasked(!isMasked)}
-                          className="px-4 py-2 rounded-lg text-xs font-semibold bg-[#BA2D0B] hover:bg-[#9E2407] border-2 border-[#BA2D0B] text-[#FFFFFF] transition-all cursor-pointer shadow-xs active:scale-98"
+                          className="px-3.5 py-2 rounded-md text-xs font-heading font-bold bg-[#9D174D] hover:bg-[#831843] text-white transition-all cursor-pointer shadow-xs active:scale-98"
                         >
                           {isMasked ? "Reveal Authenticated Console View" : "Engage Zero Knowledge Shield"}
                         </button>
-                        <span className="text-xs font-medium text-[#4B5563]">
-                          Current state: {isMasked ? "Zero Knowledge Masked" : "Point of Care Console"}
+                        <span className="text-xs font-medium text-slate-600">
+                          Current state: <strong className="text-slate-900 font-heading">{isMasked ? "Zero Knowledge Masked" : "Point of Care Console"}</strong>
                         </span>
                       </div>
 
-                      <div className="p-4 rounded-xl bg-[#F8F9FA] border-2 border-[#F19941] space-y-2 font-mono-data text-xs">
-                        <div className="flex justify-between py-1 border-b border-[#F19941]/30">
-                          <span className="text-[#4B5563]">Identity Header:</span>
-                          <span className={isMasked ? "text-[#BA2D0B] font-bold" : "text-[#F19941] font-bold"}>
-                            {isMasked ? "PT RURAL 7891 (Synthetic Token)" : "Shanti Devi (Age 48)"}
+                      <div className="p-4 rounded-md bg-white border border-black/12 space-y-2 font-mono-data text-xs shadow-2xs">
+                        <div className="flex justify-between py-1 border-b border-black/8">
+                          <span className="text-slate-500">Identity Header:</span>
+                          <span className={isMasked ? "text-[#0369A1] font-bold" : "text-[#9D174D] font-bold"}>
+                            {isMasked ? "PT-RURAL-7891 (Synthetic Token)" : "Shanti Devi (Age 48)"}
                           </span>
                         </div>
-                        <div className="flex justify-between py-1 border-b border-[#F19941]/30">
-                          <span className="text-[#4B5563]">Phone & Sector:</span>
-                          <span className={isMasked ? "text-[#4B5563] font-semibold" : "text-[#000000] font-bold"}>
-                            {isMasked ? "VAULT PROTECTED (AES 256)" : "+91 98765 43210 · Adalhat, Mirzapur"}
+                        <div className="flex justify-between py-1 border-b border-black/8">
+                          <span className="text-slate-500">Phone &amp; Sector:</span>
+                          <span className={isMasked ? "text-slate-500 font-medium" : "text-slate-900 font-bold"}>
+                            {isMasked ? "VAULT PROTECTED (AES-256)" : "+91 98765 43210 · Adalhat, Mirzapur"}
                           </span>
                         </div>
                         <div className="flex justify-between py-1">
-                          <span className="text-[#4B5563]">Reasoning Payload:</span>
-                          <span className="text-[#000000] font-bold">Cancer Type: Cervical FIGO IIB</span>
+                          <span className="text-slate-500">Reasoning Payload:</span>
+                          <span className="text-slate-900 font-bold">Cohort 2 · VIA Positive Acetic Lesion</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="lg:col-span-5 bg-[#F8F9FA] border-2 border-[#BA2D0B]/30 rounded-xl p-6">
-                      <span className="text-xs font-mono-data text-[#000000] uppercase tracking-wider block mb-4 font-bold">
+                    <div className="lg:col-span-5 card-gradient-pink border border-pink-200 rounded-lg p-5 shadow-2xs">
+                      <span className="text-xs font-mono-data text-[#9D174D] uppercase tracking-wider block mb-3 font-bold">
                         Cryptographic Chained Ledger
                       </span>
-                      <div className="space-y-2 text-xs font-mono-data text-[#4B5563]">
-                        <div className="p-2.5 rounded bg-[#FFFFFF] border-2 border-[#F19941]/40">
-                          <span className="text-[#000000] font-bold block">Block 004128 · SHA 256</span>
-                          <span>Prev Hash: a89f...b412</span>
+                      <div className="space-y-2 text-xs font-mono-data text-slate-700">
+                        <div className="p-3 rounded-md bg-white border border-black/10 shadow-2xs">
+                          <span className="text-slate-900 font-bold block mb-0.5">Block 004128 · SHA-256</span>
+                          <span className="text-slate-500 text-[11px]">Prev Hash: a89f...b412</span>
                         </div>
-                        <div className="p-2.5 rounded bg-[#DBFE87]/50 border-2 border-[#BA2D0B]/50">
-                          <span className="text-[#000000] font-bold block">Status: Validated</span>
-                          <span className="text-[#4B5563]">Timestamp: Live Synchronized</span>
+                        <div className="p-3 rounded-md bg-sky-50 border border-sky-200">
+                          <span className="text-[#0369A1] font-bold block mb-0.5">Status: Validated &amp; Immutably Anchored</span>
+                          <span className="text-[#0369A1] text-[11px]">Timestamp: Live Synchronized</span>
                         </div>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* 3. 56 Day Timeline Guard */}
+                {/* 3. 14-Day Cadence & Milestone Guard */}
                 {activeStudioTab === "timeline" && (
                   <div>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
                       <div>
-                        <span className="text-xs uppercase tracking-wider font-mono-data text-[#BA2D0B] font-bold block mb-1">
-                          Biological Repopulation Safeguard
+                        <span className="text-[11px] uppercase tracking-wider font-mono-data text-[#0369A1] font-bold block mb-0.5">
+                          Cadence &amp; Escalation Engine
                         </span>
-                        <h3 className="text-xl font-semibold text-[#000000]">
-                          56 Day Ceiling Simulator (Currently Day {timelineDay})
+                        <h3 className="font-heading font-bold text-lg sm:text-xl text-slate-900">
+                          14-Day Cadence Alert Simulator (Day {timelineDay})
                         </h3>
                       </div>
                       <div className="text-right">
-                        <span className="text-xs text-[#4B5563] block">Pelvic Tumor Control Loss:</span>
-                        <span className={`text-base font-mono-data font-bold ${timelineDay > 56 ? "text-[#BA2D0B]" : "text-[#000000]"}`}>
-                          {timelineDay > 56 ? `${((timelineDay - 56) * 1.1).toFixed(1)}% Curative Degradation` : "0.0% · Optimal Window"}
+                        <span className="text-xs text-slate-500 block">Alert Cycle State:</span>
+                        <span className={`text-xs font-mono-data font-bold ${timelineDay > 14 ? "text-[#9D174D]" : "text-[#0369A1]"}`}>
+                          {timelineDay > 14 ? `Overdue Alert Active (+${timelineDay - 14}d)` : "Standard 14d Check-in Window"}
                         </span>
                       </div>
                     </div>
 
-                    {/* Timeline Slider with Accent 1 Cyan track & Primary Red Thumb */}
+                    {/* Timeline Slider with Dark Pink Accent */}
                     <input
                       type="range"
                       min={1}
-                      max={70}
+                      max={28}
                       value={timelineDay}
                       onChange={(e) => setTimelineDay(Number(e.target.value))}
-                      className="w-full accent-[#BA2D0B] h-2.5 bg-[#90C3CB] rounded-lg cursor-pointer mb-6 border border-[#BA2D0B]"
+                      className="w-full accent-[#9D174D] h-2 bg-slate-200 rounded-md cursor-pointer mb-5"
                     />
 
-                    {/* Phase Checkpoints with Primary and Secondary Borders */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className={`p-4 rounded-xl border-2 ${timelineDay >= 10 ? "bg-[#DBFE87]/30 border-[#BA2D0B]" : "bg-[#F8F9FA] border-[#F19941]/40"}`}>
-                        <span className="text-xs font-mono-data text-[#BA2D0B] font-bold block mb-1">Fraction 10 · Day 14</span>
-                        <h4 className="text-sm font-semibold text-[#000000] mb-1">Early PAC Clearance</h4>
-                        <p className="text-xs text-[#4B5563]">Pre anesthetic blood work and renal clearance initiated automatically.</p>
+                    {/* Phase Checkpoints with Subtle Gradient Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                      <div className={`p-4 rounded-lg border transition-all ${timelineDay >= 1 ? "card-gradient-blue border-sky-300 shadow-2xs" : "bg-white border-black/10"}`}>
+                        <span className="text-[11px] font-mono-data text-[#0369A1] font-bold block mb-0.5">Day 0 · Triage &amp; Intake</span>
+                        <h4 className="font-heading font-bold text-sm text-slate-900 mb-0.5">Point-of-Care VIA Logged</h4>
+                        <p className="text-xs text-slate-600">ASHA inputs visual findings and activates 14-day cadence tracker.</p>
                       </div>
 
-                      <div className={`p-4 rounded-xl border-2 ${timelineDay >= 21 ? "bg-[#DBFE87]/30 border-[#BA2D0B]" : "bg-[#F8F9FA] border-[#F19941]/40"}`}>
-                        <span className="text-xs font-mono-data text-[#BA2D0B] font-bold block mb-1">Fraction 15 · Day 21</span>
-                        <h4 className="text-sm font-semibold text-[#000000] mb-1">Pelvic Response Exam</h4>
-                        <p className="text-xs text-[#4B5563]">Oncologist verifies regression. Tertiary dorm pass issued immediately.</p>
+                      <div className={`p-4 rounded-lg border transition-all ${timelineDay >= 7 ? "card-gradient-blue border-sky-300 shadow-2xs" : "bg-white border-black/10"}`}>
+                        <span className="text-[11px] font-mono-data text-[#0369A1] font-bold block mb-0.5">Day 7 · Mid-Cycle Ping</span>
+                        <h4 className="font-heading font-bold text-sm text-slate-900 mb-0.5">Vernacular Voice Outreach</h4>
+                        <p className="text-xs text-slate-600">Automated IVR call assesses medication compliance and symptom progression.</p>
                       </div>
 
-                      <div className={`p-4 rounded-xl border-2 ${timelineDay >= 35 ? "bg-[#DBFE87]/30 border-[#BA2D0B]" : "bg-[#F8F9FA] border-[#F19941]/40"}`}>
-                        <span className="text-xs font-mono-data text-[#BA2D0B] font-bold block mb-1">Fractions 26 to 29 · Day 35 to 49</span>
-                        <h4 className="text-sm font-semibold text-[#000000] mb-1">Brachytherapy Admission</h4>
-                        <p className="text-xs text-[#4B5563]">Curative completion finalized before Day 56 limit.</p>
+                      <div className={`p-4 rounded-lg border transition-all ${timelineDay >= 14 ? "card-gradient-pink border-pink-300 shadow-2xs" : "bg-white border-black/10"}`}>
+                        <span className="text-[11px] font-mono-data text-[#9D174D] font-bold block mb-0.5">Day 14 · Resolution Gate</span>
+                        <h4 className="font-heading font-bold text-sm text-slate-900 mb-0.5">Community Check-in / Referral</h4>
+                        <p className="text-xs text-slate-600">Resolution documented or direct escalation to Tertiary Specialist review.</p>
                       </div>
                     </div>
                   </div>
@@ -628,20 +468,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </section>
 
         {/* ========================================================================= */}
-        {/* MANDATORY TAGLINE REVEAL SECTION (B11 — Primary Border Accents)           */}
+        {/* MANDATORY TAGLINE REVEAL SECTION                                           */}
         {/* ========================================================================= */}
         <section
           ref={taglineRef}
-          className="py-24 border-b-2 border-[#BA2D0B]/20 bg-[#F8F9FA] relative"
+          className="py-20 border-b border-black/10 bg-white/70 backdrop-blur-xs relative overflow-hidden"
         >
-          <div className="max-w-4xl mx-auto px-6 sm:px-8 text-center flex flex-col items-center">
-            <div className="size-8 rounded-lg bg-white border border-[#0F766E]/30 flex items-center justify-center p-1.5 mb-4 shadow-xs">
-              <CerviSetuLogo size={20} />
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center relative z-10">
+            <div className="size-9 rounded-lg bg-white border border-black/15 flex items-center justify-center p-1.5 mb-3.5 shadow-2xs">
+              <CerviSetuLogo size={22} />
             </div>
-            <span className="text-xs uppercase tracking-widest font-mono-data text-[#BA2D0B] font-bold mb-6 block">
-              The Curative Covenant
+            <span className="text-xs uppercase tracking-widest font-heading font-bold text-[#9D174D] mb-5 px-3 py-1 rounded-md bg-pink-100 border border-pink-300 block">
+              The CerviSetu Sovereign Covenant
             </span>
-            <div className="text-3xl sm:text-4xl lg:text-5xl font-semibold leading-tight tracking-tight flex flex-wrap justify-center gap-x-2.5 gap-y-1.5 max-w-[680px]">
+            <div className="font-heading font-bold text-2xl sm:text-3xl lg:text-4xl leading-snug tracking-tight flex flex-wrap justify-center gap-x-2 gap-y-1 max-w-2xl">
               {tagWords.map((word, index) => {
                 const isRevealed = index < revealedWordCount;
                 return (
@@ -649,7 +489,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     key={index}
                     className="transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
                     style={{
-                      color: isRevealed ? "#000000" : "rgba(0, 0, 0, 0.22)",
+                      color: isRevealed ? "#0F172A" : "rgba(15, 23, 42, 0.22)",
                     }}
                   >
                     {word}
@@ -657,99 +497,130 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 );
               })}
             </div>
-            <span className="text-xs text-[#4B5563] mt-8 font-mono-data">
-              Strict adherence to international radiation oncology safety benchmarks
+            <span className="text-xs text-slate-500 mt-6 font-mono-data">
+              Aligned with WHO 90-70-90 elimination milestones and National Health Mission protocols
             </span>
           </div>
         </section>
 
         {/* ========================================================================= */}
-        {/* ASYMMETRIC INFRASTRUCTURE GRID (Primary & Secondary Borders)              */}
+        {/* MULTI-COHORT ARCHITECTURE GRID (Subtle Gradient Bento Cards)               */}
         {/* ========================================================================= */}
-        <section id="protocol" className="py-24 border-b-2 border-[#F19941]/30 bg-[#FFFFFF]">
-          <div className="max-w-7xl mx-auto px-6 sm:px-8">
-            <div className="max-w-3xl mb-16">
-              <span className="text-xs font-mono-data text-[#BA2D0B] font-bold uppercase tracking-wider block mb-3">
+        <section id="protocol" className="py-20 border-b border-black/10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mb-12">
+              <span className="text-xs font-heading font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-pink-100 text-[#9D174D] border border-pink-300 inline-block mb-2.5">
                 Core System Architecture
               </span>
-              <h2 className="text-3xl sm:text-4xl font-semibold text-[#000000] tracking-tight">
-                Designed for the reality of rural oncology handoffs
+              <h2 className="font-heading font-black text-3xl sm:text-4xl text-slate-900 tracking-tight">
+                Designed for frontline multi-cohort rural delivery
               </h2>
+              <p className="font-subtitle-playfair text-base font-semibold text-slate-600 mt-1">
+                Unified surveillance connecting primary sub-centres to regional cancer hubs
+              </p>
             </div>
 
-            {/* Asymmetric Bento Architecture with Accent Icons and Primary/Secondary Borders */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              {/* Card 1: 56 Day Biological Guard (Primary #BA2D0B Border) */}
-              <div className="lg:col-span-7 bg-[#FFFFFF] border-2 border-[#BA2D0B] rounded-2xl p-8 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+            {/* Asymmetric Bento Architecture with Subtle Gradient Cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Card 1: Cohort 1 HPV Immunization (Subtle Pink Gradient) */}
+              <div className="lg:col-span-7 card-base card-gradient-pink p-6 sm:p-7 flex flex-col justify-between">
                 <div>
-                  <div className="size-11 rounded-xl bg-[#90C3CB] border-2 border-[#BA2D0B] flex items-center justify-center text-[#000000] mb-6 shadow-xs">
-                    <SolarPulse size={24} />
+                  <div className="size-10 rounded-md bg-pink-100 border border-pink-300 flex items-center justify-center text-[#9D174D] mb-5 shadow-2xs">
+                    <SolarPulse size={22} />
                   </div>
-                  <h3 className="text-2xl font-semibold text-[#000000] mb-3">
-                    Radiobiological 56 Day Completion Engine
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-[10px] font-heading font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white text-[#9D174D] border border-pink-200">
+                      Cohort 1 · Girls Under 14
+                    </span>
+                    <span className="text-xs text-slate-400">·</span>
+                    <span className="text-xs text-slate-500 font-medium">Primary Prevention</span>
+                  </div>
+                  <h3 className="font-heading font-bold text-xl sm:text-2xl text-slate-900 mb-2">
+                    Adolescent HPV 2-Dose Tracking Engine
                   </h3>
-                  <p className="text-base text-[#4B5563] leading-relaxed mb-6">
-                    In cervical cancer chemoradiation, every additional day beyond fifty six days causes accelerated clonogenic repopulation, eroding pelvic tumor control at zero point eight to one point two percent per day. CerviSetu tracks daily fractions against biological timers.
+                  <p className="text-sm text-slate-600 leading-relaxed mb-5">
+                    Automated regimen logic calculates Dose 2 due dates at 6 months following baseline intake. Triggers 14-day pre-due vial readiness alerts for PHC sub-centres and persistent 14-day overdue escalation cycles until completion.
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-[#DBFE87]/40 border-2 border-[#BA2D0B]/30 flex items-center justify-between text-xs font-mono-data">
-                  <span className="text-[#000000] font-medium">GEC ESTRO & ABS Ceiling:</span>
-                  <span className="text-[#BA2D0B] font-bold">56 Days Absolute Maximum</span>
+                <div className="p-3.5 rounded-md bg-white/90 border border-black/10 flex items-center justify-between text-xs font-mono-data">
+                  <span className="text-slate-800 font-semibold">Standard 2-Dose Regimen:</span>
+                  <span className="text-[#9D174D] font-bold">Dose 1 (T0) &rarr; Dose 2 (T0 + 6m)</span>
                 </div>
               </div>
 
-              {/* Card 2: Zero ID Vault (Secondary #F19941 Border) */}
-              <div className="lg:col-span-5 bg-[#FFFFFF] border-2 border-[#F19941] rounded-2xl p-8 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+              {/* Card 2: Cohort 2 Screening & Triage (Subtle Sky Blue Gradient) */}
+              <div className="lg:col-span-5 card-base card-gradient-blue p-6 sm:p-7 flex flex-col justify-between">
                 <div>
-                  <div className="size-11 rounded-xl bg-[#DBFE87] border-2 border-[#F19941] flex items-center justify-center text-[#000000] mb-6 shadow-xs">
-                    <SolarShieldKeyhole size={24} />
+                  <div className="size-10 rounded-md bg-sky-100 border border-sky-300 flex items-center justify-center text-[#0369A1] mb-5 shadow-2xs">
+                    <SolarShieldKeyhole size={22} />
                   </div>
-                  <h3 className="text-xl font-semibold text-[#000000] mb-3">
-                    Zero Knowledge AES 256 Token Vault
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-[10px] font-heading font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white text-[#0369A1] border border-sky-200">
+                      Cohort 2 · Women 35–45
+                    </span>
+                    <span className="text-xs text-slate-400">·</span>
+                    <span className="text-xs text-slate-500 font-medium">Secondary Prevention</span>
+                  </div>
+                  <h3 className="font-heading font-bold text-xl text-slate-900 mb-2">
+                    Point-of-Care VIA &amp; AI Triaging
                   </h3>
-                  <p className="text-sm text-[#4B5563] leading-relaxed mb-6">
-                    Patient identifiers are stripped before entering multi agent reasoning nodes. Unmasked credentials appear strictly on verified hospital workstations to prevent radiation targeting errors.
+                  <p className="text-sm text-slate-600 leading-relaxed mb-5">
+                    Digitize visual acetic acid captures and lab slips. Instant automated triage segregates normal findings from abnormal lesions, routing cases into 14-day community check-ins or tertiary referral.
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-[#F8F9FA] border-2 border-[#F19941]/30 text-xs font-mono-data text-[#4B5563]">
-                  Cryptographically chained SHA 256 immutable audit ledger.
+                <div className="p-3.5 rounded-md bg-white/90 border border-black/10 text-xs font-mono-data text-[#0369A1] font-semibold">
+                  Dual-track care model with verified clinical oversight.
                 </div>
               </div>
 
-              {/* Card 3: Frontline ASHA Field AI (Secondary #F19941 Border) */}
-              <div className="lg:col-span-5 bg-[#FFFFFF] border-2 border-[#F19941] rounded-2xl p-8 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+              {/* Card 3: Frontline ASHA Field Coordination */}
+              <div className="lg:col-span-5 card-base card-gradient-subtle p-6 sm:p-7 flex flex-col justify-between">
                 <div>
-                  <div className="size-11 rounded-xl bg-[#DBFE87] border-2 border-[#F19941] flex items-center justify-center text-[#000000] mb-6 shadow-xs">
-                    <SolarUsersGroup size={24} />
+                  <div className="size-10 rounded-md bg-pink-100 border border-pink-300 flex items-center justify-center text-[#9D174D] mb-5 shadow-2xs">
+                    <SolarUsersGroup size={22} />
                   </div>
-                  <h3 className="text-xl font-semibold text-[#000000] mb-3">
-                    ASHA Field Coordination Within 72 Hours
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-[10px] font-heading font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white text-[#9D174D] border border-pink-200">
+                      Frontline Support
+                    </span>
+                    <span className="text-xs text-slate-400">·</span>
+                    <span className="text-xs text-slate-500 font-medium">Field Orchestration</span>
+                  </div>
+                  <h3 className="font-heading font-bold text-xl text-slate-900 mb-2">
+                    Frontline ASHA Field Coordination
                   </h3>
-                  <p className="text-sm text-[#4B5563] leading-relaxed mb-6">
-                    Automated escalation notifies village health workers with sector GPS coordinates when patients miss two consecutive fractions. Equipped with a strict twenty four hour arrival watch timer.
+                  <p className="text-sm text-slate-600 leading-relaxed mb-5">
+                    Equip village health workers with vernacular task queues, 14-day symptom check-in logging, guardian outreach SMS/voice notifications, and ABDM-compliant health record sync.
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-[#F8F9FA] border-2 border-[#F19941]/30 text-xs font-mono-data text-[#BA2D0B] font-bold">
-                  Direct escalation to District Medical Officer if unresolved.
+                <div className="p-3.5 rounded-md bg-white/90 border border-black/10 text-xs font-mono-data text-[#9D174D] font-bold">
+                  Zero drop-out accountability with GPS-verified field tickets.
                 </div>
               </div>
 
-              {/* Card 4: Prescription Intake & Optical Blur Gate (Primary #BA2D0B Border) */}
-              <div className="lg:col-span-7 bg-[#FFFFFF] border-2 border-[#BA2D0B] rounded-2xl p-8 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+              {/* Card 4: Tertiary Specialist Review Portal (Subtle Tinted Gradient) */}
+              <div className="lg:col-span-7 card-base card-gradient-subtle p-6 sm:p-7 flex flex-col justify-between">
                 <div>
-                  <div className="size-11 rounded-xl bg-[#90C3CB] border-2 border-[#BA2D0B] flex items-center justify-center text-[#000000] mb-6 shadow-xs">
-                    <SolarDocumentText size={24} />
+                  <div className="size-10 rounded-md bg-sky-100 border border-sky-300 flex items-center justify-center text-[#0369A1] mb-5 shadow-2xs">
+                    <SolarDocumentText size={22} />
                   </div>
-                  <h3 className="text-2xl font-semibold text-[#000000] mb-3">
-                    Prescription Slip Intake & Laplacian Blur Gate
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-[10px] font-heading font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white text-[#0369A1] border border-sky-200">
+                      Tertiary Linkage
+                    </span>
+                    <span className="text-xs text-slate-400">·</span>
+                    <span className="text-xs text-slate-500 font-medium">Hospital Workstation</span>
+                  </div>
+                  <h3 className="font-heading font-bold text-xl sm:text-2xl text-slate-900 mb-2">
+                    Tertiary Specialist Review Portal
                   </h3>
-                  <p className="text-base text-[#4B5563] leading-relaxed mb-6">
-                    Nurses photograph handwritten doctor slips and lab sheets. Spatial laplacian blur variance immediately checks image sharpness, guiding frontline workers to retake shaky photos before data enters medical records.
+                  <p className="text-sm text-slate-600 leading-relaxed mb-5">
+                    Tertiary oncologists and gynecologists review referred cases before patient arrival. Inspect high-resolution VIA captures, review ASHA telemetry, and sign off digital colposcopy or biopsy directives with one tap.
                   </p>
                 </div>
-                <div className="p-4 rounded-xl bg-[#DBFE87]/40 border-2 border-[#BA2D0B]/30 flex items-center justify-between text-xs font-mono-data">
-                  <span className="text-[#000000] font-medium">Laplacian Sharpness Variance Threshold:</span>
-                  <span className="text-[#BA2D0B] font-bold">85.0 Minimum Score</span>
+                <div className="p-3.5 rounded-md bg-white/90 border border-black/10 flex items-center justify-between text-xs font-mono-data">
+                  <span className="text-slate-800 font-medium">Pre-Arrival Clinical Preparation:</span>
+                  <span className="text-[#0369A1] font-bold">Direct Doctor Workstation Sync</span>
                 </div>
               </div>
             </div>
@@ -757,19 +628,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </section>
 
         {/* ========================================================================= */}
-        {/* SPATIAL PRESCRIPTION OCR STUDIO (Primary & Secondary Borders)             */}
+        {/* SPATIAL PRESCRIPTION OCR STUDIO                                           */}
         {/* ========================================================================= */}
-        <section id="vision-ocr" className="py-24 border-b-2 border-[#BA2D0B]/20 bg-[#F8F9FA]">
-          <div className="max-w-7xl mx-auto px-6 sm:px-8">
-            <div className="max-w-3xl mb-12">
-              <span className="text-xs font-mono-data text-[#BA2D0B] font-bold uppercase tracking-wider block mb-3">
-                Vision & Document Intelligence
+        <section id="vision-ocr" className="py-20 border-b border-black/10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mb-10">
+              <span className="text-xs font-heading font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-sky-100 text-[#0369A1] border border-sky-300 inline-block mb-2">
+                Vision &amp; Document Intelligence
               </span>
-              <h2 className="text-3xl sm:text-4xl font-semibold text-[#000000] tracking-tight mb-3">
-                Spatial Prescription OCR and Clinical Entity Extraction
+              <h2 className="font-heading font-black text-2xl sm:text-3xl text-slate-900 tracking-tight mb-2">
+                Spatial Clinical Slip OCR &amp; Entity Extraction
               </h2>
-              <p className="text-base text-[#4B5563] leading-relaxed">
-                Ingest handwritten oncologist orders, detect diagnostic stage and radiation dosage, and shield sensitive patient records before cloud transmission.
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Ingest screening slips, lab reports, and doctor directives with real-time blur detection and DPDP-compliant PII shielding.
               </p>
             </div>
 
@@ -778,19 +649,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </section>
 
         {/* ========================================================================= */}
-        {/* MULTI AGENT REASONING CANVAS (Primary & Secondary Borders)                 */}
+        {/* MULTI AGENT REASONING CANVAS                                              */}
         {/* ========================================================================= */}
-        <section id="agent-flow" className="py-24 border-b-2 border-[#F19941]/30 bg-[#FFFFFF]">
-          <div className="max-w-7xl mx-auto px-6 sm:px-8">
-            <div className="max-w-3xl mb-12">
-              <span className="text-xs font-mono-data text-[#BA2D0B] font-bold uppercase tracking-wider block mb-3">
+        <section id="agent-flow" className="py-20 border-b border-black/10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mb-10">
+              <span className="text-xs font-heading font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-pink-100 text-[#9D174D] border border-pink-300 inline-block mb-2">
                 Autonomous Clinical Orchestration
               </span>
-              <h2 className="text-3xl sm:text-4xl font-semibold text-[#000000] tracking-tight mb-3">
-                Autonomous Multi Agent Clinical Reasoning and Adherence Flow
+              <h2 className="font-heading font-black text-2xl sm:text-3xl text-slate-900 tracking-tight mb-2">
+                Autonomous Multi-Agent Clinical Triage &amp; Adherence Flow
               </h2>
-              <p className="text-base text-[#4B5563] leading-relaxed">
-                LangGraph orchestration across five specialized diagnostic and tracking agents with continuous DPDP Act 2023 cryptographic audit proofs.
+              <p className="text-sm text-slate-600 leading-relaxed">
+                LangGraph orchestration across specialized intake, dose tracking, cadence alert, and referral agents with continuous cryptographic audit proofs.
               </p>
             </div>
 
@@ -799,59 +670,62 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </section>
 
         {/* ========================================================================= */}
-        {/* SPLIT PHASE PROTOCOL SHOWCASE (Primary & Secondary Borders)               */}
+        {/* DUAL-TRACK CARE ARCHITECTURE SHOWCASE (Subtle Gradient Cards)             */}
         {/* ========================================================================= */}
-        <section id="architecture" className="py-24 border-b-2 border-[#BA2D0B]/20 bg-[#F8F9FA]">
-          <div className="max-w-7xl mx-auto px-6 sm:px-8">
-            <div className="max-w-3xl mb-16">
-              <span className="text-xs font-mono-data text-[#BA2D0B] font-bold uppercase tracking-wider block mb-3">
-                Split Phase Referral Bridge
+        <section id="architecture" className="py-20 border-b border-black/10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mb-12">
+              <span className="text-xs font-heading font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-sky-100 text-[#0369A1] border border-sky-300 inline-block mb-2">
+                Dual-Track Care Pathway
               </span>
-              <h2 className="text-3xl sm:text-4xl font-semibold text-[#000000] tracking-tight">
-                Eliminating the five day referral transfer bottleneck
+              <h2 className="font-heading font-black text-2xl sm:text-3xl text-slate-900 tracking-tight">
+                Community medical management vs tertiary specialist referral
               </h2>
+              <p className="font-subtitle-playfair text-sm text-slate-600 font-semibold mt-1">
+                Standardized triage protocol ensuring timely escalation for high-risk findings
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Spoke Clinic Stage with Secondary #F19941 Border */}
-              <div className="p-8 rounded-2xl bg-[#FFFFFF] border-2 border-[#F19941] shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="px-3 py-1 rounded-md text-xs font-mono-data bg-[#F19941]/20 text-[#000000] font-bold border border-[#F19941]">
-                    District Spoke Clinic · Local 12 km
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Track A: Community Management (Subtle Pink Gradient) */}
+              <div className="card-base card-gradient-pink p-6 sm:p-7">
+                <div className="flex items-center justify-between mb-3.5">
+                  <span className="px-2.5 py-0.5 rounded text-xs font-heading font-bold bg-white text-[#9D174D] border border-pink-300">
+                    Track A · Community Health Centre
                   </span>
-                  <span className="text-xs text-[#BA2D0B] font-bold">Fractions 1 to 25</span>
+                  <span className="text-xs font-heading font-bold text-[#9D174D]">14-Day Cycle</span>
                 </div>
-                <h3 className="text-xl font-semibold text-[#000000] mb-2">
-                  External Beam Radiotherapy & Cisplatin
+                <h3 className="font-heading font-bold text-xl text-slate-900 mb-2">
+                  Benign Infection &amp; Medical Management
                 </h3>
-                <p className="text-sm text-[#4B5563] leading-relaxed mb-6">
-                  Patients receive twenty five fractions locally without migrating away from family. Pre anesthetic clearance triggers on fraction ten to ensure blood tests are ready before referral.
+                <p className="text-sm text-slate-600 leading-relaxed mb-5">
+                  Non-malignant symptoms, cervicitis, and minor infections are managed locally at the PHC/CHC. ASHA conducts a scheduled 14-day home follow-up to verify symptom resolution.
                 </p>
-                <div className="space-y-2 text-xs text-[#4B5563] border-t-2 border-[#F19941]/30 pt-4 font-medium">
-                  <div>• Daily one tap fraction attendance logging</div>
-                  <div>• Automatic toxicity monitoring for weekly chemo</div>
-                  <div>• Fraction 15 pelvic response gate</div>
+                <div className="space-y-1.5 text-xs text-slate-700 border-t border-black/10 pt-3.5 font-medium">
+                  <div>• Prescribed oral/topical antibiotic therapy</div>
+                  <div>• Scheduled 14-day symptom check-in by ASHA</div>
+                  <div>• Escalation to Track B if symptoms persist</div>
                 </div>
               </div>
 
-              {/* Tertiary Hub Stage with Primary #BA2D0B Border */}
-              <div className="p-8 rounded-2xl bg-[#FFFFFF] border-2 border-[#BA2D0B] shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="px-3 py-1 rounded-md text-xs font-mono-data bg-[#90C3CB]/40 text-[#000000] font-bold border border-[#BA2D0B]">
-                    Tertiary Cancer Hub · 75 km Transfer
+              {/* Track B: Tertiary Specialist Referral (Subtle Sky Blue Gradient) */}
+              <div className="card-base card-gradient-blue p-6 sm:p-7">
+                <div className="flex items-center justify-between mb-3.5">
+                  <span className="px-2.5 py-0.5 rounded text-xs font-heading font-bold bg-white text-[#0369A1] border border-sky-300">
+                    Track B · Tertiary Hospital Hub
                   </span>
-                  <span className="text-xs text-[#BA2D0B] font-bold">Fractions 26 to 29</span>
+                  <span className="text-xs font-heading font-bold text-[#0369A1]">Priority Referral</span>
                 </div>
-                <h3 className="text-xl font-semibold text-[#000000] mb-2">
-                  High Dose Rate Brachytherapy & Closure
+                <h3 className="font-heading font-bold text-xl text-slate-900 mb-2">
+                  Specialist Oncology &amp; Colposcopy Escalation
                 </h3>
-                <p className="text-sm text-[#4B5563] leading-relaxed mb-6">
-                  When the patient finishes spoke radiation, hospital hostel beds and applicator theater dates are already reserved, eliminating traditional referral wait lists.
+                <p className="text-sm text-slate-600 leading-relaxed mb-5">
+                  Suspicious acetowhite lesions, friable bleeding, or high-grade abnormalities are escalated immediately. Tertiary specialists review uploaded findings before the patient arrives.
                 </p>
-                <div className="space-y-2 text-xs text-[#4B5563] border-t-2 border-[#BA2D0B]/30 pt-4 font-medium">
-                  <div>• Pre booked patient dorm pass minted on day 31</div>
-                  <div>• High dose rate brachytherapy completed in 4 fractions</div>
-                  <div>• Treatment closure within 49 to 54 day target</div>
+                <div className="space-y-1.5 text-xs text-slate-700 border-t border-black/10 pt-3.5 font-medium">
+                  <div>• Direct specialist portal queue placement</div>
+                  <div>• Priority colposcopy / biopsy slot reservation</div>
+                  <div>• Ayushman Bharat PM-JAY travel &amp; lodging assistance</div>
                 </div>
               </div>
             </div>
@@ -859,19 +733,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </section>
 
         {/* ========================================================================= */}
-        {/* DISTRICT ONCOLOGY IMPACT & SURVIVAL CALCULATOR (Primary/Secondary Borders) */}
+        {/* DISTRICT ONCOLOGY IMPACT CALCULATOR                                       */}
         {/* ========================================================================= */}
-        <section id="impact-calculator" className="py-24 border-b-2 border-[#BA2D0B]/20 bg-[#F8F9FA]">
-          <div className="max-w-7xl mx-auto px-6 sm:px-8">
-            <div className="max-w-3xl mb-12">
-              <span className="text-xs font-mono-data text-[#BA2D0B] font-bold uppercase tracking-wider block mb-3">
+        <section id="impact-calculator" className="py-20 border-b border-black/10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mb-10">
+              <span className="text-xs font-heading font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-pink-100 text-[#9D174D] border border-pink-300 inline-block mb-2">
                 Population Health Economics
               </span>
-              <h2 className="text-3xl sm:text-4xl font-semibold text-[#000000] tracking-tight mb-3">
-                District Oncology Population Impact and Biological Gain Calculator
+              <h2 className="font-heading font-black text-2xl sm:text-3xl text-slate-900 tracking-tight mb-2">
+                District Population Impact &amp; Prevention Return Calculator
               </h2>
-              <p className="text-base text-[#4B5563] leading-relaxed">
-                Calculate avoided clonogenic repopulation penalty, preserved survival rates, and out of pocket family savings for any rural district.
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Project averted high-grade cervical malignancies, vaccination coverage milestones, and health system cost savings across rural districts.
               </p>
             </div>
 
@@ -880,19 +754,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </section>
 
         {/* ========================================================================= */}
-        {/* DEVELOPER PLATFORM & REST APIS (Primary & Secondary Borders)              */}
+        {/* DEVELOPER PLATFORM & REST APIS                                            */}
         {/* ========================================================================= */}
-        <section id="api-studio" className="py-24 border-b-2 border-[#F19941]/30 bg-[#FFFFFF]">
-          <div className="max-w-7xl mx-auto px-6 sm:px-8">
-            <div className="max-w-3xl mb-12">
-              <span className="text-xs font-mono-data text-[#BA2D0B] font-bold uppercase tracking-wider block mb-3">
+        <section id="api-studio" className="py-20 border-b border-black/10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mb-10">
+              <span className="text-xs font-heading font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-sky-100 text-[#0369A1] border border-sky-300 inline-block mb-2">
                 Interoperable Health Stack
               </span>
-              <h2 className="text-3xl sm:text-4xl font-semibold text-[#000000] tracking-tight mb-3">
+              <h2 className="font-heading font-black text-2xl sm:text-3xl text-slate-900 tracking-tight mb-2">
                 Programmatic Sovereign Health APIs for Health Networks
               </h2>
-              <p className="text-base text-[#4B5563] leading-relaxed">
-                Instant integration with hospital HMIS and state health mission infrastructure via fast authenticated endpoints.
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Instant integration with state health mission portals, ABDM registries, and hospital HMIS systems via secure authenticated endpoints.
               </p>
             </div>
 
@@ -901,43 +775,43 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </section>
 
         {/* ========================================================================= */}
-        {/* FREQUENTLY ASKED QUESTIONS (Secondary & Primary Borders)                  */}
+        {/* FREQUENTLY ASKED QUESTIONS                                                */}
         {/* ========================================================================= */}
-        <section id="faq" className="py-24 border-b-2 border-[#F19941]/30 bg-[#FFFFFF]">
-          <div className="max-w-4xl mx-auto px-6 sm:px-8">
-            <div className="text-center max-w-xl mx-auto mb-16">
-              <span className="text-xs font-mono-data text-[#BA2D0B] font-bold uppercase tracking-wider block mb-3">
+        <section id="faq" className="py-20 border-b border-black/10">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-xl mx-auto mb-12">
+              <span className="text-xs font-heading font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-pink-100 text-[#9D174D] border border-pink-300 inline-block mb-2">
                 Clinical Inquiries
               </span>
-              <h2 className="text-3xl font-semibold text-[#000000]">
+              <h2 className="font-heading font-black text-3xl text-slate-900">
                 Frequently asked questions
               </h2>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {faqItems.map((item, index) => {
                 const isOpen = openFaqIndex === index;
                 return (
                   <div
                     key={index}
-                    className={`bg-[#FFFFFF] border-2 rounded-xl overflow-hidden transition-all duration-200 ${
-                      isOpen ? "border-[#BA2D0B] shadow-xs" : "border-[#F19941]/50 hover:border-[#BA2D0B]"
+                    className={`card-base card-gradient-subtle overflow-hidden transition-all duration-200 ${
+                      isOpen ? "border-[#0369A1] shadow-xs" : "hover:border-black/25"
                     }`}
                   >
                     <button
                       onClick={() => setOpenFaqIndex(isOpen ? null : index)}
-                      className="w-full px-6 py-5 flex items-center justify-between text-left focus:outline-none focus:ring-1 focus:ring-[#BA2D0B] cursor-pointer"
+                      className="w-full px-5 py-4 flex items-center justify-between text-left focus:outline-none focus:ring-1 focus:ring-[#9D174D]/30 cursor-pointer"
                     >
-                      <span className="text-base font-semibold text-[#000000] pr-4">{item.q}</span>
+                      <span className="font-heading font-bold text-sm sm:text-base text-slate-900 pr-4">{item.q}</span>
                       <SolarCaretDown
                         size={18}
-                        className={`text-[#000000] transition-transform duration-300 ${
-                          isOpen ? "rotate-180 text-[#BA2D0B]" : ""
+                        className={`text-slate-400 transition-transform duration-300 shrink-0 ${
+                          isOpen ? "rotate-180 text-[#0369A1]" : ""
                         }`}
                       />
                     </button>
                     {isOpen && (
-                      <div className="px-6 pb-6 text-sm text-[#4B5563] leading-relaxed border-t-2 border-[#F19941]/30 pt-4">
+                      <div className="px-5 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-black/8 pt-3 font-sans">
                         {item.a}
                       </div>
                     )}
@@ -949,99 +823,103 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </section>
 
         {/* ========================================================================= */}
-        {/* PILOT INTAKE & RISK REVERSAL (Primary #BA2D0B & Secondary #F19941 Borders)*/}
+        {/* PILOT INTAKE & RISK REVERSAL                                              */}
         {/* ========================================================================= */}
-        <section id="pilot-intake" className="py-24 bg-[#FFFFFF]">
-          <div className="max-w-4xl mx-auto px-6 sm:px-8">
-            <div className="bg-[#FFFFFF] border-2 border-[#BA2D0B] rounded-3xl p-8 sm:p-12 text-center flex flex-col items-center shadow-xl">
-              <div className="size-12 rounded-xl bg-white border border-[#0F766E]/30 flex items-center justify-center p-2 mb-6 shadow-xs">
-                <CerviSetuLogo size={28} />
+        <section id="pilot-intake" className="py-20 relative overflow-hidden">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="card-base card-gradient-subtle p-7 sm:p-10 text-center flex flex-col items-center shadow-lg">
+              <div className="size-11 rounded-lg bg-white border border-black/15 flex items-center justify-center p-1.5 mb-5 shadow-2xs">
+                <CerviSetuLogo size={26} />
               </div>
 
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#DBFE87] border-2 border-[#BA2D0B] text-[#000000] text-xs font-mono-data uppercase tracking-wider mb-6 font-bold shadow-xs">
-                <SolarShieldCheck size={16} />
-                <span>Ninety Day Zero Cost Pilot · Local Hospital Data Ownership</span>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-white border border-black/15 text-slate-800 text-xs font-heading font-bold mb-5 shadow-2xs">
+                <SolarShieldCheck size={15} className="text-[#9D174D]" />
+                <span>90-Day Zero-Cost Pilot · Local Hospital Data Ownership</span>
               </div>
 
-              <h2 className="text-3xl sm:text-4xl font-semibold text-[#000000] tracking-tight mb-4 max-w-xl">
-                Deploy CerviSetu across your oncology district
+              <h2 className="font-heading font-black text-2xl sm:text-3xl text-slate-900 tracking-tight mb-2 max-w-xl">
+                Deploy CerviSetu across your prevention district
               </h2>
 
-              <p className="text-base text-[#4B5563] max-w-lg mb-8 leading-relaxed">
-                Connect district radiotherapy daycares with regional hubs. Start with zero software licensing fees under state health mission parameters.
+              <p className="font-subtitle-playfair text-sm font-semibold text-slate-600 mb-2">
+                Frontline oncology workflow coordination for district health networks
+              </p>
+
+              <p className="text-xs sm:text-sm text-slate-600 max-w-lg mb-6 leading-relaxed">
+                Connect Primary Health Centres with regional cancer specialists. Automate adolescent HPV immunization tracking, point-of-care VIA screening, and dual-track triage under state health mission parameters.
               </p>
 
               {formStatus === "success" ? (
-                <div className="p-6 rounded-2xl bg-[#DBFE87]/40 border-2 border-[#BA2D0B] max-w-md w-full text-center">
-                  <div className="size-12 rounded-full bg-[#DBFE87] border-2 border-[#BA2D0B] flex items-center justify-center text-[#000000] mx-auto mb-3 shadow-xs">
-                    <SolarCheck size={24} />
+                <div className="p-5 rounded-lg card-gradient-blue border border-sky-300 max-w-md w-full text-center">
+                  <div className="size-10 rounded-full bg-sky-100 border border-sky-300 flex items-center justify-center text-[#0369A1] mx-auto mb-2.5 shadow-2xs">
+                    <SolarCheck size={20} />
                   </div>
-                  <h4 className="text-lg font-semibold text-[#000000] mb-2">District Pilot Intake Registered</h4>
+                  <h4 className="font-heading font-bold text-base text-slate-900 mb-1">District Pilot Intake Registered</h4>
                   {leadConfirmationId && (
-                    <div className="px-3 py-1.5 rounded-lg bg-[#FFFFFF] border-2 border-[#F19941] text-xs font-mono-data text-[#BA2D0B] font-bold mb-3 inline-block">
+                    <div className="px-3 py-1 rounded bg-white border border-black/12 text-xs font-mono-data text-[#0369A1] font-bold mb-2.5 inline-block">
                       Pilot Reference: {leadConfirmationId}
                     </div>
                   )}
-                  <p className="text-xs text-[#4B5563] mb-4">
-                    Our oncology workflow architect will contact {pilotEmail} within twenty four hours to verify district spoke coordinates.
+                  <p className="text-xs text-slate-600 mb-4">
+                    Our oncology workflow architect will contact {pilotEmail} within 24 hours to verify district spoke coordinates.
                   </p>
                   <button
                     onClick={onLaunchWorkstation}
-                    className="px-5 py-2.5 rounded-lg bg-[#BA2D0B] hover:bg-[#9E2407] border-2 border-[#BA2D0B] text-[#FFFFFF] text-xs font-semibold cursor-pointer active:scale-98"
+                    className="px-5 py-2.5 rounded-md bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-heading font-bold cursor-pointer active:scale-98 transition-colors shadow-xs"
                   >
                     Open Staff Workstation
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handlePilotSubmit} className="w-full max-w-md flex flex-col gap-4 text-left">
+                <form onSubmit={handlePilotSubmit} className="w-full max-w-md flex flex-col gap-3.5 text-left">
                   <div>
-                    <label htmlFor="pilot-email" className="text-xs font-mono-data text-[#000000] block mb-1.5 uppercase tracking-wider font-bold">
-                      Official Oncology or Department Email
+                    <label htmlFor="pilot-email" className="text-xs text-slate-800 block mb-1 font-heading font-bold uppercase tracking-wider">
+                      Official Health Department or Hospital Email
                     </label>
                     <input
                       id="pilot-email"
                       type="email"
                       value={pilotEmail}
                       onChange={(e) => setPilotEmail(e.target.value)}
-                      placeholder="oncologist@districthospital.gov.in"
-                      className="w-full bg-[#FFFFFF] border-2 border-[#F19941] rounded-lg px-4 py-3 text-sm text-[#000000] placeholder:text-[#4B5563]/60 focus:outline-none focus:border-[#BA2D0B] focus:ring-2 focus:ring-[#BA2D0B]/20 transition-colors"
+                      placeholder="officer@districthealth.gov.in"
+                      className="w-full bg-white border border-black/15 rounded-md px-3.5 py-2 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#9D174D] focus:ring-1 focus:ring-[#9D174D]/25 transition-colors"
                       required
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="district-name" className="text-xs font-mono-data text-[#000000] block mb-1.5 uppercase tracking-wider font-bold">
-                      District or Cancer Society Jurisdiction
+                    <label htmlFor="district-name" className="text-xs text-slate-800 block mb-1 font-heading font-bold uppercase tracking-wider">
+                      District or Health Society Jurisdiction
                     </label>
                     <input
                       id="district-name"
                       type="text"
                       value={districtName}
                       onChange={(e) => setDistrictName(e.target.value)}
-                      placeholder="Mirzapur District Oncology Network"
-                      className="w-full bg-[#FFFFFF] border-2 border-[#F19941] rounded-lg px-4 py-3 text-sm text-[#000000] placeholder:text-[#4B5563]/60 focus:outline-none focus:border-[#BA2D0B] focus:ring-2 focus:ring-[#BA2D0B]/20 transition-colors"
+                      placeholder="Mirzapur District Health Network"
+                      className="w-full bg-white border border-black/15 rounded-md px-3.5 py-2 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#9D174D] focus:ring-1 focus:ring-[#9D174D]/25 transition-colors"
                       required
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="facility-type" className="text-xs font-mono-data text-[#000000] block mb-1.5 uppercase tracking-wider font-bold">
+                    <label htmlFor="facility-type" className="text-xs text-slate-800 block mb-1 font-heading font-bold uppercase tracking-wider">
                       Facility Role
                     </label>
                     <select
                       id="facility-type"
                       value={facilityType}
                       onChange={(e) => setFacilityType(e.target.value)}
-                      className="w-full bg-[#FFFFFF] border-2 border-[#F19941] rounded-lg px-4 py-3 text-sm text-[#000000] focus:outline-none focus:border-[#BA2D0B] focus:ring-2 focus:ring-[#BA2D0B]/20 cursor-pointer transition-colors"
+                      className="w-full bg-white border border-black/15 rounded-md px-3.5 py-2 text-xs sm:text-sm text-slate-900 focus:outline-none focus:border-[#9D174D] focus:ring-1 focus:ring-[#9D174D]/25 cursor-pointer transition-colors"
                     >
-                      <option value="District Spoke Clinic">District Spoke Clinic (EBRT Fractions 1 to 25)</option>
-                      <option value="Tertiary Brachytherapy Hub">Tertiary Brachytherapy Hub (Fractions 26 to 29)</option>
-                      <option value="State Health Mission">State Health Mission or District Health Society</option>
+                      <option value="Primary Health Centre (PHC/CHC)">Primary Health Centre (PHC/CHC) · Prevention &amp; Screening</option>
+                      <option value="Tertiary Cancer Center / Medical College">Tertiary Cancer Center / Medical College · Specialist Review</option>
+                      <option value="District Health Society">District Health Society or State Health Mission</option>
                     </select>
                   </div>
 
                   {errorMessage && (
-                    <div className="p-3 bg-rose-100 border-2 border-rose-400 rounded-lg text-rose-800 text-xs font-semibold">
+                    <div className="p-2.5 bg-pink-50 border border-pink-300 rounded-md text-[#9D174D] text-xs font-heading font-semibold">
                       {errorMessage}
                     </div>
                   )}
@@ -1049,13 +927,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <button
                     type="submit"
                     disabled={formStatus === "loading"}
-                    className="w-full py-3 rounded-lg bg-[#BA2D0B] hover:bg-[#9E2407] border-2 border-[#BA2D0B] text-[#FFFFFF] text-sm font-semibold transition-all shadow-md active:scale-98 cursor-pointer"
+                    className="w-full py-3 rounded-md bg-[#9D174D] hover:bg-[#831843] text-white text-xs sm:text-sm font-heading font-bold transition-all shadow-xs active:scale-98 cursor-pointer mt-1"
                   >
                     {formStatus === "loading" ? "Registering District..." : "Start District Pilot"}
                   </button>
 
-                  <span className="text-[11px] text-[#4B5563] text-center">
-                    Zero setup charges. Compliant with Digital Personal Data Protection Act of 2023.
+                  <span className="text-[11px] text-slate-500 text-center">
+                    Zero setup charges. Compliant with Digital Personal Data Protection Act of 2023 &amp; ABDM standards.
                   </span>
                 </form>
               )}
@@ -1065,46 +943,52 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </main>
 
       {/* ========================================================================= */}
-      {/* ARCHITECTURAL FOOTER WITH EMBLEM & PRIMARY BORDER                         */}
+      {/* CLEAN HEALTHCARE FOOTER                                                    */}
       {/* ========================================================================= */}
-      <footer className="border-t-2 border-[#BA2D0B]/25 py-12 bg-[#F8F9FA]">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b-2 border-[#F19941]/30">
-            <div className="flex items-center gap-3">
-              <div className="size-9 rounded-xl bg-white border border-[#0F766E]/30 flex items-center justify-center p-1.5 shadow-xs">
-                <CerviSetuLogo size={22} />
+      <footer className="border-t border-black/12 py-10 bg-slate-100/90 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-5 pb-6 border-b border-black/10">
+            <div className="flex items-center gap-2.5">
+              <div className="size-8 rounded-md bg-white border border-black/15 flex items-center justify-center p-1 shadow-2xs">
+                <CerviSetuLogo size={20} />
               </div>
-              <span className="text-base font-semibold text-[#000000]">CerviSetu</span>
+              <span className="font-heading font-extrabold text-sm text-slate-900">CerviSetu</span>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-6 text-xs font-semibold text-[#4B5563]">
-              <a href="#protocol" className="hover:text-[#BA2D0B] transition-colors">Protocol</a>
-              <a href="#speech-studio" className="hover:text-[#BA2D0B] transition-colors">Speech IVR</a>
-              <a href="#vision-ocr" className="hover:text-[#BA2D0B] transition-colors">Vision OCR</a>
-              <a href="#agent-flow" className="hover:text-[#BA2D0B] transition-colors">Agent Flow</a>
-              <a href="#impact-calculator" className="hover:text-[#BA2D0B] transition-colors">Impact ROI</a>
-              <a href="#api-studio" className="hover:text-[#BA2D0B] transition-colors">API Studio</a>
-              <a href="#faq" className="hover:text-[#BA2D0B] transition-colors">FAQ</a>
+            <div className="flex flex-wrap items-center justify-center gap-5 text-xs font-heading font-semibold text-slate-600">
+              <a href="#protocol" className="hover:text-[#9D174D] transition-colors">Protocol</a>
+              <a href="#speech-studio" className="hover:text-[#9D174D] transition-colors">Voice IVR</a>
+              <a href="#vision-ocr" className="hover:text-[#9D174D] transition-colors">Vision OCR</a>
+              <a href="#agent-flow" className="hover:text-[#9D174D] transition-colors">Agent Flow</a>
+              <a href="#impact-calculator" className="hover:text-[#9D174D] transition-colors">Impact ROI</a>
+              <a href="#api-studio" className="hover:text-[#9D174D] transition-colors">API Studio</a>
+              <a href="#faq" className="hover:text-[#9D174D] transition-colors">FAQ</a>
               {onOpenGateway && (
                 <button
                   onClick={onOpenGateway}
-                  className="hover:text-[#BA2D0B] transition-colors cursor-pointer"
+                  className="hover:text-[#9D174D] transition-colors cursor-pointer"
                 >
-                  Portal Gateway
+                  Gateway
                 </button>
               )}
               <button
+                onClick={onOpenPatientCompanion}
+                className="hover:text-[#9D174D] transition-colors cursor-pointer"
+              >
+                Beneficiary Portal
+              </button>
+              <button
                 onClick={onLaunchWorkstation}
-                className="hover:text-[#BA2D0B] transition-colors cursor-pointer"
+                className="hover:text-[#9D174D] transition-colors cursor-pointer"
               >
                 Staff Portal
               </button>
             </div>
           </div>
 
-          <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#4B5563]">
-            <p>© 2026 CerviSetu Sovereign Health Initiative. Assistive and non diagnostic clinical support.</p>
-            <div className="flex items-center gap-4 font-mono-data text-[11px] text-[#000000] font-bold">
+          <div className="pt-6 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+            <p>© 2026 CerviSetu Sovereign Health Initiative · Assistive &amp; non-diagnostic clinical oncology support.</p>
+            <div className="flex items-center gap-3 font-mono-data text-[11px] text-slate-700 font-semibold">
               <span>CDSCO SaMD Safe</span>
               <span>•</span>
               <span>DPDP Act 2023 Compliant</span>

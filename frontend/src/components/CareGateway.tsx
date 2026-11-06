@@ -75,15 +75,23 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginAsha, onLogi
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#FAFAFA] flex items-center justify-center p-6 sm:p-8 md:p-12 font-sans antialiased text-black">
+    <div className="min-h-screen w-full bg-slate-200/90 text-slate-900 font-sans selection:bg-pink-100 selection:text-[#9D174D] antialiased relative overflow-hidden flex items-center justify-center p-4 sm:p-6 md:p-10">
+      {/* Blurred Out Depth Backdrop */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute -top-24 -left-24 size-[34rem] rounded-full bg-pink-300/20 blur-[72px]" />
+        <div className="absolute top-1/4 -right-24 size-[36rem] rounded-full bg-sky-300/20 blur-[72px]" />
+        <div className="absolute top-2/3 left-1/3 size-[30rem] rounded-full bg-sky-200/15 blur-[64px]" />
+        <div className="absolute inset-0 backdrop-blur-md bg-slate-100/75" />
+      </div>
+
       {/* Main Care Gateway Card */}
-      <div className="w-full max-w-4xl bg-white rounded-3xl shadow-xs border border-slate-200/90 p-8 sm:p-12 transition-all relative">
-        {/* Top bar: back link + language picker (in normal flow so long translations never overlap) */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-6 sm:mb-4">
+      <div className="relative z-10 w-full max-w-4xl card-base card-gradient-pink rounded-lg border border-black/15 shadow-sm p-6 sm:p-10 transition-all">
+        {/* Top bar: back link + language picker */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           {onOpenLanding ? (
             <button
               onClick={onOpenLanding}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-black bg-slate-100 hover:bg-slate-200 px-3.5 py-1.5 rounded-full border border-slate-200 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs font-heading font-semibold text-slate-700 hover:text-black bg-white/90 hover:bg-white px-3 py-1.5 rounded-md border border-black/15 transition-all shadow-2xs cursor-pointer"
             >
               <Sym n="arrow-left" /> System Overview
             </button>
@@ -94,40 +102,39 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginAsha, onLogi
         </div>
 
         {/* Top Branding */}
-        <div className="flex flex-col items-center justify-center mb-10">
+        <div className="flex flex-col items-center justify-center mb-8">
           <div className="flex items-center gap-3">
-            {/* CerviSetu teal ribbon emblem */}
-            <div className="size-10 rounded-2xl bg-white border border-[#0F766E]/30 flex items-center justify-center p-0.5 shadow-xs">
+            <div className="size-11 rounded-lg bg-white border border-pink-200/80 flex items-center justify-center p-1 shadow-2xs">
               <CerviSetuLogo size={34} />
             </div>
-            <span className="text-3xl font-extrabold tracking-tight text-black">cervisetu</span>
+            <span className="font-heading text-3xl font-extrabold tracking-tight text-slate-900">cervisetu</span>
           </div>
-          <span className="text-xs font-bold uppercase tracking-widest text-[#BA2D0B] bg-[#BA2D0B]/10 border border-[#BA2D0B]/20 px-3 py-1 rounded-full mt-3">
+          <span className="font-heading text-[11px] font-bold uppercase tracking-wider text-[#9D174D] bg-pink-50 border border-pink-200/90 px-3 py-1 rounded-md mt-3 shadow-2xs">
             District Hub-and-Spoke Oncology Portal
           </span>
         </div>
 
         {/* Section 1: Search for Available Facilities */}
-        <div className="bg-slate-50/80 rounded-2xl p-6 sm:p-8 border border-slate-200/80 mb-10">
-          <h2 className="text-sm font-semibold text-center text-slate-700 mb-5">
-            Search for available facilities to book an appointment <span className="font-bold text-black">(for new patients)</span>
+        <div className="card-base card-gradient-subtle rounded-lg p-5 sm:p-6 border border-black/15 mb-8 shadow-2xs">
+          <h2 className="font-heading text-xs sm:text-sm font-bold text-center text-slate-800 mb-4 uppercase tracking-wider">
+            Search Available Oncology Facilities <span className="text-[#9D174D] font-extrabold">· Open Public Lookup</span>
           </h2>
 
-          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto">
+          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2.5 max-w-2xl mx-auto">
             <div className="relative flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
               <input
                 type="text"
                 value={districtQuery}
                 onChange={(e) => setDistrictQuery(e.target.value)}
-                placeholder="Enter district name to find facilities..."
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-black focus:ring-2 focus:ring-black/10 text-slate-800 placeholder:text-slate-400 shadow-2xs"
+                placeholder="Enter district name (e.g. Mirzapur, Varanasi)..."
+                className="w-full pl-10 pr-4 py-2.5 bg-white/90 border border-black/15 rounded-md text-sm font-sans focus:outline-none focus:border-[#9D174D] focus:ring-2 focus:ring-pink-500/20 text-slate-800 placeholder:text-slate-400 shadow-2xs transition-all"
               />
             </div>
             <button
               type="submit"
               disabled={isSearching}
-              className="px-6 py-2.5 bg-[#BA2D0B] hover:bg-[#a02609] text-white font-semibold text-sm rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
+              className="px-5 py-2.5 bg-[#9D174D] hover:bg-[#831843] text-white font-heading font-semibold text-xs tracking-wider uppercase rounded-md shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
             >
               {isSearching ? "Searching..." : "Search Facilities"}
             </button>
@@ -135,52 +142,52 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginAsha, onLogi
 
           {/* Results: Hub-and-Spoke Paired Cards */}
           {hasSearched && (
-            <div className="mt-8 pt-6 border-t border-slate-200">
-              <div className="flex items-center justify-between mb-4 px-1">
-                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Matched Hub-and-Spoke Pathway for "{districtQuery}"
+            <div className="mt-6 pt-5 border-t border-black/10">
+              <div className="flex items-center justify-between mb-3 px-1">
+                <span className="font-heading text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Matched Pathway for "{districtQuery}"
                 </span>
-                <span className="text-xs text-black font-bold bg-[#DBFE87] border border-[#c4e872] px-2.5 py-0.5 rounded-full">
+                <span className="text-[11px] text-[#0369A1] font-bold bg-sky-50 border border-sky-200 px-2.5 py-0.5 rounded-md">
                   ABDM & PMJAY Empanelled
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                 {facilities.map((fac, idx) => (
                   <div
                     key={idx}
-                    className={`rounded-2xl p-5 border transition-all ${
+                    className={`card-base ${
                       fac.facility_type === "REGIONAL_EBRT_SPOKE"
-                        ? "bg-[#DBFE87]/15 border-[#DBFE87]/40"
-                        : "bg-[#90C3CB]/15 border-[#90C3CB]/40"
-                    }`}
+                        ? "card-gradient-pink border-pink-300/70"
+                        : "card-gradient-blue border-sky-300/70"
+                    } rounded-lg p-4.5 border shadow-2xs transition-all`}
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-800 shadow-2xs">
+                      <span className="font-heading text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white border border-black/15 text-slate-800 shadow-2xs">
                         {fac.badge}
                       </span>
-                      <span className="text-xs font-mono font-bold text-slate-600 flex items-center gap-1">
+                      <span className="font-mono-data text-xs font-bold text-slate-600 flex items-center gap-1">
                         <MapPin className="size-3 text-slate-400" /> ~{fac.approx_distance_km} km
                       </span>
                     </div>
 
-                    <h3 className="text-sm font-bold text-black leading-snug mb-1">{fac.facility_name}</h3>
+                    <h3 className="font-heading text-sm font-bold text-slate-900 leading-snug mb-1">{fac.facility_name}</h3>
                     <p className="text-xs text-slate-600 mb-3 font-medium">{fac.role_label}</p>
 
-                    <div className="space-y-1.5 mb-3">
+                    <div className="space-y-1.5 mb-3.5">
                       {fac.services.map((srv, sIdx) => (
                         <div key={sIdx} className="flex items-center gap-1.5 text-xs text-slate-700">
-                          <CheckCircle2 className="size-3.5 text-black shrink-0" />
+                          <CheckCircle2 className="size-3.5 text-[#0284C7] shrink-0" />
                           <span>{srv}</span>
                         </div>
                       ))}
                     </div>
 
-                    <div className="mt-3 pt-2.5 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-600">
-                      <span className="font-bold text-black"><Sym n="check" /> Free Treatment (PMJAY)</span>
+                    <div className="pt-2.5 border-t border-black/10 flex items-center justify-between text-xs text-slate-600">
+                      <span className="font-semibold text-slate-900"><Sym n="check" /> PMJAY Free Treatment</span>
                       <button
                         onClick={onLoginStaff}
-                        className="px-3 py-1 rounded-lg bg-[#BA2D0B] hover:bg-[#a02609] text-white font-semibold text-xs transition-colors cursor-pointer"
+                        className="px-3 py-1.5 rounded-md bg-[#0F172A] hover:bg-black text-white font-heading font-semibold text-xs tracking-wider transition-all cursor-pointer shadow-2xs"
                       >
                         Book Appointment &rarr;
                       </button>
@@ -193,92 +200,91 @@ export const CareGateway: React.FC<Props> = ({ onLoginStaff, onLoginAsha, onLogi
         </div>
 
         {/* Dotted Divider */}
-        <div className="relative my-10">
+        <div className="relative my-8">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-dashed border-slate-300" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-4 text-slate-500 font-semibold tracking-wider">
-              Already registered? Log in to your account
+            <span className="bg-white/95 px-4 font-heading text-[11px] text-slate-500 font-bold tracking-wider rounded-md">
+              Already registered? Select clinical portal
             </span>
           </div>
         </div>
 
-        {/* Section 2: Three Distinct Login Pathways (Doctor / Staff, Frontline ASHA, Cancer Patient) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto">
-          {/* Card 1: Log in as Doctor / Staff */}
-          <div className="group relative rounded-2xl border border-slate-200 p-6 bg-white hover:border-black hover:shadow-sm transition-all flex flex-col justify-between items-center text-center">
-            <div className="size-12 rounded-full bg-slate-100 flex items-center justify-center text-black mb-4 group-hover:scale-105 transition-transform">
-              <User className="size-6" />
+        {/* Section 2: Three Distinct Login Pathways */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+          {/* Card 1: Doctor / Staff */}
+          <div className="card-base card-gradient-warm rounded-lg border border-black/15 hover:border-black/30 p-5 transition-all shadow-2xs flex flex-col justify-between items-center text-center">
+            <div className="size-11 rounded-md bg-white border border-black/15 flex items-center justify-center text-slate-900 mb-3 shadow-2xs">
+              <User className="size-5" />
             </div>
 
-            <div className="mb-5 w-full">
+            <div className="mb-4 w-full">
               <button
                 onClick={onLoginStaff}
-                className="w-full py-2.5 px-4 rounded-full bg-black text-white hover:bg-black/85 font-semibold text-xs transition-colors shadow-xs cursor-pointer block"
+                className="w-full py-2 px-3 rounded-md bg-[#0F172A] text-white hover:bg-black font-heading font-semibold text-xs tracking-wider uppercase transition-all shadow-2xs cursor-pointer block"
               >
-                Log in as Doctor / Staff
+                Doctor / Clinical Staff
               </button>
-              <p className="text-xs text-slate-500 mt-2.5 leading-relaxed">
-                For hospital staff: radiation oncologists, spoke nurses, and cancer clinic administrators.
+              <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+                For hospital staff: radiation oncologists, spoke nurses, and cancer clinic coordinators.
               </p>
             </div>
 
-            <div className="text-[11px] font-semibold text-black bg-[#DBFE87]/40 px-3 py-1 rounded-full border border-[#DBFE87]">
+            <div className="font-mono-data text-[10px] font-bold text-slate-700 bg-white/80 px-2.5 py-1 rounded-md border border-black/10">
               CareUI Workstation · Dual-Clock Board
             </div>
           </div>
 
-          {/* Card 2: Log in as ASHA Worker */}
-          <div className="group relative rounded-2xl border border-slate-200 p-6 bg-white hover:border-[#0F766E] hover:shadow-sm transition-all flex flex-col justify-between items-center text-center">
-            <div className="size-12 rounded-full bg-[#0F766E]/10 flex items-center justify-center text-[#0F766E] mb-4 group-hover:scale-105 transition-transform">
-              <HeartHandshake className="size-6" />
+          {/* Card 2: ASHA Worker */}
+          <div className="card-base card-gradient-pink rounded-lg border border-black/15 hover:border-pink-500/40 p-5 transition-all shadow-2xs flex flex-col justify-between items-center text-center">
+            <div className="size-11 rounded-md bg-white border border-pink-200 flex items-center justify-center text-[#9D174D] mb-3 shadow-2xs">
+              <HeartHandshake className="size-5" />
             </div>
 
-            <div className="mb-5 w-full">
+            <div className="mb-4 w-full">
               <button
                 onClick={onLoginAsha || onLoginStaff}
-                className="w-full py-2.5 px-4 rounded-full bg-[#0F766E] text-white hover:bg-[#0d635c] font-semibold text-xs transition-colors shadow-xs cursor-pointer block"
+                className="w-full py-2 px-3 rounded-md bg-[#9D174D] text-white hover:bg-[#831843] font-heading font-semibold text-xs tracking-wider uppercase transition-all shadow-2xs cursor-pointer block"
               >
-                Log in as ASHA Worker
+                Frontline ASHA Worker
               </button>
-              <p className="text-xs text-slate-500 mt-2.5 leading-relaxed">
-                For frontline community health workers: home visit alerts, distress tickets, & travel vouchers.
+              <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+                For frontline community health workers: home visit alerts, distress tickets & travel vouchers.
               </p>
             </div>
 
-            <div className="text-[11px] font-semibold text-[#0F766E] bg-[#0F766E]/10 px-3 py-1 rounded-full border border-[#0F766E]/20">
+            <div className="font-mono-data text-[10px] font-bold text-[#9D174D] bg-pink-50 px-2.5 py-1 rounded-md border border-pink-200">
               ASHA Network · Field Coordination
             </div>
           </div>
 
-          {/* Card 3: Log in as Patient */}
-          <div className="group relative rounded-2xl border border-slate-200 p-6 bg-white hover:border-[#BA2D0B] hover:shadow-sm transition-all flex flex-col justify-between items-center text-center">
-            <div className="size-12 rounded-full bg-[#BA2D0B]/10 flex items-center justify-center text-[#BA2D0B] mb-4 group-hover:scale-105 transition-transform">
-              <Users className="size-6" />
+          {/* Card 3: Patient */}
+          <div className="card-base card-gradient-blue rounded-lg border border-black/15 hover:border-sky-500/40 p-5 transition-all shadow-2xs flex flex-col justify-between items-center text-center">
+            <div className="size-11 rounded-md bg-white border border-sky-200 flex items-center justify-center text-[#0284C7] mb-3 shadow-2xs">
+              <Users className="size-5" />
             </div>
 
-            <div className="mb-5 w-full">
+            <div className="mb-4 w-full">
               <button
                 onClick={() => setShowPatientLoginModal(true)}
-                className="w-full py-2.5 px-4 rounded-full border-2 border-[#BA2D0B] text-[#BA2D0B] hover:bg-[#BA2D0B] hover:text-white font-semibold text-xs transition-colors shadow-xs cursor-pointer block"
+                className="w-full py-2 px-3 rounded-md bg-[#0284C7] text-white hover:bg-[#0369A1] font-heading font-semibold text-xs tracking-wider uppercase transition-all shadow-2xs cursor-pointer block"
               >
-                Log in as Patient
+                Patient & Caregiver
               </button>
-              <p className="text-xs text-slate-500 mt-2.5 leading-relaxed">
+              <p className="text-xs text-slate-600 mt-2 leading-relaxed">
                 For cancer patients & caregivers: 29-step Healing Clock, hydration guide, & travel passes.
               </p>
             </div>
 
-            <div className="text-[11px] font-semibold text-slate-800 bg-[#90C3CB]/25 px-3 py-1 rounded-full border border-[#90C3CB]/60">
+            <div className="font-mono-data text-[10px] font-bold text-[#0369A1] bg-sky-50 px-2.5 py-1 rounded-md border border-sky-200">
               Vernacular Co-Pilot · Zero Password
             </div>
           </div>
         </div>
-
       </div>
 
-      {/* Patient login modal: ABHA sandbox, mobile OTP (both issue a patient session) */}
+      {/* Patient login modal */}
       {showPatientLoginModal && (
         <PatientLoginModal
           method={authMethod}
@@ -316,25 +322,25 @@ const PatientLoginModal: React.FC<ModalProps> = ({ method, setMethod, notice, on
     { id: "QR", icon: <QrCode className="size-4" aria-hidden="true" />, label: t("login.tab.qr") },
   ];
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center sm:p-4 z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 backdrop-blur-xs" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="patient-login-title"
         onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full max-h-[92vh] overflow-y-auto p-5 sm:p-6 shadow-2xl border border-slate-200 relative"
+        className="card-base card-gradient-subtle rounded-lg max-w-md w-full max-h-[92vh] overflow-y-auto p-6 shadow-2xl border border-black/20 relative"
       >
         <div className="flex justify-between items-start gap-3 mb-4">
           <div>
-            <h3 id="patient-login-title" className="text-lg font-bold text-slate-900">{t("login.title")}</h3>
-            <p className="text-sm text-slate-600">{t("login.subtitle")}</p>
+            <h3 id="patient-login-title" className="font-heading text-lg font-bold text-slate-900">{t("login.title")}</h3>
+            <p className="text-xs text-slate-600">{t("login.subtitle")}</p>
           </div>
           <div className="flex items-center gap-2">
             <LanguageSwitch />
             <button
               onClick={onClose}
               aria-label={t("login.close")}
-              className="size-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center font-bold focus-visible:outline-2 focus-visible:outline-black"
+              className="size-8 rounded-md bg-white hover:bg-slate-100 text-slate-700 flex items-center justify-center font-bold border border-black/15 shadow-2xs focus-visible:outline-2 focus-visible:outline-black cursor-pointer"
             >
               <Sym n="x" />
             </button>
@@ -342,20 +348,20 @@ const PatientLoginModal: React.FC<ModalProps> = ({ method, setMethod, notice, on
         </div>
 
         {notice && (
-          <p role="status" className="mb-4 text-sm text-[#BA2D0B] bg-[#BA2D0B]/5 border border-[#BA2D0B]/20 rounded-xl px-3 py-2">
+          <p role="status" className="mb-4 text-xs font-medium text-[#9D174D] bg-pink-50 border border-pink-200 rounded-md px-3 py-2">
             {t("login.sessionExpired")}
           </p>
         )}
 
-        <div className="grid grid-cols-3 gap-1.5 bg-slate-100 p-1 rounded-xl mb-5 text-xs sm:text-sm font-semibold" role="tablist">
+        <div className="grid grid-cols-3 gap-1 bg-slate-200/70 p-1 rounded-md mb-5 text-xs font-heading font-semibold" role="tablist">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               role="tab"
               aria-selected={method === tab.id}
               onClick={() => setMethod(tab.id)}
-              className={`min-h-11 px-1 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                method === tab.id ? "bg-white text-slate-900 shadow-xs" : "text-slate-600 hover:text-slate-900"
+              className={`py-2 px-1 rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                method === tab.id ? "bg-white text-slate-900 shadow-2xs border border-black/10 font-bold" : "text-slate-600 hover:text-slate-900"
               }`}
             >
               {tab.icon} {tab.label}
@@ -370,13 +376,13 @@ const PatientLoginModal: React.FC<ModalProps> = ({ method, setMethod, notice, on
             <MobileOtpLogin onVerified={onVerified} onRegister={() => setMethod("ABHA")} />
           ) : (
             <div className="space-y-4 text-center">
-              <div className="mx-auto bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center p-6">
+              <div className="mx-auto bg-white/70 border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center p-6 shadow-2xs">
                 <QrCode className="size-14 text-slate-400 mb-3" aria-hidden="true" />
-                <p className="text-sm text-slate-700">{t("login.qr.unavailable")}</p>
+                <p className="text-xs text-slate-700">{t("login.qr.unavailable")}</p>
               </div>
               <button
                 onClick={() => setMethod("OTP")}
-                className="w-full min-h-12 bg-black hover:bg-black/85 text-white font-semibold text-sm rounded-full transition-colors cursor-pointer"
+                className="w-full py-2.5 bg-[#0F172A] hover:bg-black text-white font-heading font-semibold text-xs tracking-wider uppercase rounded-md transition-all shadow-2xs cursor-pointer"
               >
                 {t("login.qr.useMobile")}
               </button>

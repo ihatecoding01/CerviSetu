@@ -298,7 +298,7 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
       {/* 3-Role Activity Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Doctors Card */}
-        <Card className={`border-l-4 border-l-indigo-600 bg-white shadow-2xs cursor-pointer transition-all ${roleFilter === "DOCTOR" ? "ring-2 ring-indigo-500" : ""}`}
+        <Card className={`border border-slate-200 hover:border-indigo-300 rounded-xl bg-white shadow-2xs cursor-pointer transition-all ${roleFilter === "DOCTOR" ? "ring-2 ring-indigo-500 border-indigo-400" : ""}`}
               onClick={() => setRoleFilter(roleFilter === "DOCTOR" ? "ALL" : "DOCTOR")}>
           <CardContent className="p-4 flex items-center justify-between">
             <div>
@@ -318,7 +318,7 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
         </Card>
 
         {/* Nurses & Frontline Card */}
-        <Card className={`border-l-4 border-l-emerald-600 bg-white shadow-2xs cursor-pointer transition-all ${roleFilter === "NURSE_HEALTHCARE_WORKER" ? "ring-2 ring-emerald-500" : ""}`}
+        <Card className={`border border-slate-200 hover:border-emerald-300 rounded-xl bg-white shadow-2xs cursor-pointer transition-all ${roleFilter === "NURSE_HEALTHCARE_WORKER" ? "ring-2 ring-emerald-500 border-emerald-400" : ""}`}
               onClick={() => setRoleFilter(roleFilter === "NURSE_HEALTHCARE_WORKER" ? "ALL" : "NURSE_HEALTHCARE_WORKER")}>
           <CardContent className="p-4 flex items-center justify-between">
             <div>
@@ -338,7 +338,7 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
         </Card>
 
         {/* Patients & Families Card */}
-        <Card className={`border-l-4 border-l-amber-500 bg-white shadow-2xs cursor-pointer transition-all ${roleFilter === "PATIENT" ? "ring-2 ring-amber-500" : ""}`}
+        <Card className={`border border-slate-200 hover:border-amber-300 rounded-xl bg-white shadow-2xs cursor-pointer transition-all ${roleFilter === "PATIENT" ? "ring-2 ring-amber-500 border-amber-400" : ""}`}
               onClick={() => setRoleFilter(roleFilter === "PATIENT" ? "ALL" : "PATIENT")}>
           <CardContent className="p-4 flex items-center justify-between">
             <div>
@@ -358,10 +358,10 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
         </Card>
 
         {/* SHA-256 Ledger Health Card */}
-        <Card className="border-l-4 border-l-[#BA2D0B] bg-white shadow-2xs">
+        <Card className="border border-slate-200 hover:border-teal-300 rounded-xl bg-white shadow-2xs">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#BA2D0B] flex items-center gap-1.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-teal-700 flex items-center gap-1.5">
                 <ShieldCheck className="size-3.5" />
                 SHA-256 Block Chain
               </p>
@@ -371,7 +371,7 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
               </h3>
               <p className="text-xs text-gray-500 mt-0.5">DPDP 2023 Tamper-Evident</p>
             </div>
-            <Badge variant="primary" size="xs">
+            <Badge variant="primary" size="xs" className="bg-teal-50 text-teal-800 border-teal-200">
               100% Intact
             </Badge>
           </CardContent>
@@ -382,7 +382,7 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
       <Card className="bg-gray-50/80 border border-gray-200 shadow-2xs">
         <CardContent className="p-3.5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Activity className="size-4 text-[#BA2D0B]" />
+            <Activity className="size-4 text-teal-600" />
             <span className="text-xs font-bold text-gray-800">Live 3-Role Event Simulator:</span>
             <span className="text-xs text-gray-500 hidden sm:inline">
               Dispatch role-attributed actions and verify SHA-256 cryptographic block chaining
@@ -451,7 +451,7 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-base font-bold text-black flex items-center gap-2">
-                  <KeyRound className="size-4 text-[#BA2D0B]" />
+                  <KeyRound className="size-4 text-teal-700" />
                   PII Vault Decryption Gate
                 </CardTitle>
                 <CardDescription className="text-xs text-gray-500">Authorized medical officer role validation</CardDescription>
@@ -489,8 +489,8 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
             )}
 
             {vaultResult && (
-              <div className="p-3.5 rounded-xl bg-[#BA2D0B]/10 border border-[#BA2D0B]/20 flex flex-col gap-2">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-[#BA2D0B]">
+              <div className="p-3.5 rounded-xl bg-teal-50 border border-teal-200 flex flex-col gap-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-teal-800">
                   <ShieldCheck className="size-4" />
                   <span>[STATUTORY ACCESS AUTHORIZED - LOGGED]</span>
                 </div>
@@ -508,7 +508,7 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <CardTitle className="text-base font-bold text-[#111418] flex items-center gap-2">
-                  <Lock className="size-4 text-[#90C3CB]" />
+                  <Lock className="size-4 text-teal-700" />
                   Tamper-Evident Multi-Role Audit Ledger
                 </CardTitle>
                 <CardDescription className="text-xs text-gray-500">
@@ -645,7 +645,7 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
                           </TableCell>
 
                           {/* Patient Token */}
-                          <TableCell className="font-mono text-xs text-[#BA2D0B] font-semibold">
+                          <TableCell className="font-mono text-xs text-teal-800 font-semibold">
                             {log.patient_token || "SYSTEM"}
                           </TableCell>
 

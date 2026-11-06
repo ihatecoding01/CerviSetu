@@ -88,7 +88,7 @@ export function MessageCenter() {
               </p>
               <p className="text-gray-600 truncate" translate="no">{m.body}</p>
             </div>
-            <span className={`shrink-0 font-semibold ${["FAILED", "UNDELIVERED", "BLOCKED_NOT_ALLOWED", "NO_PHONE_NUMBER"].includes(m.status) ? "text-[#BA2D0B]" : "text-gray-700"}`}>
+            <span className={`shrink-0 font-semibold ${["FAILED", "UNDELIVERED", "BLOCKED_NOT_ALLOWED", "NO_PHONE_NUMBER"].includes(m.status) ? "text-rose-600" : "text-gray-700"}`}>
               {STATUS_TEXT[m.status] || m.status}
             </span>
           </div>

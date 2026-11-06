@@ -51,11 +51,11 @@ const avatarFallbackVariants = cva(
   {
     variants: {
       color: {
-        default: "bg-gray-100 text-gray-700",
-        primary: "bg-[#BA2D0B]/10 text-[#BA2D0B] border border-[#BA2D0B]/20",
-        warning: "bg-[#F19941]/20 text-[#BA2D0B] border border-[#F19941]/40",
-        info: "bg-[#90C3CB]/20 text-slate-900 border border-[#90C3CB]/40",
-        destructive: "bg-[#BA2D0B]/15 text-[#BA2D0B] border border-[#BA2D0B]/30",
+        default: "bg-slate-100 text-slate-700",
+        primary: "bg-pink-50 text-[#9D174D] border border-pink-200",
+        warning: "bg-slate-100 text-slate-800 border border-slate-200",
+        info: "bg-sky-50 text-[#0369A1] border border-sky-200",
+        destructive: "bg-pink-100 text-[#831843] border border-pink-300",
       },
     },
     defaultVariants: {
