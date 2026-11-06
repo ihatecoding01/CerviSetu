@@ -17,7 +17,12 @@ export default defineConfig(() => {
         name: "mirror-dist-to-backend-static",
         closeBundle() {
           // Keep ../backend/dashboard/static in sync for FastAPI local & container serving
+          // Clean stale hashed bundles before copying to prevent accumulation of dead assets
           if (fs.existsSync(distDir)) {
+            const staticAssetsDir = path.join(staticDir, "assets");
+            if (fs.existsSync(staticAssetsDir)) {
+              fs.rmSync(staticAssetsDir, { recursive: true, force: true });
+            }
             fs.mkdirSync(staticDir, { recursive: true });
             fs.cpSync(distDir, staticDir, { recursive: true });
           }
