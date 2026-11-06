@@ -2,7 +2,7 @@
 import json
 import secrets
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from backend.config import DB_PATH
@@ -18,6 +18,7 @@ class ClinicalDatabase:
         self.db_path = str(db_path or DB_PATH)
         self._init_schema()
         self.seed_multistage_cohort()
+        self.seed_prevention_cohorts()
 
     def _get_conn(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)
@@ -389,7 +390,7 @@ class ClinicalDatabase:
                 )
             """)
 
-            # 9. External AI result cache and usage log (see backend/core/ai_usage.py).
+            # 10. External AI result cache and usage log (see backend/core/ai_usage.py).
             # Cache keys are hashes; values are validated, de-identified results only.
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS ai_cache (
@@ -417,6 +418,63 @@ class ClinicalDatabase:
                     characters INTEGER,
                     pages INTEGER,
                     error_category TEXT
+                )
+            """)
+
+            # 11. Adolescent HPV Vaccination Registry (Cohort 1: Girls Under 14)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS adolescent_registry (
+                    beneficiary_id TEXT PRIMARY KEY,
+                    patient_token TEXT UNIQUE NOT NULL,
+                    full_name TEXT NOT NULL,
+                    age INTEGER NOT NULL,
+                    dob TEXT,
+                    guardian_name TEXT NOT NULL,
+                    guardian_phone TEXT NOT NULL,
+                    village TEXT NOT NULL,
+                    school_or_camp TEXT NOT NULL,
+                    prior_vaccine_audit TEXT DEFAULT 'NONE',
+                    dose_count INTEGER DEFAULT 0,
+                    status TEXT DEFAULT 'UNVACCINATED',
+                    dose_1_date TEXT,
+                    dose_1_batch TEXT,
+                    dose_1_site TEXT,
+                    dose_1_center TEXT,
+                    dose_2_due_date TEXT,
+                    dose_2_date TEXT,
+                    dose_2_batch TEXT,
+                    dose_2_site TEXT,
+                    dose_2_center TEXT,
+                    aefi_reported INTEGER DEFAULT 0,
+                    aefi_notes TEXT,
+                    pre_due_alert_sent INTEGER DEFAULT 0,
+                    overdue_alert_count INTEGER DEFAULT 0,
+                    last_alert_date TEXT,
+                    abdm_logged INTEGER DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+
+            # 12. Secondary Screening & Dual-Track Cases (Cohort 2: Women 35-45)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS screening_cases (
+                    case_id TEXT PRIMARY KEY,
+                    patient_token TEXT NOT NULL,
+                    patient_name TEXT NOT NULL,
+                    age INTEGER NOT NULL,
+                    screening_type TEXT NOT NULL,
+                    test_date TEXT NOT NULL,
+                    findings_classification TEXT NOT NULL,
+                    uploaded_image_or_doc TEXT,
+                    symptom_notes TEXT,
+                    triage_track TEXT NOT NULL,
+                    care_action_status TEXT NOT NULL,
+                    prescribed_local_therapy TEXT,
+                    fourteen_day_milestone_date TEXT,
+                    checkin_outcome TEXT,
+                    tertiary_facility TEXT,
+                    specialist_doctor_notes TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
             conn.commit()
@@ -1105,6 +1163,337 @@ class ClinicalDatabase:
             return [dict(r) for r in cursor.fetchall()]
 
     # ==========================================
+    # 3B. Adolescent Registry & 2-Dose Tracking (Cohort 1: Girls 9-14)
+    # ==========================================
+
+    def save_adolescent_beneficiary(
+        self,
+        beneficiary_id: str,
+        patient_token: str,
+        full_name: str,
+        age: int,
+        dob: Optional[str],
+        guardian_name: str,
+        guardian_phone: str,
+        village: str,
+        school_or_camp: str,
+        prior_vaccine_audit: str = "NONE",
+        dose_count: int = 0,
+        status: str = "UNVACCINATED",
+        dose_1_date: Optional[str] = None,
+        dose_1_batch: Optional[str] = None,
+        dose_1_site: Optional[str] = "Left Deltoid",
+        dose_1_center: Optional[str] = "Primary Health Centre Mirzapur",
+        dose_2_due_date: Optional[str] = None,
+        dose_2_date: Optional[str] = None,
+        dose_2_batch: Optional[str] = None,
+        dose_2_site: Optional[str] = "Left Deltoid",
+        dose_2_center: Optional[str] = "Primary Health Centre Mirzapur",
+        aefi_reported: int = 0,
+        aefi_notes: Optional[str] = None,
+        pre_due_alert_sent: int = 0,
+        overdue_alert_count: int = 0,
+        last_alert_date: Optional[str] = None,
+        abdm_logged: int = 0
+    ) -> Dict[str, Any]:
+        self.save_patient(patient_token, age, "FEMALE", "RURAL")
+        with self._get_conn() as conn:
+            conn.execute("""
+                INSERT OR REPLACE INTO adolescent_registry
+                (beneficiary_id, patient_token, full_name, age, dob, guardian_name, guardian_phone, village, school_or_camp, prior_vaccine_audit, dose_count, status, dose_1_date, dose_1_batch, dose_1_site, dose_1_center, dose_2_due_date, dose_2_date, dose_2_batch, dose_2_site, dose_2_center, aefi_reported, aefi_notes, pre_due_alert_sent, overdue_alert_count, last_alert_date, abdm_logged)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (beneficiary_id, patient_token, full_name, age, dob, guardian_name, guardian_phone, village, school_or_camp, prior_vaccine_audit, dose_count, status, dose_1_date, dose_1_batch, dose_1_site, dose_1_center, dose_2_due_date, dose_2_date, dose_2_batch, dose_2_site, dose_2_center, aefi_reported, aefi_notes, pre_due_alert_sent, overdue_alert_count, last_alert_date, abdm_logged))
+            conn.commit()
+        return self.get_adolescent_beneficiary(beneficiary_id) or {}
+
+    def get_adolescent_beneficiaries(self, status: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
+        query = "SELECT * FROM adolescent_registry"
+        params: List[Any] = []
+        if status:
+            query += " WHERE status = ?"
+            params.append(status)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        params.append(limit)
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute(query, tuple(params))
+            return [dict(r) for r in cursor.fetchall()]
+
+    def get_adolescent_beneficiary(self, beneficiary_id: str) -> Optional[Dict[str, Any]]:
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM adolescent_registry WHERE beneficiary_id = ? OR patient_token = ?", (beneficiary_id, beneficiary_id))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def record_adolescent_dose(
+        self,
+        beneficiary_id: str,
+        dose_number: int,
+        batch_number: str = "CERV-2026-A1",
+        admin_site: str = "Left Deltoid",
+        center: str = "Primary Health Centre Mirzapur",
+        administered_date: Optional[str] = None,
+        aefi_reported: int = 0,
+        aefi_notes: Optional[str] = None
+    ) -> Dict[str, Any]:
+        adm_date = administered_date or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        existing = self.get_adolescent_beneficiary(beneficiary_id)
+        if not existing:
+            raise ValueError(f"Beneficiary {beneficiary_id} not found")
+
+        with self._get_conn() as conn:
+            if dose_number == 1:
+                try:
+                    parsed = datetime.strptime(adm_date, "%Y-%m-%d")
+                    due_date = (parsed + timedelta(days=180)).strftime("%Y-%m-%d")
+                except Exception:
+                    due_date = (datetime.now(timezone.utc) + timedelta(days=180)).strftime("%Y-%m-%d")
+
+                conn.execute("""
+                    UPDATE adolescent_registry
+                    SET dose_count = 1,
+                        status = 'PARTIALLY_VACCINATED',
+                        dose_1_date = ?,
+                        dose_1_batch = ?,
+                        dose_1_site = ?,
+                        dose_1_center = ?,
+                        dose_2_due_date = ?,
+                        aefi_reported = ?,
+                        aefi_notes = ?
+                    WHERE beneficiary_id = ?
+                """, (adm_date, batch_number, admin_site, center, due_date, aefi_reported, aefi_notes, beneficiary_id))
+            elif dose_number == 2:
+                conn.execute("""
+                    UPDATE adolescent_registry
+                    SET dose_count = 2,
+                        status = 'FULLY_IMMUNIZED',
+                        dose_2_date = ?,
+                        dose_2_batch = ?,
+                        dose_2_site = ?,
+                        dose_2_center = ?,
+                        aefi_reported = ?,
+                        aefi_notes = ?,
+                        abdm_logged = 1
+                    WHERE beneficiary_id = ?
+                """, (adm_date, batch_number, admin_site, center, aefi_reported, aefi_notes, beneficiary_id))
+            conn.commit()
+
+        # Mirror entry in legacy hpv_vaccinations for reporting continuity
+        vac_id = f"VAC-{secrets.token_hex(4).upper()}"
+        self.save_hpv_vaccination(
+            vaccine_id=vac_id,
+            patient_token=existing["patient_token"],
+            patient_name=existing["full_name"],
+            age=existing["age"],
+            dose_number=dose_number,
+            vaccine_brand="Cervavac",
+            administered_date=adm_date,
+            school_or_center=center,
+            status="COMPLETED"
+        )
+
+        return self.get_adolescent_beneficiary(beneficiary_id) or {}
+
+    def update_adolescent_alert(self, beneficiary_id: str, alert_type: str, notes: Optional[str] = None) -> Dict[str, Any]:
+        existing = self.get_adolescent_beneficiary(beneficiary_id)
+        if not existing:
+            raise ValueError(f"Beneficiary {beneficiary_id} not found")
+
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        with self._get_conn() as conn:
+            if alert_type == "14_DAY_PRE_DUE":
+                conn.execute("""
+                    UPDATE adolescent_registry
+                    SET pre_due_alert_sent = 1,
+                        last_alert_date = ?
+                    WHERE beneficiary_id = ?
+                """, (today_str, beneficiary_id))
+                ticket_header = "HPV Vaccine 14-Day Pre-Due / Vial Readiness Check"
+                ticket_notes = notes or f"14-day pre-due window reached for {existing['full_name']} (Dose 2 due: {existing.get('dose_2_due_date')}). Verify Cervavac/Gardasil vial availability at PHC and confirm appointment with parent ({existing['guardian_phone']})."
+            else:
+                conn.execute("""
+                    UPDATE adolescent_registry
+                    SET overdue_alert_count = overdue_alert_count + 1,
+                        last_alert_date = ?
+                    WHERE beneficiary_id = ?
+                """, (today_str, beneficiary_id))
+                ticket_header = "HPV Second Dose Overdue Priority Home Visit"
+                ticket_notes = notes or f"Dose 2 overdue by >14 days for {existing['full_name']}. Immediate ASHA village home visit required. Address hesitation and coordinate PHC administration."
+            conn.commit()
+
+        # Create corresponding ASHA field task
+        ticket_id = f"TKT-VAC-{secrets.token_hex(3).upper()}"
+        self.create_asha_ticket(
+            ticket_id=ticket_id,
+            patient_token=existing["patient_token"],
+            asha_worker_id="ASHA-001",
+            patient_first_name=existing["full_name"].split()[0],
+            guardian_name=existing["guardian_name"],
+            village=existing["village"],
+            landmark=existing.get("school_or_camp", "Near PHC"),
+            contact_phone=existing["guardian_phone"],
+            days_missed=14 if alert_type == "14_DAY_OVERDUE" else 0,
+            current_step=existing.get("dose_count", 0),
+            delay_root_cause="PREVENTIVE_VACCINATION_FOLLOWUP",
+            field_outcome="DISPATCHED",
+            stigma_safe_category=ticket_header,
+            notes=ticket_notes
+        )
+
+        return self.get_adolescent_beneficiary(beneficiary_id) or {}
+
+    # ==========================================
+    # 3C. Secondary Screening & Dual-Track Cases (Cohort 2: Women 35-45)
+    # ==========================================
+
+    def save_screening_case(
+        self,
+        case_id: str,
+        patient_token: str,
+        patient_name: str,
+        age: int,
+        screening_type: str,
+        test_date: str,
+        findings_classification: str,
+        uploaded_image_or_doc: Optional[str] = None,
+        symptom_notes: Optional[str] = None,
+        triage_track: str = "ROUTINE_3_5Y_RECALL",
+        care_action_status: str = "RESOLVED",
+        prescribed_local_therapy: Optional[str] = None,
+        fourteen_day_milestone_date: Optional[str] = None,
+        tertiary_facility: Optional[str] = "Varanasi Regional Cancer Centre (Hub)"
+    ) -> Dict[str, Any]:
+        self.save_patient(patient_token, age, "FEMALE", "RURAL")
+
+        milestone_date = fourteen_day_milestone_date
+        if triage_track == "ASHA_COMMUNITY_MANAGEMENT" and not milestone_date:
+            try:
+                parsed = datetime.strptime(test_date, "%Y-%m-%d")
+                milestone_date = (parsed + timedelta(days=14)).strftime("%Y-%m-%d")
+            except Exception:
+                milestone_date = (datetime.now(timezone.utc) + timedelta(days=14)).strftime("%Y-%m-%d")
+
+        with self._get_conn() as conn:
+            conn.execute("""
+                INSERT OR REPLACE INTO screening_cases
+                (case_id, patient_token, patient_name, age, screening_type, test_date, findings_classification, uploaded_image_or_doc, symptom_notes, triage_track, care_action_status, prescribed_local_therapy, fourteen_day_milestone_date, tertiary_facility)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (case_id, patient_token, patient_name, age, screening_type, test_date, findings_classification, uploaded_image_or_doc, symptom_notes, triage_track, care_action_status, prescribed_local_therapy, milestone_date, tertiary_facility))
+            conn.commit()
+
+        # If ASHA community management, create a 14-day checkin field ticket
+        if triage_track == "ASHA_COMMUNITY_MANAGEMENT":
+            tkt_id = f"TKT-CHK-{secrets.token_hex(3).upper()}"
+            self.create_asha_ticket(
+                ticket_id=tkt_id,
+                patient_token=patient_token,
+                asha_worker_id="ASHA-002",
+                patient_first_name=patient_name.split()[0],
+                guardian_name="Family Contact",
+                village="Mirzapur District Block",
+                landmark="Near Sub-centre",
+                contact_phone="+91 98765 00000",
+                days_missed=0,
+                current_step=1,
+                delay_root_cause="BENIGN_COMMUNITY_FOLLOWUP",
+                field_outcome="DISPATCHED",
+                stigma_safe_category="14-Day Benign Symptom Resolution Check-in",
+                notes=f"Verify symptom resolution for {patient_name} under medical therapy: {prescribed_local_therapy or 'Standard medical management'}."
+            )
+        elif triage_track == "TERTIARY_SPECIALIST_REFERRAL":
+            tkt_id = f"TKT-REF-{secrets.token_hex(3).upper()}"
+            self.create_asha_ticket(
+                ticket_id=tkt_id,
+                patient_token=patient_token,
+                asha_worker_id="ASHA-004",
+                patient_first_name=patient_name.split()[0],
+                guardian_name="Family Contact",
+                village="Mirzapur District Block",
+                landmark="Near Sub-centre",
+                contact_phone="+91 98765 00000",
+                days_missed=0,
+                current_step=1,
+                delay_root_cause="TERTIARY_REFERRAL_ESCORT",
+                field_outcome="DISPATCHED",
+                stigma_safe_category="Tertiary Care Center Referral Escort",
+                notes=f"Escort patient {patient_name} ({age}Y) to {tertiary_facility} for specialist evaluation of suspicious VIA/Pap findings."
+            )
+
+        return self.get_screening_case(case_id) or {}
+
+    def get_screening_cases(self, triage_track: Optional[str] = None, care_action_status: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
+        query = "SELECT * FROM screening_cases"
+        conditions = []
+        params: List[Any] = []
+        if triage_track:
+            conditions.append("triage_track = ?")
+            params.append(triage_track)
+        if care_action_status:
+            conditions.append("care_action_status = ?")
+            params.append(care_action_status)
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        params.append(limit)
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute(query, tuple(params))
+            return [dict(r) for r in cursor.fetchall()]
+
+    def get_screening_case(self, case_id: str) -> Optional[Dict[str, Any]]:
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM screening_cases WHERE case_id = ? OR patient_token = ?", (case_id, case_id))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def update_community_checkin(self, case_id: str, outcome: str, checkin_notes: Optional[str] = None) -> Dict[str, Any]:
+        existing = self.get_screening_case(case_id)
+        if not existing:
+            raise ValueError(f"Screening case {case_id} not found")
+
+        resolved = (outcome == "SYMPTOMS_RESOLVED")
+        new_status = "RESOLVED" if resolved else "REFERRED_TO_TERTIARY"
+        new_track = existing["triage_track"] if resolved else "TERTIARY_SPECIALIST_REFERRAL"
+
+        with self._get_conn() as conn:
+            conn.execute("""
+                UPDATE screening_cases
+                SET checkin_outcome = ?,
+                    care_action_status = ?,
+                    triage_track = ?,
+                    symptom_notes = symptom_notes || ' | 14-day Check-in: ' || ?
+                WHERE case_id = ?
+            """, (outcome, new_status, new_track, checkin_notes or outcome, case_id))
+            conn.commit()
+
+        return self.get_screening_case(case_id) or {}
+
+    def update_specialist_review(
+        self,
+        case_id: str,
+        oncologist_id: str,
+        clinical_assessment: str,
+        treatment_plan: str
+    ) -> Dict[str, Any]:
+        existing = self.get_screening_case(case_id)
+        if not existing:
+            raise ValueError(f"Screening case {case_id} not found")
+
+        notes = f"Reviewed by {oncologist_id}: {clinical_assessment}. Directive: {treatment_plan}"
+        with self._get_conn() as conn:
+            conn.execute("""
+                UPDATE screening_cases
+                SET specialist_doctor_notes = ?,
+                    care_action_status = 'SPECIALIST_REVIEWED'
+                WHERE case_id = ?
+            """, (notes, case_id))
+            conn.commit()
+
+        return self.get_screening_case(case_id) or {}
+
+    # ==========================================
     # 4. Weekly Chemotherapy Clearances
     # ==========================================
 
@@ -1163,14 +1552,18 @@ class ClinicalDatabase:
         days_missed: int,
         current_step: int,
         delay_root_cause: Optional[str] = None,
-        field_outcome: Optional[str] = None
+        field_outcome: Optional[str] = None,
+        stigma_safe_category: Optional[str] = None,
+        stigma_safe_header: Optional[str] = None,
+        notes: Optional[str] = None
     ) -> Dict[str, Any]:
+        header = stigma_safe_header or stigma_safe_category or "मातृ एवं महिला स्वास्थ्य सेवा / Women Health Follow-Up"
         with self._get_conn() as conn:
             conn.execute("""
                 INSERT OR REPLACE INTO asha_field_tickets
-                (ticket_id, patient_token, asha_worker_id, patient_first_name, guardian_name, village, landmark, contact_phone, days_missed, current_step, delay_root_cause, field_outcome)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (ticket_id, patient_token, asha_worker_id, patient_first_name, guardian_name, village, landmark, contact_phone, days_missed, current_step, delay_root_cause, field_outcome))
+                (ticket_id, patient_token, asha_worker_id, patient_first_name, guardian_name, village, landmark, contact_phone, days_missed, current_step, stigma_safe_header, delay_root_cause, field_outcome)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (ticket_id, patient_token, asha_worker_id, patient_first_name, guardian_name, village, landmark, contact_phone, days_missed, current_step, header, delay_root_cause, field_outcome))
             conn.commit()
         return {
             "ticket_id": ticket_id,
@@ -1178,7 +1571,9 @@ class ClinicalDatabase:
             "patient_first_name": patient_first_name,
             "guardian_name": guardian_name,
             "days_missed": days_missed,
-            "current_step": current_step
+            "current_step": current_step,
+            "stigma_safe_category": header,
+            "notes": notes
         }
 
     def update_asha_ticket_outcome(
@@ -1215,7 +1610,13 @@ class ClinicalDatabase:
         with self._get_conn() as conn:
             cursor = conn.cursor()
             cursor.execute(query, tuple(params))
-            return [dict(r) for r in cursor.fetchall()]
+            out = []
+            for r in cursor.fetchall():
+                d = dict(r)
+                if not d.get("stigma_safe_category"):
+                    d["stigma_safe_category"] = d.get("stigma_safe_header")
+                out.append(d)
+            return out
 
     # ==========================================
     # 6. LINAC Maintenance Downtime
@@ -1633,6 +2034,139 @@ class ClinicalDatabase:
             days_missed=3,
             current_step=19,
             delay_root_cause="FEAR_OF_PROCEDURE"
+        )
+
+        self.seed_prevention_cohorts()
+
+    def seed_prevention_cohorts(self):
+        """Seed representative cases for Multi-Cohort Prevention (Girls under 14 and Women 35-45)."""
+        with self._get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) as cnt FROM adolescent_registry")
+            if cursor.fetchone()["cnt"] > 0:
+                return
+
+        # Cohort 1: Girls Under 14 (Ages 9-14)
+        self.save_adolescent_beneficiary(
+            beneficiary_id="BEN-101",
+            patient_token="PT-ADO-101",
+            full_name="Ananya Kumari",
+            age=11,
+            dob="2015-04-12",
+            guardian_name="Mahesh Kumari",
+            guardian_phone="+91 94150 99881",
+            village="Gram Pipra, Mirzapur",
+            school_or_camp="Mirzapur Girls Middle School",
+            prior_vaccine_audit="NONE",
+            dose_count=0,
+            status="UNVACCINATED"
+        )
+        self.save_adolescent_beneficiary(
+            beneficiary_id="BEN-102",
+            patient_token="PT-ADO-102",
+            full_name="Priya Sharma",
+            age=13,
+            dob="2013-08-20",
+            guardian_name="Ramesh Sharma",
+            guardian_phone="+91 98231 44556",
+            village="Kalyanpur, Mirzapur",
+            school_or_camp="Kalyanpur Secondary School",
+            prior_vaccine_audit="ROUTINE_DRIVE",
+            dose_count=1,
+            status="PARTIALLY_VACCINATED",
+            dose_1_date="2026-05-15",
+            dose_1_batch="CERV-2026-B1",
+            dose_1_site="Left Deltoid",
+            dose_1_center="PHC Kalyanpur",
+            dose_2_due_date="2026-11-15",
+            pre_due_alert_sent=1
+        )
+        self.save_adolescent_beneficiary(
+            beneficiary_id="BEN-103",
+            patient_token="PT-ADO-103",
+            full_name="Kavita Patel",
+            age=12,
+            dob="2014-02-14",
+            guardian_name="Sunil Patel",
+            guardian_phone="+91 98765 11223",
+            village="Vindhyachal Sector 3",
+            school_or_camp="Govt Girls High School, Vindhyachal",
+            prior_vaccine_audit="NONE",
+            dose_count=1,
+            status="PARTIALLY_VACCINATED",
+            dose_1_date="2026-04-01",
+            dose_1_batch="CERV-2026-A4",
+            dose_1_site="Left Deltoid",
+            dose_1_center="Sub-Centre Mirzapur",
+            dose_2_due_date="2026-10-01",
+            overdue_alert_count=2,
+            last_alert_date="2026-10-16"
+        )
+        self.save_adolescent_beneficiary(
+            beneficiary_id="BEN-104",
+            patient_token="PT-ADO-104",
+            full_name="Sneha Verma",
+            age=14,
+            dob="2012-11-05",
+            guardian_name="Prakash Verma",
+            guardian_phone="+91 99341 77665",
+            village="Rampur Block",
+            school_or_camp="Adarsh Kanya Vidyalaya",
+            prior_vaccine_audit="NONE",
+            dose_count=2,
+            status="FULLY_IMMUNIZED",
+            dose_1_date="2026-03-10",
+            dose_1_batch="CERV-2026-A1",
+            dose_1_site="Left Deltoid",
+            dose_1_center="PHC Mirzapur",
+            dose_2_due_date="2026-09-10",
+            dose_2_date="2026-09-12",
+            dose_2_batch="CERV-2026-B2",
+            dose_2_site="Left Deltoid",
+            dose_2_center="PHC Mirzapur",
+            abdm_logged=1
+        )
+
+        # Cohort 2: Women Aged 35-45 (Screening & Triaging)
+        self.save_screening_case(
+            case_id="SCR-CASE-01",
+            patient_token="PT-SCR-3501",
+            patient_name="Sunita Devi",
+            age=38,
+            screening_type="VIA",
+            test_date="2026-10-15",
+            findings_classification="NORMAL",
+            symptom_notes="Routine cervical screening. No complaints or contact bleeding.",
+            triage_track="ROUTINE_3_5Y_RECALL",
+            care_action_status="RESOLVED"
+        )
+        self.save_screening_case(
+            case_id="SCR-CASE-02",
+            patient_token="PT-SCR-3502",
+            patient_name="Meera Singh",
+            age=41,
+            screening_type="COMBINED",
+            test_date="2026-10-28",
+            findings_classification="BENIGN_SYMPTOMATIC",
+            symptom_notes="Copious foul-smelling discharge, cervical redness, benign cervicitis.",
+            triage_track="ASHA_COMMUNITY_MANAGEMENT",
+            care_action_status="14_DAY_CHECKIN_PENDING",
+            prescribed_local_therapy="Metronidazole 400mg BD x 7d + Clotrimazole 1% vaginal gel; 14-day symptom check-in scheduled.",
+            fourteen_day_milestone_date="2026-11-11"
+        )
+        self.save_screening_case(
+            case_id="SCR-CASE-03",
+            patient_token="PT-SCR-3503",
+            patient_name="Asha Devi",
+            age=43,
+            screening_type="VIA",
+            test_date="2026-11-02",
+            findings_classification="ABNORMAL_SUSPICIOUS",
+            uploaded_image_or_doc="/static/samples/via_acetowhite_lesion.jpg",
+            symptom_notes="Dense acetowhite lesion on squamocolumnar junction, irregular borders, post-coital spotting.",
+            triage_track="TERTIARY_SPECIALIST_REFERRAL",
+            care_action_status="REFERRED_TO_TERTIARY",
+            tertiary_facility="Varanasi Regional Cancer Centre (Hub)"
         )
 
 
