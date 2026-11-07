@@ -65,10 +65,10 @@ export function EscalationHeatmap({ canReview = true }: Props) {
   const following = rows.filter((r) => r.following);
   const current = rows.find((r) => r.referral_id === selected) ?? null;
   const stages = [
-    { title: "Daily Reminders", days: "1–10", icon: MessageSquare, desc: "Voice, WhatsApp or SMS each day", variant: "primary" as const, count: following.filter((r) => r.follow_up_step === "DAILY_REMINDER").length },
-    { title: "Intensive Contact", days: "11–13", icon: PhoneCall, desc: "More frequent contact if she has not replied", variant: "warning" as const, count: following.filter((r) => r.follow_up_step === "INTENSIVE_CONTACT").length },
-    { title: "ASHA Home Visit", days: "14", icon: Home, desc: "The visit records her decision", variant: "destructive" as const, count: following.filter((r) => r.follow_up_step === "ASHA_VISIT").length },
-    { title: "Reached Hospital", days: "Closed", icon: UserCheck, desc: "Follow-up stops when she arrives", variant: "neutral" as const, count: rows.filter((r) => r.arrived_on).length },
+    { title: "Daily Reminders", days: "1–10", icon: MessageSquare, desc: "Voice, WhatsApp or SMS each day", variant: "primary" as const, cardVariant: "blue" as const, traceColor: "#0284C7", count: following.filter((r) => r.follow_up_step === "DAILY_REMINDER").length },
+    { title: "Intensive Contact", days: "11–13", icon: PhoneCall, desc: "More frequent contact if she has not replied", variant: "warning" as const, cardVariant: "warm" as const, traceColor: "#E11D48", count: following.filter((r) => r.follow_up_step === "INTENSIVE_CONTACT").length },
+    { title: "ASHA Home Visit", days: "14", icon: Home, desc: "The visit records her decision", variant: "destructive" as const, cardVariant: "pink" as const, traceColor: "#9D174D", count: following.filter((r) => r.follow_up_step === "ASHA_VISIT").length },
+    { title: "Reached Hospital", days: "Closed", icon: UserCheck, desc: "Follow-up stops when she arrives", variant: "neutral" as const, cardVariant: "subtle" as const, traceColor: "#059669", count: rows.filter((r) => r.arrived_on).length },
   ];
   const declined = rows.filter((r) => r.status === "DECLINED");
 
@@ -100,17 +100,25 @@ export function EscalationHeatmap({ canReview = true }: Props) {
         {stages.map((s) => {
           const Icon = s.icon;
           return (
-            <Card key={s.title} size="sm" className="bg-white border-gray-200 shadow-2xs hover:border-black transition-all">
+            <Card
+              key={s.title}
+              size="sm"
+              variant={s.cardVariant}
+              traceColor={s.traceColor}
+              className="border-slate-200/80 shadow-2xs hover:shadow-sm transition-all"
+            >
               <CardHeader className="pb-1.5">
                 <div className="flex items-center justify-between">
-                  <div className="size-7 rounded-lg flex items-center justify-center bg-[#E0F2FE]/40 text-black"><Icon className="size-3.5" /></div>
+                  <div className="size-7 rounded-lg flex items-center justify-center bg-white/70 text-slate-800 border border-black/5 shadow-2xs">
+                    <Icon className="size-3.5" />
+                  </div>
                   <Badge variant={s.variant} size="xs">{s.days}</Badge>
                 </div>
-                <CardTitle className="text-sm font-bold text-black mt-1.5">{s.title}</CardTitle>
+                <CardTitle className="text-sm font-bold text-slate-900 mt-1.5">{s.title}</CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="text-xl font-bold text-black mb-1">{s.count}</div>
-                <p className="text-xs text-gray-500 leading-tight">{s.desc}</p>
+                <div className="text-2xl font-bold font-mono-data text-slate-900 mb-0.5">{s.count}</div>
+                <p className="text-xs text-slate-500 leading-tight">{s.desc}</p>
               </CardContent>
             </Card>
           );

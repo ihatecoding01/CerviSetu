@@ -252,50 +252,50 @@ export function PreventionScreening() {
             </Alert>
           )}
 
-          {/* Metric Overview Cards */}
+          {/* Metric Overview Cards with calibrated perimeter hover trace */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card size="sm" className="bg-white border-gray-200 shadow-2xs">
+            <Card size="sm" variant="blue" traceColor="#0284C7" className="border-sky-200/80 shadow-2xs hover:shadow-sm transition-all">
               <CardHeader className="pb-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-gray-600">Adolescents Enrolled (9-14y)</span>
-                  <div className="size-8 rounded-lg bg-[#E0F2FE]/40 text-black flex items-center justify-center font-bold">
+                  <span className="text-xs font-semibold text-sky-800">Adolescents Enrolled (9-14y)</span>
+                  <div className="size-8 rounded-lg bg-sky-100 text-sky-800 flex items-center justify-center font-bold">
                     <Users className="size-4" />
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="pt-1">
-                <div className="text-2xl font-bold text-black">{vaccinations.length} Registered</div>
-                <div className="text-xs text-gray-500 mt-0.5">Schools &amp; health posts</div>
+                <div className="text-2xl font-bold font-mono-data text-slate-900">{vaccinations.length} <span className="text-xs font-sans font-normal text-slate-500">Registered</span></div>
+                <div className="text-xs text-slate-500 mt-0.5">Schools &amp; health posts</div>
               </CardContent>
             </Card>
 
-            <Card size="sm" className="bg-white border-gray-200 shadow-2xs">
+            <Card size="sm" variant="subtle" traceColor="#059669" className="border-emerald-200/80 shadow-2xs hover:shadow-sm transition-all">
               <CardHeader className="pb-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-gray-600">Dose 2 Retention Target</span>
-                  <div className="size-8 rounded-lg bg-[#0284C7]/20 text-[#9D174D] flex items-center justify-center font-bold">
+                  <span className="text-xs font-semibold text-emerald-800">Dose 2 Retention Target</span>
+                  <div className="size-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
                     <Calendar className="size-4" />
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="pt-1">
-                <div className="text-2xl font-bold text-black">94.2% Completed</div>
+                <div className="text-2xl font-bold font-mono-data text-slate-900">94.2% <span className="text-xs font-sans font-normal text-emerald-700 font-bold">Completed</span></div>
                 <div className="text-xs text-emerald-700 mt-0.5">60-day automated reminder active</div>
               </CardContent>
             </Card>
 
-            <Card size="sm" className="bg-white border-gray-200 shadow-2xs">
+            <Card size="sm" variant="pink" traceColor="#9D174D" className="border-pink-200/80 shadow-2xs hover:shadow-sm transition-all">
               <CardHeader className="pb-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-gray-600">Vaccine Brands Stocked</span>
-                  <div className="size-8 rounded-lg bg-[#BAE6FD]/30 text-slate-900 flex items-center justify-center font-bold">
+                  <span className="text-xs font-semibold text-[#9D174D]">Vaccine Brands Stocked</span>
+                  <div className="size-8 rounded-lg bg-pink-100 text-[#9D174D] flex items-center justify-center font-bold">
                     <Syringe className="size-4" />
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="pt-1">
-                <div className="text-2xl font-bold text-black">Cervavac &middot; Gardasil-9</div>
-                <div className="text-xs text-gray-500 mt-0.5">Serum Institute of India indigenous supply</div>
+                <div className="text-lg font-bold text-slate-900">Cervavac &middot; Gardasil-9</div>
+                <div className="text-xs text-slate-500 mt-0.5">Serum Institute of India indigenous supply</div>
               </CardContent>
             </Card>
           </div>

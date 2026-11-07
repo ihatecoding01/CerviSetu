@@ -233,7 +233,7 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
       {/* Live Hash Chain Integrity Banner */}
       {chainVerifyResult && (
         <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs ${
-          chainVerifyResult.is_valid ? "bg-emerald-50 border-emerald-300 text-emerald-950" : "bg-rose-50 border-rose-300 text-rose-950"
+          chainVerifyResult.is_valid ? "bg-gradient-to-r from-emerald-50/90 via-sky-50/50 to-white border-emerald-200 text-emerald-950" : "bg-rose-50 border-rose-300 text-rose-950"
         }`}>
           <div className="flex items-start gap-2.5">
             <CheckCircle2 className="size-5 text-emerald-600 shrink-0 mt-0.5" />
@@ -255,78 +255,94 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
       {/* 3-Role Activity Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Doctors Card */}
-        <Card className={`border-l-4 border-l-indigo-600 bg-white shadow-2xs cursor-pointer transition-all ${roleFilter === "DOCTOR" ? "ring-2 ring-indigo-500" : ""}`}
-              onClick={() => setRoleFilter(roleFilter === "DOCTOR" ? "ALL" : "DOCTOR")}>
+        <Card
+          variant="blue"
+          traceColor="#0284C7"
+          className={`border-sky-200/70 shadow-2xs cursor-pointer transition-all ${roleFilter === "DOCTOR" ? "ring-2 ring-[#0284C7] shadow-sm" : "hover:shadow-sm"}`}
+          onClick={() => setRoleFilter(roleFilter === "DOCTOR" ? "ALL" : "DOCTOR")}
+        >
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#0284C7] flex items-center gap-1.5">
                 <Stethoscope className="size-3.5" />
                 Doctors &amp; CMO
               </p>
-              <h3 className="text-2xl font-bold text-gray-900 mt-1">
+              <h3 className="text-2xl font-bold font-mono-data text-slate-900 mt-1">
                 {summary?.ledger_role_counts?.DOCTOR || doctorCount}
               </h3>
-              <p className="text-[11px] text-gray-500 mt-0.5">OCR Signs &amp; Alert Triages</p>
+              <p className="text-[11px] text-slate-600 mt-0.5">OCR Signs &amp; Alert Triages</p>
             </div>
-            <Badge variant="neutral" size="xs" className="bg-indigo-50 text-indigo-700 border-indigo-200">
+            <Badge variant="neutral" size="xs" className="bg-sky-100/70 text-sky-800 border-sky-200">
               Role 1
             </Badge>
           </CardContent>
         </Card>
 
         {/* Nurses & Frontline Card */}
-        <Card className={`border-l-4 border-l-emerald-600 bg-white shadow-2xs cursor-pointer transition-all ${roleFilter === "NURSE_HEALTHCARE_WORKER" ? "ring-2 ring-emerald-500" : ""}`}
-              onClick={() => setRoleFilter(roleFilter === "NURSE_HEALTHCARE_WORKER" ? "ALL" : "NURSE_HEALTHCARE_WORKER")}>
+        <Card
+          variant="subtle"
+          traceColor="#0369A1"
+          className={`border-slate-200 shadow-2xs cursor-pointer transition-all ${roleFilter === "NURSE_HEALTHCARE_WORKER" ? "ring-2 ring-[#0284C7] shadow-sm" : "hover:shadow-sm"}`}
+          onClick={() => setRoleFilter(roleFilter === "NURSE_HEALTHCARE_WORKER" ? "ALL" : "NURSE_HEALTHCARE_WORKER")}
+        >
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
-                <UserCheck className="size-3.5" />
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                <UserCheck className="size-3.5 text-sky-600" />
                 Nurses &amp; Field Staff
               </p>
-              <h3 className="text-2xl font-bold text-gray-900 mt-1">
+              <h3 className="text-2xl font-bold font-mono-data text-slate-900 mt-1">
                 {summary?.ledger_role_counts?.NURSE_HEALTHCARE_WORKER || nurseCount}
               </h3>
-              <p className="text-[11px] text-gray-500 mt-0.5">Reminders, Visits, Consent</p>
+              <p className="text-[11px] text-slate-600 mt-0.5">Reminders, Visits, Consent</p>
             </div>
-            <Badge variant="neutral" size="xs" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+            <Badge variant="neutral" size="xs" className="bg-slate-100 text-slate-700 border-slate-200">
               Role 2
             </Badge>
           </CardContent>
         </Card>
 
         {/* Patients & Families Card */}
-        <Card className={`border-l-4 border-l-amber-500 bg-white shadow-2xs cursor-pointer transition-all ${roleFilter === "PATIENT" ? "ring-2 ring-amber-500" : ""}`}
-              onClick={() => setRoleFilter(roleFilter === "PATIENT" ? "ALL" : "PATIENT")}>
+        <Card
+          variant="warm"
+          traceColor="#E11D48"
+          className={`border-rose-100/80 shadow-2xs cursor-pointer transition-all ${roleFilter === "PATIENT" ? "ring-2 ring-[#0284C7] shadow-sm" : "hover:shadow-sm"}`}
+          onClick={() => setRoleFilter(roleFilter === "PATIENT" ? "ALL" : "PATIENT")}
+        >
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700 flex items-center gap-1.5">
-                <HeartPulse className="size-3.5" />
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                <HeartPulse className="size-3.5 text-rose-500" />
                 Patients &amp; Caregivers
               </p>
-              <h3 className="text-2xl font-bold text-gray-900 mt-1">
+              <h3 className="text-2xl font-bold font-mono-data text-slate-900 mt-1">
                 {summary?.ledger_role_counts?.PATIENT || patientCount}
               </h3>
-              <p className="text-[11px] text-gray-500 mt-0.5">Reminders and replies</p>
+              <p className="text-[11px] text-slate-600 mt-0.5">Reminders and replies</p>
             </div>
-            <Badge variant="neutral" size="xs" className="bg-amber-50 text-amber-700 border-amber-200">
+            <Badge variant="neutral" size="xs" className="bg-rose-50 text-rose-700 border-rose-200">
               Role 3
             </Badge>
           </CardContent>
         </Card>
 
         {/* SHA-256 Ledger Health Card */}
-        <Card className="border-l-4 border-l-[#9D174D] bg-white shadow-2xs">
+        <Card
+          variant="pink"
+          traceColor="#9D174D"
+          className="border-pink-200/80 shadow-2xs hover:shadow-sm transition-all"
+        >
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-[#9D174D] flex items-center gap-1.5">
                 <ShieldCheck className="size-3.5" />
                 SHA-256 Block Chain
               </p>
-              <h3 className="text-2xl font-bold text-gray-900 mt-1 flex items-center gap-1.5">
+              <h3 className="text-2xl font-bold font-mono-data text-slate-900 mt-1 flex items-center gap-1.5">
                 {summary?.chain_integrity?.total_blocks_verified || localLogs.length}
                 <CheckCircle2 className="size-4 text-emerald-600 inline" />
               </h3>
-              <p className="text-xs text-gray-500 mt-0.5">DPDP 2023 Tamper-Evident</p>
+              <p className="text-xs text-slate-600 mt-0.5">DPDP 2023 Tamper-Evident</p>
             </div>
             <Badge variant="primary" size="xs">
               100% Intact
@@ -336,7 +352,7 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
       </div>
 
       {/* Role Action Simulation Bar */}
-      <Card className="bg-gray-50/80 border border-gray-200 shadow-2xs">
+      <Card variant="subtle" className="border-slate-200 shadow-2xs">
         <CardContent className="p-3.5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Activity className="size-4 text-[#9D174D]" />

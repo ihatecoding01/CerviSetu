@@ -19,9 +19,11 @@ import {
   ChevronDown,
   Copy,
   Download,
+  Microscope,
   Printer,
   Check,
   Sparkles,
+  UserCheck,
 } from "lucide-react";
 import { Button } from "../careui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../careui/card";
@@ -294,39 +296,102 @@ export function ClinicianEncounter({
               </button>
 
               {actionsDropdownOpen && (
-                <div className="absolute right-0 mt-1 w-56 bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-50 text-xs">
-                  <button
-                    onClick={() => {
-                      handleExportFhir();
-                      setActionsDropdownOpen(false);
-                    }}
-                    className="w-full text-left px-3.5 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700 transition-colors"
-                  >
-                    <Download className="size-3.5 text-blue-600" />
-                    <span>Export FHIR R4 Bundle</span>
-                  </button>
+                <div className="absolute right-0 mt-1 w-64 bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-50 text-xs divide-y divide-gray-100">
+                  {/* Workflow Actions */}
+                  <div className="py-1">
+                    {referral && referral.status === "REFERRED" && (
+                      <button
+                        onClick={async () => {
+                          setActionsDropdownOpen(false);
+                          try {
+                            await referralApi.arrival(referral.referral_id);
+                            await loadReferral();
+                            showToast("Patient arrival confirmed. Case record unlocked.", "success");
+                          } catch (e: any) {
+                            showToast(e.message || "Could not confirm arrival", "warning");
+                          }
+                        }}
+                        className="w-full text-left px-3.5 py-2 hover:bg-emerald-50 flex items-center gap-2 text-emerald-800 font-semibold transition-colors"
+                      >
+                        <UserCheck className="size-3.5 text-emerald-600" />
+                        <span>Confirm Patient Arrival</span>
+                      </button>
+                    )}
 
-                  <button
-                    onClick={() => {
-                      setActiveTab("consultation");
-                      setActionsDropdownOpen(false);
-                    }}
-                    className="w-full text-left px-3.5 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700 transition-colors"
-                  >
-                    <Sparkles className="size-3.5 text-[#0284C7]" />
-                    <span>AI Voice Notes</span>
-                  </button>
+                    {referral && referral.status !== "REFERRED" && (
+                      <>
+                        <button
+                          onClick={async () => {
+                            setActionsDropdownOpen(false);
+                            try {
+                              await referralApi.setStatus(referral.referral_id, { status: "COLPOSCOPY_DONE" });
+                              await loadReferral();
+                              showToast("Status updated to Colposcopy Done", "success");
+                            } catch (e: any) {
+                              showToast(e.message || "Could not update status", "warning");
+                            }
+                          }}
+                          className="w-full text-left px-3.5 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700 transition-colors"
+                        >
+                          <Stethoscope className="size-3.5 text-sky-600" />
+                          <span>Mark Colposcopy Done</span>
+                        </button>
 
-                  <button
-                    onClick={() => {
-                      window.print();
-                      setActionsDropdownOpen(false);
-                    }}
-                    className="w-full text-left px-3.5 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700 transition-colors"
-                  >
-                    <Printer className="size-3.5 text-gray-500" />
-                    <span>Print Case Record</span>
-                  </button>
+                        <button
+                          onClick={async () => {
+                            setActionsDropdownOpen(false);
+                            try {
+                              await referralApi.setStatus(referral.referral_id, { status: "BIOPSY_TAKEN" });
+                              await loadReferral();
+                              showToast("Status updated to Biopsy Taken", "success");
+                            } catch (e: any) {
+                              showToast(e.message || "Could not update status", "warning");
+                            }
+                          }}
+                          className="w-full text-left px-3.5 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700 transition-colors"
+                        >
+                          <Microscope className="size-3.5 text-pink-600" />
+                          <span>Mark Biopsy Taken</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Tools & Export */}
+                  <div className="py-1">
+                    <button
+                      onClick={() => {
+                        handleExportFhir();
+                        setActionsDropdownOpen(false);
+                      }}
+                      className="w-full text-left px-3.5 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700 transition-colors"
+                    >
+                      <Download className="size-3.5 text-blue-600" />
+                      <span>Export FHIR R4 Bundle</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setActiveTab("consultation");
+                        setActionsDropdownOpen(false);
+                      }}
+                      className="w-full text-left px-3.5 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700 transition-colors"
+                    >
+                      <Sparkles className="size-3.5 text-[#0284C7]" />
+                      <span>AI Voice Notes</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        window.print();
+                        setActionsDropdownOpen(false);
+                      }}
+                      className="w-full text-left px-3.5 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700 transition-colors"
+                    >
+                      <Printer className="size-3.5 text-gray-500" />
+                      <span>Print Case Record</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -397,6 +462,11 @@ export function ClinicianEncounter({
           )}
 
           {activeTab === "pathway" && referral && <CaseRecord key={referral.referral_id} referral={referral} onChanged={loadReferral} />}
+          {activeTab === "pathway" && !referral && (
+            <p className="text-sm text-gray-600 bg-white border border-gray-200 rounded-2xl p-6">
+              No referral case record is linked to this patient token ({patientToken}). Please create a referral from Intake or select an active referral from the dropdown above.
+            </p>
+          )}
 
           {activeTab === "followup" && referral && (
             <section className="bg-white border border-gray-200 rounded-2xl p-5 max-w-2xl">
@@ -412,6 +482,11 @@ export function ClinicianEncounter({
                 </ol>
               )}
             </section>
+          )}
+          {activeTab === "followup" && !referral && (
+            <p className="text-sm text-gray-600 bg-white border border-gray-200 rounded-2xl p-6">
+              No follow-up log available for this patient token ({patientToken}).
+            </p>
           )}
 
           {activeTab === "consultation" && (
@@ -615,6 +690,66 @@ export function ClinicianEncounter({
                         ))}
                       </TableBody>
                     </Table>
+                  </div>
+
+                  {/* Consultation Action Bar */}
+                  <div className="pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
+                    <div className="text-xs text-gray-500">
+                      {medications.length} medication{medications.length === 1 ? "" : "s"} prescribed
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          setChiefComplaints("");
+                          setClinicalHistory("");
+                          setMedications([]);
+                          showToast("Consultation form reset.", "info");
+                        }}
+                        className="text-xs"
+                      >
+                        Reset
+                      </Button>
+                      <Button
+                        variant="obsidian"
+                        size="sm"
+                        disabled={consultBusy}
+                        onClick={async () => {
+                          if (!patientToken) return;
+                          setConsultBusy(true);
+                          try {
+                            if (referral) {
+                              const medSummary = medications.length
+                                ? `Rx: ${medications.map((m) => `${m.name} (${m.dosage}, ${m.frequency})`).join("; ")}`
+                                : "";
+                              const remarksText = [chiefComplaints ? `CC: ${chiefComplaints}` : "", clinicalHistory ? `History: ${clinicalHistory}` : "", medSummary].filter(Boolean).join(" | ");
+                              await referralApi.clinical(referral.referral_id, {
+                                remarks: remarksText || referral.remarks || undefined,
+                              });
+                            }
+                            await api.logDoctorSignOff({
+                              doctor_id: "STAFF-SESSION",
+                              patient_token: patientToken,
+                              case_id: referral?.referral_id || patientToken,
+                              action_type: "DOCTOR_CONSULTATION_SIGNOFF",
+                              notes: chiefComplaints || "Clinical consultation and prescription recorded.",
+                              ncg_verified: false,
+                            });
+                            showToast("Consultation signed off and recorded in ledger.", "success");
+                            if (referral) await loadReferral();
+                          } catch (e: any) {
+                            showToast(e.message || "Could not save consultation", "warning");
+                          } finally {
+                            setConsultBusy(false);
+                          }
+                        }}
+                        className="bg-[#0369A1] hover:bg-[#075985] text-white font-semibold text-xs gap-1.5"
+                      >
+                        <Check className="size-3.5" />
+                        <span>Save &amp; Sign-off Consultation</span>
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

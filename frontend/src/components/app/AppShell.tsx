@@ -77,9 +77,15 @@ export function AppShell({ staff, portal, nav, active, onNavigate, onSignOut, ge
   );
 
   return (
-    <div className="h-[100dvh] flex bg-[#FAFAFC] text-[#111418] font-sans antialiased overflow-hidden">
+    <div className="h-[100dvh] flex bg-[#FAFAFC] text-[#111418] font-sans antialiased overflow-hidden relative">
+      {/* Subtle Orion Ambient Lighting Scrim */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden z-0 opacity-60" aria-hidden="true">
+        <div className="absolute -top-32 right-[-5%] w-[600px] h-[400px] rounded-full bg-gradient-to-br from-sky-400/8 via-sky-200/4 to-transparent blur-3xl" />
+        <div className="absolute -bottom-32 left-[15%] w-[500px] h-[350px] rounded-full bg-gradient-to-tr from-rose-400/6 via-pink-200/3 to-transparent blur-3xl" />
+      </div>
+
       {/* Desktop sidebar */}
-      <aside className={`hidden md:flex flex-col shrink-0 border-r border-black/[0.08] bg-white p-3 transition-[width] duration-200 ${collapsed ? "w-[68px]" : "w-60"}`}>
+      <aside className={`hidden md:flex flex-col shrink-0 border-r border-black/[0.08] bg-white p-3 transition-[width] duration-200 z-10 ${collapsed ? "w-[68px]" : "w-60"}`}>
         <div className={`flex items-center gap-2 mb-5 ${collapsed ? "flex-col" : "justify-between"}`}>
           <button type="button" onClick={() => setCollapsed((c) => !c)} aria-label={collapsed ? "Expand navigation" : "Collapse navigation"} data-testid="nav-collapse"
             className={`p-2 rounded-md text-slate-500 hover:bg-slate-100 cursor-pointer ${collapsed ? "" : "order-first"}`}>
@@ -106,7 +112,7 @@ export function AppShell({ staff, portal, nav, active, onNavigate, onSignOut, ge
         </div>
       )}
 
-      <div className="flex-1 min-w-0 flex flex-col">
+      <div className="flex-1 min-w-0 flex flex-col relative z-10">
         <header className="h-14 shrink-0 border-b border-black/[0.08] bg-white px-3 sm:px-6 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <button type="button" onClick={() => setDrawer(true)} aria-label="Open menu" data-testid="nav-open" className="md:hidden p-2 rounded-md text-slate-600 hover:bg-slate-100 cursor-pointer"><Menu className="size-5" /></button>

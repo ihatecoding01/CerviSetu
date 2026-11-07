@@ -7,6 +7,7 @@ import { AppShell, type NavItem } from "../app/AppShell";
 import { staffGenie } from "../app/genieConfigs";
 import { Empty, Notice, when } from "../app/Status";
 import { btn, ui } from "../app/ui";
+import { Card } from "../careui/card";
 import { CostPlanner } from "./CostPlanner";
 
 const NAV: NavItem[] = [
@@ -29,6 +30,14 @@ const NO_STAFF = { staff_id: "", name: "", role: "NURSE", health_post: "", hospi
 const roleName = (r: string) => ROLES.find(([v]) => v === r)?.[1] ?? r;
 const readable = (a: string) => { const s = a.replace(/_/g, " ").toLowerCase(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
+const COUNT_CONFIG: Record<keyof DashboardCounts, { variant: "subtle" | "blue" | "pink" | "warm"; traceColor: string; labelColor?: string }> = {
+  referrals: { variant: "subtle", traceColor: "#0369A1", labelColor: "text-slate-700" },
+  in_follow_up: { variant: "blue", traceColor: "#0284C7", labelColor: "text-[#0284C7]" },
+  overdue: { variant: "pink", traceColor: "#9D174D", labelColor: "text-[#9D174D]" },
+  arrivals: { variant: "subtle", traceColor: "#059669", labelColor: "text-emerald-800" },
+  declined: { variant: "warm", traceColor: "#E11D48", labelColor: "text-rose-800" },
+};
+
 function Overview({ onError, go }: { onError: (m: string) => void; go: (id: string) => void }) {
   const [counts, setCounts] = useState<DashboardCounts | null>(null);
   const [dir, setDir] = useState<{ hospitals: number; posts: number; unrouted: number; staff: number } | null>(null);
@@ -44,9 +53,21 @@ function Overview({ onError, go }: { onError: (m: string) => void; go: (id: stri
     <div className="flex flex-col gap-6" data-testid="admin-dashboard">
       <header><h1 className={ui.h1}>Programme overview</h1><p className={`${ui.muted} mt-1`}>Counts only. Administrators never see patient records.</p></header>
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        {COUNTS.map(([k, label, hint]) => (
-          <div key={k} className={`${ui.panel} p-4`}><div className="font-heading text-2xl font-semibold tabular-nums">{counts?.[k] ?? "–"}</div><div className="text-sm font-semibold mt-1">{label}</div><div className="text-xs text-slate-500">{hint}</div></div>
-        ))}
+        {COUNTS.map(([k, label, hint]) => {
+          const cfg = COUNT_CONFIG[k] ?? { variant: "subtle", traceColor: "#0369A1" };
+          return (
+            <Card
+              key={k}
+              variant={cfg.variant}
+              traceColor={cfg.traceColor}
+              className="p-4 border-slate-200/80 shadow-2xs hover:shadow-sm transition-all"
+            >
+              <div className="font-heading text-2xl font-bold font-mono-data text-slate-900">{counts?.[k] ?? "–"}</div>
+              <div className={`text-sm font-semibold mt-1 ${cfg.labelColor ?? "text-slate-800"}`}>{label}</div>
+              <div className="text-xs text-slate-500 mt-0.5">{hint}</div>
+            </Card>
+          );
+        })}
       </div>
       {dir && dir.unrouted > 0 && <Notice tone="attention">{`${dir.unrouted} active health post${dir.unrouted > 1 ? "s have" : " has"} no referral hospital. Nurses there cannot refer until a route is set.`}</Notice>}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

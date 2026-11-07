@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Download, Upload } from "lucide-react";
+import { Download, Hospital, Upload, UserCheck } from "lucide-react";
 import { referralApi, STATUS_LABELS, STATUS_ORDER, type Referral, type ReferralFile } from "../../api/referrals";
 import { Notice, Pill, when } from "../app/Status";
 import { btn, ui } from "../app/ui";
@@ -85,7 +85,31 @@ export function CaseRecord({ referral, onChanged }: { referral: Referral; onChan
           )}
         </section>
       )}
-      {!arrived && <Notice tone="guidance">The clinical record opens after the hospital confirms her arrival.</Notice>}
+      {!arrived && (
+        <div className="rounded-xl border border-sky-200 bg-sky-50/80 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-sky-950">
+          <div className="flex items-center gap-2.5">
+            <div className="size-8 rounded-lg bg-[#0284C7]/20 text-[#0284C7] flex items-center justify-center font-bold shrink-0">
+              <Hospital className="size-4" />
+            </div>
+            <div>
+              <div className="font-bold text-sm text-slate-900">Hospital Arrival Required</div>
+              <div className="text-slate-600 mt-0.5">
+                This patient is currently in <strong>Referred</strong> status. Confirm arrival to stop reminder cycles and unlock colposcopy, biopsy, and treatment documentation.
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            disabled={busy}
+            className={`${btn("primary")} shrink-0 bg-[#0284C7] hover:bg-[#0369A1] text-white font-semibold text-xs gap-1.5 cursor-pointer`}
+            onClick={() => act(() => referralApi.arrival(id), "Patient arrival confirmed. Clinical record unlocked.")}
+            data-testid="confirm-arrival-btn"
+          >
+            <UserCheck className="size-3.5" />
+            {busy ? "Confirming..." : "Confirm Arrival & Unlock Record"}
+          </button>
+        </div>
+      )}
 
       <Block title="1. Screening at the health post" tag="Entered by the health post. Read only." note="Screening results are not a diagnosis.">
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm" data-testid="intake-summary">
