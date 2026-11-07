@@ -64,7 +64,7 @@ export function parsePath(pathname: string): AppRoute {
   }
 
   // 4. Landing Page Paths (/ or /landing)
-  if (cleanPath === "/" || cleanPath === "/landing") {
+  if (cleanPath === "/" || cleanPath === "/landing" || cleanPath === "/book-screening") {
     return { view: "landing", path: cleanPath };
   }
 

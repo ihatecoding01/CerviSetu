@@ -438,7 +438,7 @@ async def patient_ask(req: PatientGenieQuestion) -> Dict[str, Any]:
         "- Ayushman Bharat (PM-JAY): Up to ₹5 Lakh cashless coverage per eligible family per year for secondary/tertiary hospital care (colposcopy, biopsy, surgery, day care, medicines). "
         "- National Health Mission (NHM): 100% free cervical VIA screening and public OPD consultation. "
         "- State Cancer Relief Fund / Rashtriya Arogya Nidhi (RAN): Financial assistance of ₹3-5 Lakhs for BPL/marginalized patients at government tertiary hospitals. "
-        "- Free Transport: Free ambulance dialing 102/108 and NHM travel stipend for rural referrals. "
+        "- Free Transport: Free ambulance dialing 102/108 and NHM travel stipend for referrals. "
         "- Dharamshala: Low-cost or free night shelter accommodation near major government referral centres. "
         "You can explain hospital logistics: bring referral slip, Aadhaar/Voter ID, ABHA/Ayushman card, and past reports; proceed to Gynaecology OPD. "
         "CRITICAL GUARDRAIL: YOU MUST NEVER PROVIDE MEDICAL DIAGNOSES, DISEASE STAGING, PROGNOSIS, OR DRUG PRESCRIPTIONS. "

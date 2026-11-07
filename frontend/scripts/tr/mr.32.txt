@@ -1,0 +1,93 @@
+2438|नेमलेले रेफरल केंद्र
+2465|नकाशावर निवडा
+2507|या केंद्राचा मार्ग
+2583|परिसर, खूण किंवा पिनकोड
+2604|जवळचे केंद्र
+2667|मार्ग
+2683|तुमचे नेमलेले रेफरल केंद्र, जवळच्या सुविधा, अंतर व मार्ग पाहा.
+2690|केंद्राचे अंतर पाहण्यासाठी स्थान शेअर करा. हा तुमचा निर्णय आहे. ते जतन किंवा शेअर होत नाही. मार्ग दाखवण्यासाठी नकाशा सेवेला सुरुवात व शेवटचे बिंदू मिळतात.
+2691|माझे रेफरल केंद्र नकाशावर दाखवा
+2709|सुरुवात: तुमचे स्थान
+2711|सरळ रेषा, रस्त्याचा मार्ग नाही
+2717|नकाशावर तुमच्या ठिकाणी टॅप करा.
+2737|हे तुमचे नेमलेले केंद्र नाही.
+2776|तुमचे स्थान जतन किंवा टीमशी शेअर होत नाही. मार्ग दाखवण्यासाठी नकाशा सेवेला सुरुवात व शेवटचे बिंदू मिळतात.
+248|स्वीकृत ✓
+403|पूर्ण झाले ✓
+494|Full Workstation ➔
+504|गेट क्लिअर झाले ✓
+570|Immutable Chain ✓
+659|मिर्झापूर स्पोक क्लिनिक ➔ आरसीसी वाराणसी हब (~75 किमी)
+660|मिर्झापूर स्पोक क्लिनिक ➔ रिजनल कॅन्सर सेंटर (आरसीसी) वाराणसी हब
+662|मिर्झापूर ➔ वाराणसी
+663|मिर्झापूर ➔ वाराणसी कँट (2 सीट्स)
+766|पॅथॉलॉजी लॅब OCR पडताळले ✓
+878|Zero-Knowledge OCR साठी तयार ✓
+894|नियमित उपस्थिती ✓
+928|SHA-256: 0x8bb3a45...Verified ✓
+984|स्लॉट निश्चित झाला (दिवस 41) ✓
+1064|Tamper-Proof ✓
+1295|✓ मोफत उपचार (PMJAY)
+1296|🔊 'ब्रॅकिथेरपी दरम्यान, वैद्यकीय टीम भूल आणि वेदनाशामक देते. कृपया प्रक्रियेला घाबरू नका.'
+1297|🟡 इशारा (50-56d)
+1359|🟢 इष्टतम (≤49d)
+1360|🔴 उल्लंघनाचा धोका (>56d)
+1364|🟢 प्रो: दिवस {d} (<=49d)
+1366|🟢 दररोज उपस्थित
+1369|🟡 प्रो: दिवस {d} (<=56d)
+1371|🟡 एक दिवस चुकला +1
+1374|🔴 प्रो: दिवस {d} (>56d)
+1376|🔴 ३ दिवस उशीर (२ फ्रॅक्शन्स चुकले)
+1379|🟢 दिवस 1 बेसलाइन पडताळले
+1382|🟢 प्रीकॅन्सर पाळत
+1384|🟢 मार्जिन क्लिअर
+1445|✓ हो, ८ ग्लास घेतले
+1477|फॉर्मवर लागू करा ✓
+1526|SHA-256: 0x8bb3a45c...Verified ✓
+1600|इनटेक नोट्समध्ये जोडले ✓
+2628|लोकसंख्या कॅचमेंट:
+2629|सकारात्मक संमती
+2630|पूर्व-आगमन क्लिनिकल तयारी:
+2631|पूर्व-आगमन डॉसियर टर्शियरी हॉस्पिटल स्पेशालिस्ट क्यूमध्ये सिंक केले
+2632|1 दाबा · HPV लसीकरणाची तारीख निश्चित करा
+2633|2 दाबा · स्क्रीनिंगची लक्षणे / ASHA भेटीचा अहवाल द्या
+2634|3 दाबा · तातडीच्या टर्शियरी केअर रेफरल मार्गदर्शनासाठी
+2778|Zero drop-out accountability with GPS-verified field tickets.
+2779|Zero-Knowledge DPDP Token Vault
+2780|cervical cancer screening
+2781|marked as arrived
+2782|not referred
+2783|officer@districthealth.gov.in
+2784|reminder recorded
+2785|repeat(14, minmax(0, 1fr))
+2786|three/examples/jsm/loaders/GLTFLoader.js
+2787|your referral hospital
+2788|· Inactive
+2796|• Direct specialist portal queue placement
+2797|• Escalation to Track B if symptoms persist
+2798|• Prescribed oral/topical antibiotic therapy
+2799|• Priority colposcopy / biopsy slot reservation
+2800|• Scheduled 14-day symptom check-in by ASHA
+2801|👧 Anjali (14Y · Unvaccinated)
+2802|👧 Priya (13Y · Vaccinated)
+2803|👩 Meera (42Y · Screened)
+2804|👩 Sunita (38Y · Unscreened)
+2805|Back to Home
+2806|Bring CerviSetu to your organisation
+2807|City
+2808|Contact person
+2809|Health post or clinic
+2810|Join the Programme
+2811|Join the programme to connect cervical screening, hospital referral and 14-day follow-up for the women you serve.
+2812|Municipal or government body
+2814|Online requests are not open yet, so this was not sent or saved.
+2815|Organisation name
+2816|Organisation type
+2817|Select
+2818|Send Request
+2819|Tell us about your organisation
+2820|We discuss your screening and referral needs
+2821|We plan the rollout with your team
+2822|What would you like to do?
+2823|Work email
+2824|cervical screening

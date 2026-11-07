@@ -45,6 +45,7 @@ export * from "./dashboard/MessageCenter";
 
 // 7. Landing & 3D Interactive Hero
 export * from "./landing/LandingPage";
+export * from "./landing/BookScreening";
 
 // 8. Shared Common Utilities
 export * from "./common/LanguageSwitch";

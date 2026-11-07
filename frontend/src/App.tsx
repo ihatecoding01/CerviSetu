@@ -19,6 +19,7 @@ import {
   ClinicianEncounter,
   PreventionScreening,
   LandingPage,
+  BookScreening,
   StaffSignIn,
 } from "./components";
 import { useRouter } from "./lib/router";
@@ -97,11 +98,13 @@ export default function App() {
 
   // 0. Landing Page View (URL: / or /landing)
   if (currentRoute.view === "landing") {
+    if (currentRoute.path === "/book-screening") return <BookScreening onBack={() => navigate("/")} />;
     return (
       <LandingPage
         onLaunchWorkstation={() => navigate({ view: "staff", tab: "overview-tab" })}
         onOpenPatientCompanion={() => navigate("/patient")}
         onOpenGateway={() => navigate("/gateway")}
+        onBookScreening={() => { navigate("/book-screening"); window.scrollTo(0, 0); }}
       />
     );
   }

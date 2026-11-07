@@ -208,11 +208,11 @@ export const PatientPortal: React.FC<Props> = ({ token, onRequireLogin, onOpenOw
         )}
       </Section>
       {r.hospital && (
-        <Section title="Find Your Centre" id="find-centre">
+        <div className="lg:relative lg:left-1/2 lg:w-[min(1200px,calc(100vw-48px))] lg:-translate-x-1/2">
           <Suspense fallback={<p className="text-sm text-slate-600">Loading map</p>}>
             <FindCentre token={token} />
           </Suspense>
-        </Section>
+        </div>
       )}
       <Section title="Your Care Journey" id="journey">
         <ReferralJourney referral={r} />

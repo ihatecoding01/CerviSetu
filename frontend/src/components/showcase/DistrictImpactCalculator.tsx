@@ -127,10 +127,10 @@ export const DistrictImpactCalculator: React.FC = () => {
               />
             </div>
 
-            {/* Slider 4: District Rural Population */}
+            {/* Slider 4: District Population */}
             <div>
               <div className="flex justify-between text-xs font-mono-data mb-1.5">
-                <span className="text-slate-600 font-medium font-sans">Rural Population Catchment:</span>
+                <span className="text-slate-600 font-medium font-sans">Population Catchment:</span>
                 <span className="font-bold text-slate-900">{(population / 100000).toFixed(1)} Lakhs</span>
               </div>
               <input

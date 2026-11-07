@@ -13,7 +13,7 @@ import { CerviSetuLogo } from "../icons/CerviSetuLogo";
 const SAMPLES = [
   { id: "sample_cervical_01", label: "Cervical Carcinoma FIGO IIB (Standard Spoke)" },
   { id: "sample_cervical_02", label: "Endocervical Adenocarcinoma (Advanced)" },
-  { id: "sample_cervical_03", label: "CHC Rural Primary Screening Referral" },
+  { id: "sample_cervical_03", label: "Health Post Screening Referral" },
 ];
 
 export const VisionOcrStudio: React.FC = () => {

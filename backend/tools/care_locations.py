@@ -10,12 +10,14 @@ from backend.core.database import global_db
 
 OSM_TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
 OSM_GEOCODER = "https://nominatim.openstreetmap.org/search"
+OSRM_DEMO = "https://router.project-osrm.org"  # A public demo server: fine for development, not for production use.
 
 
 def map_config() -> Dict[str, str]:
-    """Providers are set by deployment. Route-based travel time stays off until a routing service is configured."""
+    """Providers are set by deployment. In production, routing stays off until a service is configured."""
+    default_routing = "" if os.getenv("CERVISETU_ENV", "") == "production" else OSRM_DEMO
     return {"tile_url": os.getenv("CERVISETU_MAP_TILE_URL", OSM_TILES), "geocoder_url": os.getenv("CERVISETU_GEOCODER_URL", OSM_GEOCODER),
-            "routing_url": os.getenv("CERVISETU_ROUTING_URL", "")}
+            "routing_url": os.getenv("CERVISETU_ROUTING_URL", default_routing)}
 
 
 def _centre(row: Any) -> Dict[str, Any]:

@@ -1,7 +1,7 @@
 // The ward board cohort, shared by the dashboard and Ask Genie so both always show the same patients.
 export const WARD_COHORT = [
 {
-  token: "PT-RURAL-7891",
+  token: "PT-7891",
   name: "Shanti Devi",
   age: "48Y, Female",
   village: "Kalyanpur, Mirzapur",
@@ -17,7 +17,7 @@ export const WARD_COHORT = [
   avatarColor: "bg-sky-50 text-[#0369A1] border-sky-200",
 },
 {
-  token: "PT-RURAL-4421",
+  token: "PT-4421",
   name: "Sunita Maurya",
   age: "45Y, Female",
   village: "Vindhyachal Sector 2",
@@ -33,10 +33,10 @@ export const WARD_COHORT = [
   avatarColor: "bg-slate-100 text-slate-800 border-slate-200",
 },
 {
-  token: "PT-RURAL-1102",
+  token: "PT-1102",
   name: "Manju Verma",
   age: "50Y, Female",
-  village: "Robertsganj Rural",
+  village: "Robertsganj",
   stage: "Stage IIIB Cervix (CCRT)",
   lane: "critical",
   ottDays: 59,
@@ -49,7 +49,7 @@ export const WARD_COHORT = [
   avatarColor: "bg-pink-50 text-[#9D174D] border-pink-200",
 },
 {
-  token: "PT-RURAL-9034",
+  token: "PT-9034",
   name: "Anjali Patel",
   age: "42Y, Female",
   village: "Chunar Block B",

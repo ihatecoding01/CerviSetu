@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
-import { CircleHelp, Maximize2, Minus, Plus, RotateCcw, ScanSearch, Sparkles } from "lucide-react";
+import { CalendarDays, ChevronDown, CircleHelp, Crosshair, Info, Maximize2, Minus, Plus, RotateCcw, ScanSearch, Sparkles } from "lucide-react";
 
 type Vec = [number, number, number];
 type Part = { id: string; label: string; at: Vec; text: string; side: "left" | "right"; top: number };
@@ -18,13 +18,26 @@ const PARTS: Part[] = [
   { id: "tube", label: "Fallopian tube", at: [-2.45, 2.2, 0], side: "left", top: 4, text: "The tube that links each ovary region to the uterus." },
   { id: "ovary", label: "Ovary", at: [2.25, 0.85, 0.32], side: "right", top: 18, text: "One of two organs that store eggs and make hormones." },
 ];
-
 const MODES = [
-  { id: "anatomy", label: "Anatomy", icon: Sparkles, labels: ["tz", "cervix", "os"], cam: [0, -0.2, 16], target: [0, -0.25, 0], ring: 0x0284c7, text: "Drag to rotate in 3D. Select any anatomical marker to inspect cervical and uterine structures." },
-  { id: "screening", label: "Screening (VIA)", icon: ScanSearch, labels: ["tz", "os"], cam: [0.5, -1.2, 5.8], target: [0, -1.05, 0.2], ring: 0x9d174d, text: "Visual Inspection with Acetic Acid (VIA) inspects the transformation zone for acetowhite epithelial changes." },
-  { id: "findings", label: "Clinical Guidance", icon: CircleHelp, labels: ["tz"], cam: [-0.6, -1.1, 6], target: [0, -1.05, 0.2], ring: 0x9d174d, text: "Clinical triage maps Bethesda classifications (NILM, LSIL, HSIL, CIN 1–3) to immediate tertiary colposcopy referral." },
+  { id: "anatomy", label: "Anatomy", icon: Sparkles, labels: ["cervix"], cam: [1.3, 0.25, 11], target: [0, 0, 0], ring: 0x0f766e, text: "Drag to rotate, and select a point to learn about each part." },
+  { id: "screening", label: "Screening (VIA)", icon: ScanSearch, labels: ["tz", "os"], cam: [0.5, -1.2, 5.8], target: [0, -1.05, 0.2], ring: 0xf19941, text: "In VIA, a health worker looks at the cervix after applying dilute acetic acid. The highlighted ring marks the transformation zone. A positive screen is not a diagnosis." },
+  { id: "followup", label: "Changes Over 14 Days", icon: CalendarDays, labels: ["os"], cam: [2.4, 0, 11], target: [0, 0, 0], ring: 0x0f766e, text: "" },
+  { id: "findings", label: "Common findings", icon: CircleHelp, labels: ["tz"], cam: [-0.6, -1.1, 6], target: [0, -1.05, 0.2], ring: 0xba2d0b, text: "Reports may use terms like NILM, LSIL, HSIL, or CIN 1 to 3. Only histopathology and the treating doctor confirm a diagnosis." },
 ] as const;
 type Mode = (typeof MODES)[number];
+
+// Placeholder notice: the mesh below is procedural. Set VITE_CERVIX_MODEL_URL to a licensed GLB to replace it.
+// A GLB may include empty nodes named anchor_<part id> so annotation points follow the real anatomy.
+const MODEL_URL: string = import.meta.env.VITE_CERVIX_MODEL_URL ?? "";
+const HALF_W = 3.6;
+const HALF_H = 2.65;
+const isWide = (m: Mode) => m.id === "anatomy" || m.id === "followup";
+
+const STOPS = [
+  { to: 10, title: "Daily reminders", color: 0x0f766e, text: "After a referral, reminders go out only if she has agreed to messages." },
+  { to: 13, title: "Intensive contact", color: 0xf19941, text: "Health staff try to reach her directly and record what happened." },
+  { to: 14, title: "ASHA home visit", color: 0xba2d0b, text: "An ASHA worker is assigned to visit. A refusal, or no contact, goes to a doctor for review." },
+];
 
 const clamp = THREE.MathUtils.clamp;
 const smooth = THREE.MathUtils.smoothstep;
@@ -33,21 +46,21 @@ const hex = (c: number) => new THREE.Color(c);
 // Half-width of the opening carved into the front of the organ at height y: cavity, canal, then vagina.
 function opening(y: number): number {
   let w = 0;
-  if (y > 0.35 && y < 1.98) w = (0.1 + 0.92 * Math.pow((y - 0.35) / 1.5, 1.15)) * Math.sqrt(clamp((1.98 - y) / 0.2, 0, 1));
+  if (y > 0.35 && y < 1.98) w = (0.08 + 0.6 * Math.pow((y - 0.35) / 1.5, 1.15)) * Math.sqrt(clamp((1.98 - y) / 0.2, 0, 1));
   if (y >= -0.65 && y <= 0.4) w = Math.max(w, 0.075);
-  if (y < -0.5) w = Math.max(w, 0.6 * Math.sqrt(clamp((-0.5 - y) / 0.28, 0, 1)));
+  if (y < -0.5) w = Math.max(w, 0.56 * Math.sqrt(clamp((-0.5 - y) / 0.28, 0, 1)));
   return w;
 }
 
 function buildOrgan() {
   const profile = new THREE.SplineCurve(
-    ([[0.001, 2.28], [0.7, 2.22], [1.25, 2.0], [1.55, 1.62], [1.45, 1.15], [1.12, 0.6], [0.82, 0.05], [0.72, -0.45], [0.8, -0.9], [0.84, -1.4], [0.76, -2.1], [0.68, -2.95]] as const).map(([r, y]) => new THREE.Vector2(r, y)),
+    ([[0.001, 2.28], [0.7, 2.22], [1.25, 2.0], [1.55, 1.62], [1.45, 1.15], [1.12, 0.6], [0.82, 0.05], [0.72, -0.45], [0.8, -0.9], [0.84, -1.4], [0.76, -1.95], [0.7, -2.45]] as const).map(([r, y]) => new THREE.Vector2(r, y)),
   ).getSpacedPoints(240);
   const seg = 320;
   const pos: number[] = [];
   const col: number[] = [];
   const index: number[] = [];
-  const skin = hex(0xec8c88), light = hex(0xf6b6ad), wall = hex(0xf0a097), cavity = hex(0xb02d3d), canal = hex(0x9c2535), vagina = hex(0xd85a63), c = new THREE.Color();
+  const skin = hex(0xe9a09a), light = hex(0xf2b9b0), wall = hex(0xeeb0a6), cavity = hex(0xb9525b), canal = hex(0xa5434f), vagina = hex(0xcf7a7c), c = new THREE.Color();
   profile.forEach((p, j) => {
     for (let i = 0; i < seg; i++) {
       const a = (i / seg) * Math.PI * 2;
@@ -55,22 +68,22 @@ function buildOrgan() {
       const y = p.y;
       let z = p.x * 0.68 * Math.sin(a);
       const fibre = 0.5 + 0.5 * Math.sin(Math.abs(x) * 30 + y * 14 + 2 * Math.sin(y * 5));
-      z *= 1 + 0.008 * fibre;
-      c.copy(skin).lerp(light, fibre * 0.42);
+      z *= 1 + 0.0015 * fibre;
+      c.copy(skin).lerp(light, fibre * 0.1).multiplyScalar(0.84 + 0.16 * Math.max(0, Math.sin(a)));
       if (z > 0) {
         const w = opening(y);
         const inVagina = y < -0.5;
-        const t = w > 0 ? smooth(w - Math.abs(x), 0, 0.09) : 0;
-        const floor = inVagina ? -0.25 + 0.035 * Math.sin(y * 32) : -0.06;
+        const t = w > 0 ? smooth(w - Math.abs(x), 0, 0.16) : 0;
+        const floor = inVagina ? -0.25 + 0.012 * Math.sin(y * 26) : -0.06;
         const lip = w > 0 ? Math.exp(-(((Math.abs(x) - w) / 0.07) ** 2)) * 0.05 : 0;
         z = z * (1 - t) + floor * t + lip * (1 - t);
         if (t > 0) {
-          const deep = inVagina ? c.clone().copy(vagina).multiplyScalar(0.86 + 0.14 * (0.5 + 0.5 * Math.sin(y * 32))) : (w < 0.1 ? canal : cavity);
-          c.copy(wall).lerp(light, fibre * 0.5).lerp(deep, smooth(t, 0.35, 0.9));
+          const deep = inVagina ? c.clone().copy(vagina).multiplyScalar(0.94 + 0.06 * (0.5 + 0.5 * Math.sin(y * 26))) : (w < 0.1 ? canal : cavity);
+          c.copy(wall).lerp(light, fibre * 0.08).lerp(deep, smooth(t, 0.35, 0.9));
         }
       }
       pos.push(x, y, z);
-      col.push(c.r, c.g, c.b, smooth(y, -2.95, -2.2));
+      col.push(c.r, c.g, c.b, smooth(y, -2.45, -1.8));
       if (j < profile.length - 1) {
         const n = (i + 1) % seg;
         index.push(j * seg + i, j * seg + n, (j + 1) * seg + i, j * seg + n, (j + 1) * seg + n, (j + 1) * seg + i);
@@ -82,79 +95,65 @@ function buildOrgan() {
   g.setAttribute("color", new THREE.Float32BufferAttribute(col, 4));
   g.setIndex(index);
   g.computeVertexNormals();
-  return new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({ vertexColors: true, transparent: true, roughness: 0.38, clearcoat: 0.7, clearcoatRoughness: 0.32, envMapIntensity: 0.5, side: THREE.DoubleSide }));
+  return new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({ vertexColors: true, transparent: true, roughness: 0.56, clearcoat: 0.22, clearcoatRoughness: 0.5, envMapIntensity: 0.32, side: THREE.DoubleSide }));
 }
 
 function buildCervix() {
   const g = new THREE.SphereGeometry(0.62, 160, 120);
   const p = g.attributes.position;
   const colors = new Float32Array(p.count * 3);
-  const base = hex(0xee7d86), zone = hex(0xf49a78), dark = hex(0x8e1f30), c = new THREE.Color(), v = new THREE.Vector3();
+  const base = hex(0xe58f92), zone = hex(0xeeaa94), dark = hex(0x96404a), c = new THREE.Color(), v = new THREE.Vector3();
   for (let i = 0; i < p.count; i++) {
     v.fromBufferAttribute(p, i);
-    const r = Math.sqrt(v.x * v.x + v.y * v.y);
-    const inTz = Math.exp(-(((r - 0.34) / 0.11) ** 2));
-    const inOs = smooth(0.12 - r, 0, 0.06);
-    c.copy(base).lerp(zone, inTz * 0.9).lerp(dark, inOs * 0.95);
-    colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
+    const d = Math.hypot(v.x, v.y);
+    c.copy(base);
+    if (v.z > 0) {
+      const slit = Math.exp(-((v.x / 0.04) ** 2) - (v.y / 0.17) ** 2);
+      v.multiplyScalar(1 - slit * 0.22 - Math.exp(-((d / 0.22) ** 2)) * 0.1);
+      c.lerp(zone, Math.exp(-(((d - 0.3) / 0.12) ** 2)) * 0.75).lerp(dark, clamp(slit * 1.2, 0, 1));
+    }
+    p.setXYZ(i, v.x, v.y, v.z);
+    c.toArray(colors, i * 3);
   }
   g.setAttribute("color", new THREE.BufferAttribute(colors, 3));
   g.computeVertexNormals();
-  const m = new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.35, clearcoat: 0.8, clearcoatRoughness: 0.28, envMapIntensity: 0.6 }));
-  m.position.set(0, -1.02, 0.44);
-  m.scale.set(1, 0.85, 0.68);
+  const m = new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.5, clearcoat: 0.28, clearcoatRoughness: 0.45, envMapIntensity: 0.35 }));
+  m.position.set(0, -1.02, 0.2);
+  m.scale.set(1, 0.95, 0.78);
   return m;
 }
 
-function taperedTube(points: [number, number, number][], radius: number, taper: number, material: THREE.Material) {
-  const curve = new THREE.CatmullRomCurve3(points.map(([x, y, z]) => new THREE.Vector3(x, y, z)));
-  const g = new THREE.TubeGeometry(curve, 64, radius, 24, false);
-  const p = g.attributes.position;
-  const v = new THREE.Vector3();
-  for (let i = 0; i < p.count; i++) {
-    v.fromBufferAttribute(p, i);
-    const u = i / p.count;
-    const s = 1 - (1 - taper) * u;
-    p.setXYZ(i, v.x * s, v.y * s, v.z * s);
+function taperedTube(points: Vec[], radius: number, end: number, material: THREE.Material) {
+  const curve = new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(...p)));
+  const n = 64, r = 14;
+  const g = new THREE.TubeGeometry(curve, n, radius, r);
+  const p = g.attributes.position, v = new THREE.Vector3();
+  for (let i = 0; i <= n; i++) {
+    const center = curve.getPointAt(i / n);
+    const scale = 1 + (end - 1) * (i / n);
+    for (let k = 0; k <= r; k++) {
+      const at = i * (r + 1) + k;
+      v.fromBufferAttribute(p, at).sub(center).multiplyScalar(scale).add(center);
+      p.setXYZ(at, v.x, v.y, v.z);
+    }
   }
   g.computeVertexNormals();
   return new THREE.Mesh(g, material);
 }
 
-function fimbriae(material: THREE.Material) {
-  const g = new THREE.Group();
-  for (let i = 0; i < 14; i++) {
-    const a = (i / 14) * Math.PI * 2;
-    const pts: [number, number, number][] = [
-      [0, 0, 0],
-      [Math.cos(a) * 0.12, Math.sin(a) * 0.12 - 0.05, 0.08],
-      [Math.cos(a) * 0.22, Math.sin(a) * 0.22 - 0.12, 0.2],
-    ];
-    g.add(taperedTube(pts, 0.024, 0.3, material));
-  }
-  return g;
-}
-
 function adnexa(side: 1 | -1, tubeMaterial: THREE.Material, fringeMaterial: THREE.Material, ovaryMaterial: THREE.Material) {
   const g = new THREE.Group();
-  const tubePts: [number, number, number][] = [
-    [1.15, 1.82, 0],
-    [1.7, 2.05, 0.1],
-    [2.35, 2.05, -0.05],
-    [2.65, 1.6, -0.15],
-    [2.5, 1.1, -0.05],
-  ];
-  g.add(taperedTube(tubePts, 0.08, 0.55, tubeMaterial));
-  const fringe = fimbriae(fringeMaterial);
-  fringe.position.set(2.5, 1.05, -0.05);
-  g.add(fringe);
-  const ovaryGeo = new THREE.SphereGeometry(0.38, 48, 36);
-  const p = ovaryGeo.attributes.position;
-  const v = new THREE.Vector3();
+  g.add(taperedTube([[1.42, 1.72, 0], [1.95, 2.18, 0], [2.65, 2.3, 0.02], [3.2, 1.85, 0.05], [3.25, 1.3, 0.1]], 0.1, 1.9, tubeMaterial));
+  for (let i = 0; i < 14; i++) {
+    const a = -1.05 + (i / 13) * 2.1;
+    const reach = 0.42 + (i % 3) * 0.1;
+    g.add(taperedTube([[3.25, 1.32, 0.1], [3.25 + Math.sin(a) * reach * 0.5, 1.1, 0.1 + Math.cos(a) * 0.1], [3.2 + Math.sin(a) * reach, 0.86 + (i % 2) * 0.1, 0.1 + Math.cos(a * 2) * 0.18]], 0.05, 0.35, fringeMaterial));
+  }
+  const ovaryGeo = new THREE.SphereGeometry(0.42, 56, 40);
+  const p = ovaryGeo.attributes.position, v = new THREE.Vector3();
   for (let i = 0; i < p.count; i++) {
     v.fromBufferAttribute(p, i);
-    const bump = 1 + 0.08 * Math.sin(v.x * 12) * Math.cos(v.y * 12);
-    v.multiplyScalar(bump);
+    v.multiplyScalar(1 + 0.035 * Math.sin(v.x * 17) * Math.sin(v.y * 19) * Math.sin(v.z * 15 + 1));
     p.setXYZ(i, v.x, v.y, v.z);
   }
   ovaryGeo.computeVertexNormals();
@@ -168,21 +167,21 @@ function adnexa(side: 1 | -1, tubeMaterial: THREE.Material, fringeMaterial: THRE
 
 function buildModel() {
   const group = new THREE.Group();
-  const tubeMaterial = new THREE.MeshPhysicalMaterial({ color: 0xe67679, roughness: 0.36, clearcoat: 0.7, clearcoatRoughness: 0.3, envMapIntensity: 0.5 });
-  const fringeMaterial = new THREE.MeshPhysicalMaterial({ color: 0xd95f68, roughness: 0.42, clearcoat: 0.5, envMapIntensity: 0.4 });
-  const ovaryMaterial = new THREE.MeshPhysicalMaterial({ color: 0xedb9a0, roughness: 0.46, clearcoat: 0.5, envMapIntensity: 0.45 });
+  const tubeMaterial = new THREE.MeshPhysicalMaterial({ color: 0xe39a96, roughness: 0.55, clearcoat: 0.2, clearcoatRoughness: 0.5, envMapIntensity: 0.3 });
+  const fringeMaterial = new THREE.MeshPhysicalMaterial({ color: 0xd98a8a, roughness: 0.58, clearcoat: 0.15, envMapIntensity: 0.3 });
+  const ovaryMaterial = new THREE.MeshPhysicalMaterial({ color: 0xecc3ae, roughness: 0.6, clearcoat: 0.15, envMapIntensity: 0.3 });
   [1, -1].forEach((side) => {
     const a = adnexa(side as 1 | -1, tubeMaterial, fringeMaterial, ovaryMaterial);
     a.traverse((o) => { if (o instanceof THREE.Mesh && side === -1) (o.material as THREE.Material).side = THREE.DoubleSide; });
     group.add(a);
   });
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.013, 10, 96), new THREE.MeshBasicMaterial({ color: 0x0284c7, transparent: true }));
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.008, 10, 96), new THREE.MeshBasicMaterial({ color: 0x0f766e, transparent: true }));
   ring.position.set(0, -1.02, 0.62);
   group.add(buildOrgan(), buildCervix(), ring);
   return { group, ring };
 }
 
-/** Interactive anatomy figure seamlessly integrated into the landing hero. */
+/** Interactive anatomy figure for the landing hero. Illustrative only: nothing here reads patient data or predicts disease. */
 export default function CervixModel() {
   const stage = useRef<HTMLDivElement>(null);
   const figure = useRef<HTMLElement>(null);
@@ -192,21 +191,21 @@ export default function CervixModel() {
   const look = useRef<(mode: Mode) => void>(() => undefined);
   const ringColor = useRef<(color: number) => void>(() => undefined);
   const pins = useRef<Record<string, HTMLButtonElement | null>>({});
-  const tags = useRef<Record<string, HTMLButtonElement | null>>({});
-  const lines = useRef<Record<string, SVGLineElement | null>>({});
+  const tags = useRef<Record<string, HTMLSpanElement | null>>({});
   const [webgl, setWebgl] = useState(true);
   const [active, setActive] = useState("tz");
   const [modeId, setModeId] = useState<Mode["id"]>("anatomy");
   const [showMode, setShowMode] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(() => window.matchMedia("(min-width: 640px)").matches);
+  const [day, setDay] = useState(7);
   const [spinning, setSpinning] = useState(!window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-
   const mode = MODES.find((m) => m.id === modeId) ?? MODES[0];
+  const stop = STOPS.find((x) => day <= x.to) ?? STOPS[2];
   const part = PARTS.find((p) => p.id === active) ?? PARTS[0];
-  const shown = new Set<string>(mode.labels);
-  if (!showMode) shown.add(active);
-
-  const noteTitle = showMode ? mode.label : part.label;
-  const noteText = showMode ? mode.text : part.text;
+  // One label at a time keeps the anatomy clear: the selected part, or the part this mode is about.
+  const labelled = showMode ? mode.labels[0] : active;
+  const noteTitle = showMode ? (modeId === "followup" ? stop.title : mode.label) : part.label;
+  const noteText = showMode ? (modeId === "followup" ? stop.text : mode.text) : part.text;
 
   useEffect(() => {
     const el = host.current;
@@ -215,6 +214,7 @@ export default function CervixModel() {
     try {
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     } catch {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- WebGL support is only known by trying
       setWebgl(false);
       return;
     }
@@ -228,7 +228,7 @@ export default function CervixModel() {
     const environment = pmrem.fromScene(room, 0.04);
     scene.environment = environment.texture;
     const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
-    camera.position.set(...(MODES[0].cam as unknown as Vec));
+    
     scene.add(new THREE.HemisphereLight(0xffffff, 0xf3d9d2, 0.9));
     const key = new THREE.DirectionalLight(0xffffff, 1.7);
     key.position.set(3, 5, 7);
@@ -237,6 +237,18 @@ export default function CervixModel() {
     scene.add(key, fill);
     const { group: model, ring } = buildModel();
     scene.add(model);
+    const anchors: Record<string, THREE.Object3D> = {};
+    if (MODEL_URL) {
+      void import("three/examples/jsm/loaders/GLTFLoader.js").then(({ GLTFLoader }) => new GLTFLoader().load(MODEL_URL, (gltf) => {
+        const box = new THREE.Box3().setFromObject(gltf.scene);
+        const dims = box.getSize(new THREE.Vector3());
+        gltf.scene.scale.setScalar(Math.min((HALF_W * 2) / dims.x, (HALF_H * 2) / dims.y));
+        gltf.scene.position.sub(box.getCenter(new THREE.Vector3()).multiplyScalar(gltf.scene.scale.x));
+        [...model.children].forEach((child) => { if (child !== ring) model.remove(child); });
+        model.add(gltf.scene);
+        gltf.scene.traverse((o) => { if (o.name.startsWith("anchor_")) anchors[o.name.slice(7)] = o; });
+      }, undefined, () => undefined)); // A failed download keeps the procedural model.
+    }
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(...(MODES[0].target as unknown as Vec));
     controls.enableZoom = false;
@@ -246,25 +258,40 @@ export default function CervixModel() {
     let spin = !still;
     let goal: { cam: THREE.Vector3; target: THREE.Vector3 } | null = null;
     renderer.domElement.style.touchAction = "pan-y";
-    controls.addEventListener("start", () => { goal = null; });
+    controls.addEventListener("start", () => { goal = null; fitted = false; });
     zoomBy.current = (f) => {
       goal = null;
+      fitted = false;
       const offset = camera.position.clone().sub(controls.target);
-      camera.position.copy(controls.target).add(offset.setLength(clamp(offset.length() * f, 3, 20)));
+      camera.position.copy(controls.target).add(offset.setLength(clamp(offset.length() * f, 3, 24)));
     };
     toggleSpin.current = () => { spin = !spin; return spin; };
     look.current = (m) => {
-      goal = { cam: new THREE.Vector3(...(m.cam as unknown as Vec)), target: new THREE.Vector3(...(m.target as unknown as Vec)) };
+      modeNow = m;
+      fitted = isWide(m);
+      goal = { cam: camFor(m), target: new THREE.Vector3(...(m.target as unknown as Vec)) };
       if (still) { camera.position.copy(goal.cam); controls.target.copy(goal.target); goal = null; }
     };
     ringColor.current = (color) => (ring.material as THREE.MeshBasicMaterial).color.setHex(color);
     const wheel = (e: WheelEvent) => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); zoomBy.current(e.deltaY > 0 ? 1.08 : 0.93); } };
     renderer.domElement.addEventListener("wheel", wheel, { passive: false });
+    // The whole organ always fits: distance comes from the container's shape, not from CSS scaling.
+    const fitDistance = () => {
+      const tan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      return Math.max(HALF_H / tan, HALF_W / (tan * camera.aspect)) * 1.14;
+    };
+    let fitted = true;
+    let modeNow: Mode = MODES[0];
+    const camFor = (m: Mode) => {
+      const c = new THREE.Vector3(...(m.cam as unknown as Vec));
+      return isWide(m) ? c.setLength(fitDistance()) : c;
+    };
     const size = () => {
       const { clientWidth: w, clientHeight: h } = el;
       renderer.setSize(w, h);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+      if (fitted && isWide(modeNow)) camera.position.copy(camFor(modeNow));
     };
     const resized = new ResizeObserver(size);
     resized.observe(el);
@@ -279,9 +306,9 @@ export default function CervixModel() {
       }
       controls.update();
       if (!still) {
-        if (spin) swing += 0.008;
-        model.rotation.y = Math.sin(swing) * 0.32;
-        model.position.y = Math.sin(t / 1400) * 0.025;
+        if (spin) swing += 0.004;
+        model.rotation.y = Math.sin(swing) * 0.14;
+        model.position.y = Math.sin(t / 2200) * 0.012;
         (ring.material as THREE.MeshBasicMaterial).opacity = 0.65 + Math.sin(t / 450) * 0.3;
       }
       renderer.render(scene, camera);
@@ -291,7 +318,9 @@ export default function CervixModel() {
       PARTS.forEach((p) => {
         const pin = pins.current[p.id];
         if (!pin) return;
-        v.set(p.at[0], p.at[1], p.at[2]).applyMatrix4(model.matrixWorld).project(camera);
+        const anchor = anchors[p.id];
+        if (anchor) anchor.getWorldPosition(v).project(camera);
+        else v.set(p.at[0], p.at[1], p.at[2]).applyMatrix4(model.matrixWorld).project(camera);
         const x = ((v.x + 1) / 2) * w;
         const y = ((1 - v.y) / 2) * h;
         const inView = x > 0 && x < w && y > 0 && y < h;
@@ -299,13 +328,12 @@ export default function CervixModel() {
         pin.style.opacity = front && inView ? "1" : "0";
         pin.style.pointerEvents = front && inView ? "auto" : "none";
         const tag = tags.current[p.id];
-        const line = lines.current[p.id];
-        if (tag && line) {
-          line.setAttribute("x1", String(x));
-          line.setAttribute("y1", String(y));
-          line.setAttribute("x2", String(p.side === "left" ? tag.offsetLeft + tag.offsetWidth : tag.offsetLeft));
-          line.setAttribute("y2", String(tag.offsetTop + tag.offsetHeight / 2));
-          line.style.opacity = front && inView ? "1" : "0";
+        if (tag) {
+          const width = tag.offsetWidth;
+          const onRight = p.side === "right" && x + 18 + width < w;
+          const left = clamp(onRight || x - 18 - width < 0 ? x + 18 : x - 18 - width, 4, Math.max(4, w - width - 4));
+          tag.style.transform = `translate(${left}px, ${y - tag.offsetHeight / 2}px)`;
+          tag.style.opacity = front && inView ? "1" : "0";
         }
       });
     };
@@ -333,197 +361,76 @@ export default function CervixModel() {
   }, []);
 
   useEffect(() => { look.current(mode); }, [mode]);
-  useEffect(() => { ringColor.current(mode.ring); }, [mode]);
+  useEffect(() => { ringColor.current(modeId === "followup" ? stop.color : mode.ring); }, [modeId, stop, mode]);
 
   const pick = (id: string) => { setActive(id); setShowMode(false); };
-  const expand = () => {
-    if (document.fullscreenElement) void document.exitFullscreen();
-    else void figure.current?.requestFullscreen?.();
-  };
+  const expand = () => { if (document.fullscreenElement) void document.exitFullscreen(); else void figure.current?.requestFullscreen?.(); };
+  const roundBtn = "size-11 rounded-full bg-white border border-slate-100 shadow-sm flex items-center justify-center cursor-pointer hover:bg-slate-50 text-slate-800";
+  const steps = [{ at: 0, day: "Day 0", label: "Referral" }, { at: 7, day: "Day 7", label: "Reminder" }, { at: 14, day: "Day 14", label: "Follow-up" }];
 
   return (
-    <figure
-      ref={figure}
-      className="m-0 w-full relative select-none [&:fullscreen]:bg-slate-950 [&:fullscreen]:p-6"
-      data-testid="cervix-model"
-    >
-      {/* Ambient Radial Medical Glow behind Model (Seamless blending into Hero backdrop) */}
-      <div className="absolute inset-0 -z-10 flex items-center justify-center pointer-events-none overflow-hidden">
-        <div className="w-[320px] sm:w-[460px] h-[320px] sm:h-[460px] rounded-full bg-radial from-pink-200/35 via-sky-100/25 to-transparent blur-3xl opacity-80" />
-      </div>
-
-      <div
-        ref={stage}
-        className="relative w-full h-[450px] sm:h-[500px] lg:h-[520px] rounded-2xl border border-black/8 bg-linear-to-b from-white/75 via-white/40 to-white/80 backdrop-blur-xs shadow-xs overflow-hidden flex flex-col justify-between p-3.5"
-      >
-        {/* Full-bleed 3D Canvas */}
-        <div
-          ref={host}
-          className="absolute inset-0 cursor-grab active:cursor-grabbing [&>canvas]:block"
-          data-testid="cervix-canvas"
-        />
-
-        {/* Top Header Floating Glass Pill: Modes & Quick Actions */}
-        <div className="relative z-10 flex items-center justify-between gap-2">
-          {/* Mode Segmented Glass Tabs */}
-          <div
-            className="inline-flex items-center p-1 rounded-lg bg-white/90 backdrop-blur-md border border-black/10 shadow-2xs gap-0.5"
-            role="group"
-            aria-label="Clinical exploration modes"
-          >
-            {MODES.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                aria-pressed={modeId === m.id}
-                onClick={() => {
-                  setModeId(m.id);
-                  setShowMode(true);
-                }}
-                data-testid={`mode-${m.id}`}
-                className={`h-7 px-2.5 rounded-md text-[11px] font-heading font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
-                  modeId === m.id
-                    ? "bg-[#0F172A] text-white font-bold shadow-xs"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70"
-                }`}
-              >
-                <m.icon className="size-3 shrink-0" aria-hidden="true" />
-                <span>{m.label}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Quick Controls: Rotate, Zoom & Fullscreen */}
-          <div className="inline-flex items-center gap-1 bg-white/90 backdrop-blur-md border border-black/10 shadow-2xs rounded-lg p-1">
-            <button
-              type="button"
-              className={`size-7 rounded-md flex items-center justify-center cursor-pointer transition-colors ${
-                spinning ? "text-[#0284C7] bg-sky-50" : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-              }`}
-              aria-label="Toggle autorotate"
-              title="Toggle autorotate"
-              onClick={() => setSpinning(toggleSpin.current())}
-              data-testid="spin"
-            >
-              <RotateCcw className="size-3.5" />
-            </button>
-            <button
-              type="button"
-              className="size-7 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center cursor-pointer"
-              aria-label="Zoom in"
-              title="Zoom in"
-              onClick={() => zoomBy.current(0.85)}
-              data-testid="zoom-in"
-            >
-              <Plus className="size-3.5" />
-            </button>
-            <button
-              type="button"
-              className="size-7 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center cursor-pointer"
-              aria-label="Zoom out"
-              title="Zoom out"
-              onClick={() => zoomBy.current(1.18)}
-            >
-              <Minus className="size-3.5" />
-            </button>
-            <button
-              type="button"
-              className="size-7 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100 flex items-center justify-center cursor-pointer"
-              aria-label="Fullscreen"
-              title="Fullscreen"
-              onClick={expand}
-              data-testid="expand"
-            >
-              <Maximize2 className="size-3.5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Anatomical Pins & Overlay Tags */}
-        {webgl ? (
-          <>
-            <svg className="absolute inset-0 size-full pointer-events-none z-10" aria-hidden="true">
-              {PARTS.filter((p) => shown.has(p.id)).map((p) => (
-                <line
-                  key={p.id}
-                  ref={(l) => { lines.current[p.id] = l; }}
-                  stroke="#0284C7"
-                  strokeWidth="1.2"
-                  strokeDasharray="2 2"
-                />
+    <figure ref={figure} className="m-0 w-full [&:fullscreen]:overflow-auto [&:fullscreen]:p-6" data-testid="cervix-model">
+      <div ref={stage} className="relative">
+        <div className="relative h-[380px] sm:h-[480px] [:fullscreen_&]:h-[72vh] overflow-hidden bg-[radial-gradient(circle_at_50%_52%,#E4F5F4_0%,#F3FBFA_38%,#FFFFFF_68%)]">
+          <div ref={host} className="absolute inset-0 cursor-grab active:cursor-grabbing [&>canvas]:block" data-testid="cervix-canvas" />
+          {webgl ? (
+            <>
+              {PARTS.map((p) => (
+                <button key={p.id} ref={(b) => { pins.current[p.id] = b; }} type="button" title={p.label} aria-label={p.label} aria-pressed={!showMode && active === p.id} onClick={() => pick(p.id)} data-testid={`pin-${p.id}`}
+                  className="absolute left-0 top-0 size-6 flex items-center justify-center cursor-pointer rounded-full">
+                  <span className={`block rounded-full ${!showMode && active === p.id ? "size-3 bg-[#0F766E] ring-[5px] ring-[#0F766E]/25" : "size-2.5 bg-white ring-[5px] ring-white/45 shadow"}`} />
+                </button>
               ))}
-            </svg>
-
-            {PARTS.map((p) => (
-              <button
-                key={p.id}
-                ref={(b) => { pins.current[p.id] = b; }}
-                type="button"
-                title={p.label}
-                aria-label={p.label}
-                aria-pressed={!showMode && active === p.id}
-                onClick={() => pick(p.id)}
-                data-testid={`pin-${p.id}`}
-                className="absolute left-0 top-0 size-6 flex items-center justify-center cursor-pointer rounded-full z-15 group"
-              >
-                <span
-                  className={`block rounded-full bg-white shadow-sm transition-all ${
-                    !showMode && active === p.id
-                      ? "size-4 border-[3px] border-[#9D174D] ring-4 ring-pink-100"
-                      : "size-2.5 border-2 border-[#0284C7] group-hover:scale-125"
-                  }`}
-                />
+              {PARTS.filter((p) => p.id === labelled).map((p) => (
+                <span key={p.id} ref={(b) => { tags.current[p.id] = b; }} className="absolute left-0 top-0 pointer-events-none rounded-full bg-white/95 shadow-sm border border-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-800 whitespace-nowrap" data-testid={`tag-${p.id}`}>{p.label}</span>
+              ))}
+              <div className="absolute right-1 top-1 flex gap-1.5">
+                <button type="button" className="size-8 rounded-full bg-white border border-slate-200 flex items-center justify-center cursor-pointer" aria-label="Zoom in" title="Zoom in" onClick={() => zoomBy.current(0.85)} data-testid="zoom-in"><Plus className="size-3.5" /></button>
+                <button type="button" className="size-8 rounded-full bg-white border border-slate-200 flex items-center justify-center cursor-pointer" aria-label="Zoom out" title="Zoom out" onClick={() => zoomBy.current(1.18)}><Minus className="size-3.5" /></button>
+                <button type="button" className="size-8 rounded-full bg-white border border-slate-200 flex items-center justify-center cursor-pointer" aria-label="Reset view" title="Reset view" onClick={() => look.current(mode)} data-testid="reset-view"><Crosshair className="size-3.5" /></button>
+              </div>
+            </>
+          ) : (
+            <p className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-slate-600" data-testid="cervix-fallback">The 3D view is not available on this device. The anatomy guide below still works.</p>
+          )}
+        </div>
+        <div id="explore-panel" hidden={!panelOpen} className="mt-2 sm:mt-0 sm:absolute sm:right-0 sm:bottom-3 sm:w-[148px] rounded-2xl bg-white sm:shadow-md sm:border border-slate-100 sm:p-1.5" role="group" aria-label="Explore" data-testid="explore-panel">
+          <p className="hidden sm:block px-2 py-1 text-xs font-bold text-black">Explore</p>
+          <div className="grid grid-cols-2 sm:grid-cols-1 gap-1">
+            {MODES.map((m) => (
+              <button key={m.id} type="button" aria-pressed={modeId === m.id} onClick={() => { setModeId(m.id); setShowMode(true); }} data-testid={`mode-${m.id}`}
+                className={`min-h-9 rounded-lg px-2 text-[11px] leading-tight text-left font-medium flex items-center gap-2 cursor-pointer ${modeId === m.id ? "bg-[#D5EFEF] text-[#0B5D57]" : "text-slate-700 hover:bg-slate-50"}`}>
+                <m.icon className="size-4 shrink-0" aria-hidden="true" />{m.label}
               </button>
             ))}
-
-            {PARTS.filter((p) => shown.has(p.id)).map((p) => (
-              <button
-                key={p.id}
-                ref={(b) => { tags.current[p.id] = b; }}
-                type="button"
-                tabIndex={-1}
-                onClick={() => pick(p.id)}
-                style={{ top: `${p.top}%` }}
-                data-testid={`tag-${p.id}`}
-                className={`absolute ${
-                  p.side === "left" ? "left-2" : "right-2"
-                } max-w-[42%] rounded-md bg-white/95 backdrop-blur-md shadow-2xs border border-black/10 px-2 py-0.5 text-[11px] font-heading font-semibold text-slate-800 cursor-pointer z-15 hover:border-[#0284C7] hover:text-[#0284C7] transition-all`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </>
-        ) : (
-          <p className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-slate-600" data-testid="cervix-fallback">
-            The 3D interactive view is not available on this device.
-          </p>
-        )}
-
-        {/* Bottom Floating Glass Card: Part Description & Live Annotation */}
-        <div
-          className="relative z-10 rounded-xl bg-white/90 backdrop-blur-md border border-black/10 p-3 sm:px-4 sm:py-2.5 shadow-2xs flex items-center justify-between gap-3 text-xs"
-          aria-live="polite"
-          data-testid="cervix-note"
-        >
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-heading font-bold text-slate-900 tracking-tight">
-                {noteTitle}
-              </span>
-              <span className="text-[10px] font-mono-data px-1.5 py-0.5 rounded bg-sky-50 text-[#0369A1] border border-sky-200 font-semibold">
-                Interactive Specimen
-              </span>
-            </div>
-            <p className="mt-0.5 text-[11px] text-slate-600 font-sans line-clamp-2 leading-relaxed">
-              {noteText}
-            </p>
           </div>
-
-          <span className="hidden sm:inline-flex shrink-0 text-[10px] font-mono-data text-slate-400">
-            Drag to rotate
-          </span>
+        </div>
+        <div className="mt-2 sm:mt-0 sm:absolute sm:left-0 sm:bottom-3 sm:w-[172px] sm:bg-white/90 sm:rounded-xl sm:p-2 text-xs text-slate-700" data-testid="cervix-note">
+          <div aria-live="polite"><strong className="block text-black">{noteTitle}</strong>{noteText}</div>
+          <button type="button" aria-expanded={panelOpen} aria-controls="explore-panel" onClick={() => setPanelOpen(!panelOpen)} className="mt-1 inline-flex min-h-9 items-center gap-1 rounded-lg px-1 font-semibold text-[#0B5D57] underline-offset-2 hover:underline cursor-pointer" data-testid="explore-toggle">
+            {panelOpen ? "Hide Explore" : "Show Explore"}<ChevronDown className={`size-3.5 transition-transform motion-reduce:transition-none ${panelOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+          </button>
+          {showMode && (modeId === "screening" || modeId === "findings") && <em className="block mt-1 not-italic font-semibold text-[#BA2D0B]">Awaiting clinical review</em>}
         </div>
       </div>
+      <div className="mt-3 rounded-2xl bg-white border border-slate-100 shadow-sm p-4 flex items-center gap-4">
+        <div className="flex-1 min-w-0">
+          <label htmlFor="follow-up-day" className="flex items-center gap-2 text-sm font-bold text-black">
+            <span>Referral Follow-up Journey (14 Days)</span>
+            <Info className="size-4 shrink-0 text-slate-600" aria-hidden="true" />
+          </label>
+          <input id="follow-up-day" type="range" min={0} max={14} value={day} aria-valuetext={`Day ${day} of 14`} onChange={(e) => { setDay(Number(e.target.value)); setModeId("followup"); setShowMode(true); }} className="mt-2 w-full accent-[#14A098]" data-testid="timeline" />
+          <div className="flex justify-between text-xs">
+            {steps.map((s) => <button key={s.at} type="button" onClick={() => { setDay(s.at); setModeId("followup"); setShowMode(true); }} className={`cursor-pointer ${s.at === 7 ? "text-center" : s.at === 14 ? "text-right" : "text-left"}`}><strong className="block text-black">{s.day}</strong><span className="text-slate-600">{s.label}</span></button>)}
+          </div>
+          <span className="sr-only" data-testid="timeline-day">{`Day ${day} of 14`}</span>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <div className="flex flex-col items-center gap-1 text-xs text-slate-700"><button type="button" className={roundBtn} aria-label="Rotate" aria-pressed={spinning} onClick={() => setSpinning(toggleSpin.current())} data-testid="spin"><RotateCcw className="size-4" /></button><span aria-hidden="true">Rotate</span></div>
+          <div className="flex flex-col items-center gap-1 text-xs text-slate-700"><button type="button" className={roundBtn} aria-label="Expand" onClick={expand} data-testid="expand"><Maximize2 className="size-4" /></button><span aria-hidden="true">Expand</span></div>
+        </div>
+      </div>
+      <figcaption className="mt-2 text-xs text-slate-500">Illustrative model, not to scale. Colours and highlights show follow-up status only, not changes in the body or disease. Follow-up closes when the hospital confirms arrival.</figcaption>
     </figure>
   );
 }

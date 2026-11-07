@@ -1,0 +1,38 @@
+248|Cleared ✓
+403|Done ✓
+494|Full Workstation ➔
+504|Gate Cleared ✓
+570|Immutable Chain ✓
+659|Mirzapur Spoke Clinic ➔ RCC Varanasi Hub (~75 km)
+660|Mirzapur Spoke Clinic ➔ Regional Cancer Centre (RCC) Varanasi Hub
+662|Mirzapur ➔ Varanasi
+663|Mirzapur ➔ Varanasi Cantt (2 Seats)
+766|Pathology Lab OCR Verified ✓
+878|Ready for Zero-Knowledge OCR ✓
+894|Regular Attendance ✓
+928|SHA-256: 0x8bb3a45...Verified ✓
+984|Slot Confirmed (Day 41) ✓
+1064|Tamper-Proof ✓
+1295|✓ Free Treatment (PMJAY)
+1296|🔊 'During brachytherapy, the medical team provides anesthesia and pain relief. Please do not fear the procedure.'
+1297|🟡 Warning (50-56d)
+1359|🟢 Optimal (≤49d)
+1360|🔴 Breach Risk (>56d)
+1364|🟢 Proj: Day {d} (<=49d)
+1366|🟢 Attending Daily
+1369|🟡 Proj: Day {d} (<=56d)
+1371|🟡 Missed Day +1
+1374|🔴 Proj: Day {d} (>56d)
+1376|🔴 Overdue Day +3 (Missed 2 Fractions)
+1379|🟢 Day 1 Baseline Verified
+1382|🟢 Precancer Surveillance
+1384|🟢 Margin Clear
+1445|✓ Yes, 8 Glasses Taken
+1477|Apply to Form ✓
+1526|SHA-256: 0x8bb3a45c...Verified ✓
+1600|Added to intake notes ✓
+2801|👧 Anjali (14Y · Unvaccinated)
+2802|👧 Priya (13Y · Vaccinated)
+2803|👩 Meera (42Y · Screened)
+2804|👩 Sunita (38Y · Unscreened)
+2825|Building bridges to better health

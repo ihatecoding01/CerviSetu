@@ -62,18 +62,19 @@ def test_no_referral():
     assert care_locations.centres_for(None)["assigned_status"] == "NO_REFERRAL"
 
 
-def test_routing_is_off_until_configured(monkeypatch):
+def test_routing_is_off_in_production_until_configured(monkeypatch):
     monkeypatch.delenv("CERVISETU_ROUTING_URL", raising=False)
+    monkeypatch.setenv("CERVISETU_ENV", "production")
     assert care_locations.map_config()["routing_url"] == ""
     monkeypatch.setenv("CERVISETU_ROUTING_URL", "https://routes.example")
     assert care_locations.map_config()["routing_url"] == "https://routes.example"
 
 
 def test_needs_session_and_own_record_only():
-    assert TestClient(app).get("/api/portal/PT-CASE-RITA/centres").status_code == 401
+    assert TestClient(app).get("/api/portal/PT-NO-REFERRAL/centres").status_code == 401
     client = TestClient(app)
     client.cookies.set(ps.COOKIE_NAME, ps.issue_session("PT-SOMEONE-ELSE"))
-    assert client.get("/api/portal/PT-CASE-RITA/centres").status_code == 403
+    assert client.get("/api/portal/PT-NO-REFERRAL/centres").status_code == 403
 
 
 def test_own_session_gets_directory_only_and_location_is_ignored():

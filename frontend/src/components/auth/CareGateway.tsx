@@ -94,7 +94,7 @@ export const CareGateway: React.FC<Props> = ({
                 CerviSetu
               </span>
               <span className="text-[11px] font-sans text-slate-500 mt-0.5">
-                HPV Immunization &amp; Rural Cancer Referral Platform
+                HPV Immunization &amp; Cervical Cancer Referral Platform
               </span>
             </div>
           </div>
@@ -102,7 +102,7 @@ export const CareGateway: React.FC<Props> = ({
           
 
           <p className="font-subtitle-playfair text-xs sm:text-sm text-slate-600 mt-2 text-center max-w-lg leading-relaxed font-medium">
-            Sovereign multi-cohort triage, point-of-care VIA verification, and rapid hospital referral pathways across rural districts.
+            Sovereign multi-cohort triage, point-of-care VIA verification, and rapid hospital referral pathways across health post networks.
           </p>
         </div>
 

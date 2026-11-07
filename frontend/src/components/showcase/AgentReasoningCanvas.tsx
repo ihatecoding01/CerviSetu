@@ -45,7 +45,7 @@ export const AgentReasoningCanvas: React.FC = () => {
             <span className="text-xs text-slate-600 font-medium">LangGraph Orchestration</span>
           </div>
           <h3 className="font-heading text-2xl font-bold text-slate-900 tracking-tight">
-            Autonomous Rural Clinical Decision & Adherence Canvas
+            Autonomous Clinical Decision & Adherence Canvas
           </h3>
         </div>
 
