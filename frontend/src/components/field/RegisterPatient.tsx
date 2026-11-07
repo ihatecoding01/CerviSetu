@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { ArrowLeft, Check, FileText, Loader2, X } from "lucide-react";
+import { ArrowLeft, Check, FileText, Loader2, Sparkles, X } from "lucide-react";
 import { referralApi, STATUS_LABELS, type AshaRegistration, type DuplicateMatch, type Referral } from "../../api/referrals";
 import type { StaffProfile } from "../../api/staff";
 import { Notice } from "../app/Status";
@@ -18,6 +18,61 @@ const MAX_BYTES = 10 * 1024 * 1024;
 const ACCEPT = ["application/pdf", "image/png", "image/jpeg"];
 const today = () => new Date().toISOString().slice(0, 10);
 const label = (list: string[][], v: string) => list.find(([k]) => k === v)?.[1] ?? v;
+
+const DEMO_PREFILL_POOL = [
+  {
+    patient_name: "Kavita Patil",
+    age: "36",
+    phone: "9820145672",
+    preferred_language: "mr",
+    area: "Malvani Sector 4",
+    screening_method: "VIA",
+    screening_result: "POSITIVE",
+    refer: "yes",
+    notes: "Prefers evening voice calls after 5:00 PM.",
+    consent_contact: "GRANTED",
+    consent_followup: "GRANTED",
+  },
+  {
+    patient_name: "Sunita More",
+    age: "42",
+    phone: "9833214589",
+    preferred_language: "mr",
+    area: "Dharavi Kumbharwada",
+    screening_method: "VIA",
+    screening_result: "SUSPICIOUS",
+    refer: "yes",
+    notes: "Available on daughter phone post 4:30 PM.",
+    consent_contact: "GRANTED",
+    consent_followup: "GRANTED",
+  },
+  {
+    patient_name: "Amina Shaikh",
+    age: "39",
+    phone: "9876543210",
+    preferred_language: "hi",
+    area: "Govandi Shivaji Nagar",
+    screening_method: "PAP",
+    screening_result: "POSITIVE",
+    refer: "yes",
+    notes: "Contact morning before household shift.",
+    consent_contact: "GRANTED",
+    consent_followup: "GRANTED",
+  },
+  {
+    patient_name: "Pooja Jadhav",
+    age: "34",
+    phone: "9819876543",
+    preferred_language: "mr",
+    area: "Worli Koliwada",
+    screening_method: "HPV",
+    screening_result: "POSITIVE",
+    refer: "yes",
+    notes: "Prefers WhatsApp reminder in Marathi.",
+    consent_contact: "GRANTED",
+    consent_followup: "GRANTED",
+  },
+];
 
 interface Doc { file: File; kind: string; state: "ready" | "saving" | "saved" | "failed"; error?: string }
 
@@ -40,8 +95,47 @@ export function RegisterPatient({ staff, centre, onCancel, onOpen, onDone }: {
   staff: StaffProfile; centre: string | null; onCancel: () => void; onOpen: (referralId: string) => void; onDone: (r: Referral) => void;
 }) {
   const [step, setStep] = useState(0);
-  const [f, setF] = useState({ patient_name: "", age: "", phone: "", preferred_language: "", area: "", screening_date: today(), screening_method: "", screening_result: "",
-    refer: "", referral_date: today(), notes: "", consent_contact: "", consent_followup: "" });
+  const [profileIdx, setProfileIdx] = useState(0);
+  const sample = DEMO_PREFILL_POOL[profileIdx % DEMO_PREFILL_POOL.length];
+  const [f, setF] = useState({
+    patient_name: sample.patient_name,
+    age: sample.age,
+    phone: sample.phone,
+    preferred_language: sample.preferred_language,
+    area: sample.area,
+    screening_date: today(),
+    screening_method: sample.screening_method,
+    screening_result: sample.screening_result,
+    refer: sample.refer,
+    referral_date: today(),
+    notes: sample.notes,
+    consent_contact: sample.consent_contact,
+    consent_followup: sample.consent_followup,
+  });
+
+  const fillSample = (nextIdx?: number) => {
+    const idx = nextIdx ?? (profileIdx + 1);
+    const p = DEMO_PREFILL_POOL[idx % DEMO_PREFILL_POOL.length];
+    setProfileIdx(idx);
+    setF({
+      patient_name: p.patient_name,
+      age: p.age,
+      phone: p.phone,
+      preferred_language: p.preferred_language,
+      area: p.area,
+      screening_date: today(),
+      screening_method: p.screening_method,
+      screening_result: p.screening_result,
+      refer: p.refer,
+      referral_date: today(),
+      notes: p.notes,
+      consent_contact: p.consent_contact,
+      consent_followup: p.consent_followup,
+    });
+    setMatches(null);
+    setError(null);
+  };
+
   const [docs, setDocs] = useState<Doc[]>([]);
   const [docKind, setDocKind] = useState("SCREENING_REPORT");
   const [docConsent, setDocConsent] = useState(false);
@@ -146,6 +240,21 @@ export function RegisterPatient({ staff, centre, onCancel, onOpen, onDone }: {
       <div className="flex items-center gap-2">
         <button type="button" onClick={onCancel} aria-label="Close registration" className="p-1.5 -ml-1.5 rounded-md text-slate-500 hover:bg-slate-100 cursor-pointer"><ArrowLeft className="size-5" /></button>
         <h2 id="register-title" className={ui.h2}>Register patient</h2>
+      </div>
+
+      <div className="flex items-center justify-between p-2.5 rounded-lg bg-sky-50 border border-sky-200 text-xs">
+        <div className="flex items-center gap-2 text-sky-900 font-medium">
+          <Sparkles className="size-4 text-[#0284C7] shrink-0" />
+          <span>Demo profile loaded: <strong>{f.patient_name}</strong>. Advance through steps by clicking <strong>Continue</strong>.</span>
+        </div>
+        <button
+          type="button"
+          onClick={() => fillSample()}
+          className="text-xs font-semibold text-[#0369A1] hover:underline px-2.5 py-1 rounded bg-white border border-sky-200 shrink-0 cursor-pointer shadow-2xs"
+          data-testid="reg-next-sample"
+        >
+          🎲 Next Sample
+        </button>
       </div>
       <ol className="flex gap-1" aria-label="Steps">
         {STEPS.map((s, i) => <li key={s} className={`flex-1 border-t-2 pt-1.5 text-[11px] font-semibold ${i < step ? "border-emerald-600 text-emerald-800" : i === step ? "border-[#0369A1] text-[#075985]" : "border-slate-200 text-slate-400"}`} aria-current={i === step ? "step" : undefined}>{s}</li>)}
