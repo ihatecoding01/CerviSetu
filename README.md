@@ -4,11 +4,6 @@
   <h3>Cervical Cancer Referral Pathway for India's Health Posts, Hospitals and ASHA Workers</h3>
   <p><strong>No woman lost between an abnormal screening and care.</strong></p>
 
-  <a href="https://cervi-setu.pages.dev/"><img alt="Live Web MVP" src="https://img.shields.io/badge/🌐%20LIVE%20MVP-cervi--setu.pages.dev-018C7F?style=for-the-badge&labelColor=0F172A"></a>
-  <a href="https://drive.google.com/file/d/16l-TvH1dR5j1hMcbAAils9efy5uEkBBj/view?usp=sharing"><img alt="Implementation Video" src="https://img.shields.io/badge/▶%20VIDEO%20DEMO-Google%20Drive-E11D48?style=for-the-badge&labelColor=0F172A"></a>
-  <a href="https://drive.google.com/file/d/1BsL-AtmQBqwCRf0Hlhza8K8Dn3J2iIAw/view?usp=sharing"><img alt="2-Page Solution Brief" src="https://img.shields.io/badge/📄%20SOLUTION%20BRIEF-2--Page%20PDF-2563EB?style=for-the-badge&labelColor=0F172A"></a>
-  <a href="https://docs.google.com/presentation/d/1DWDuXUPUlsiF7aNQ_xHp2cximp8js2nM/edit?usp=sharing&ouid=112906296684609349584&rtpof=true&sd=true"><img alt="Pitch Deck" src="https://img.shields.io/badge/📊%20PITCH%20DECK-Google%20Slides-D97706?style=for-the-badge&labelColor=0F172A"></a>
-  <br>
   <a href="#running-the-test-suite"><img alt="pytest" src="https://img.shields.io/badge/pytest-245%20tests-4C9A2A?style=for-the-badge&labelColor=555555&logo=pytest&logoColor=white"></a>
   <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/Python-3.14%2B-3776AB?style=for-the-badge&labelColor=555555&logo=python&logoColor=white"></a>
   <a href="https://react.dev/"><img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&labelColor=555555&logo=react&logoColor=white"></a>
@@ -19,12 +14,15 @@
   <a href="https://abdm.gov.in/"><img alt="ABDM" src="https://img.shields.io/badge/ABDM-ABHA%20sandbox-018C7F?style=for-the-badge&labelColor=555555"></a>
   <a href="#security--privacy"><img alt="DPDP Act 2023" src="https://img.shields.io/badge/DPDP%20Act%202023-AES--256--GCM-2E7D32?style=for-the-badge&labelColor=555555"></a>
   <a href="#multilingual-interface-7-languages"><img alt="7 languages" src="https://img.shields.io/badge/UI-7%20languages-9D174D?style=for-the-badge&labelColor=555555"></a>
-</div>
 
-<br>
-
-<div align="center">
-  <a href="https://drive.google.com/file/d/16l-TvH1dR5j1hMcbAAils9efy5uEkBBj/view?usp=sharing"><img alt="Watch the implementation video" src="https://img.shields.io/badge/▶%20WATCH%20THE%20IMPLEMENTATION%20VIDEO-018C7F?style=for-the-badge"></a>
+  <p>
+    <a href="https://cervi-setu.pages.dev/"><img alt="Live Web MVP" src="https://img.shields.io/badge/🌐%20LIVE%20MVP-cervi--setu.pages.dev-018C7F?style=for-the-badge&labelColor=0F172A"></a>
+    <a href="https://drive.google.com/file/d/1BsL-AtmQBqwCRf0Hlhza8K8Dn3J2iIAw/view?usp=sharing"><img alt="2-Page Solution Brief" src="https://img.shields.io/badge/📄%20SOLUTION%20BRIEF-2--Page%20PDF-2563EB?style=for-the-badge&labelColor=0F172A"></a>
+    <a href="https://docs.google.com/presentation/d/1DWDuXUPUlsiF7aNQ_xHp2cximp8js2nM/edit?usp=sharing&ouid=112906296684609349584&rtpof=true&sd=true"><img alt="Pitch Deck" src="https://img.shields.io/badge/📊%20PITCH%20DECK-Google%20Slides-D97706?style=for-the-badge&labelColor=0F172A"></a>
+  </p>
+  <p>
+    <a href="https://drive.google.com/file/d/16l-TvH1dR5j1hMcbAAils9efy5uEkBBj/view?usp=sharing"><img alt="Watch the implementation video" src="https://img.shields.io/badge/▶%20WATCH%20THE%20IMPLEMENTATION%20VIDEO-018C7F?style=for-the-badge"></a>
+  </p>
 </div>
 
 <br>
@@ -39,7 +37,6 @@ The platform has **six role-based portals** (patient, doctor, nurse, ASHA worker
 
 ## Contents
 
-- [Application Preview](#application-preview)
 - [The Referral Pathway](#the-referral-pathway)
 - [System Architecture](#system-architecture)
 - [Portals and Features](#portals-and-features)
@@ -65,84 +62,7 @@ The platform has **six role-based portals** (patient, doctor, nurse, ASHA worker
 - [Project Structure](#project-structure)
 - [License](#license)
 
----
 
-## Application Preview
-
-Screenshots of the running application. Every patient shown is fictional demo data.
-
-<table>
-  <tr>
-    <td width="50%" align="center">
-      <img src="./docs/screenshots/01_landing_page.png" alt="CerviSetu landing page" width="100%">
-      <br><strong>Landing page</strong><br><sub>Interactive 3D cervix model, the 14-day follow-up journey and showcase studios.</sub>
-    </td>
-    <td width="50%" align="center">
-      <img src="./docs/screenshots/02_care_gateway.png" alt="Care gateway" width="100%">
-      <br><strong>Care gateway</strong><br><sub>One entry point with Orion cards for staff, ASHA mobilizers and patients.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <img src="./docs/screenshots/03_patient_portal.png" alt="Patient portal" width="100%">
-      <br><strong>Patient portal</strong><br><sub>Next step, referral centre, directions, cost estimate and interactive navigation map.</sub>
-    </td>
-    <td width="50%" align="center">
-      <img src="./docs/screenshots/05_doctor_dashboard.png" alt="Doctor dashboard" width="100%">
-      <br><strong>Doctor dashboard</strong><br><sub>Urgent cases first, with counts for review, follow-up, arrivals and the Clinical & Field Intelligence Hub.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <img src="./docs/screenshots/06_referral_cases.png" alt="Referral cases" width="100%">
-      <br><strong>Referral cases</strong><br><sub>Opens on "Needs attention", with filters for all patients, review, follow-up, arrivals, care and closed.</sub>
-    </td>
-    <td width="50%" align="center">
-      <img src="./docs/screenshots/07_case_record.png" alt="Case record" width="100%">
-      <br><strong>Case record</strong><br><sub>Screening summary, care journey, clinical findings, follow-up history and opt-in OCR document reading.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <img src="./docs/screenshots/11_asha_followups.png" alt="ASHA follow-ups" width="100%">
-      <br><strong>ASHA worker</strong><br><sub>Who needs you today: home visits due (day 14+), field call/visit logging, and contact history.</sub>
-    </td>
-    <td width="50%" align="center">
-      <img src="./docs/screenshots/12_asha_register.png" alt="ASHA patient registration" width="100%">
-      <br><strong>ASHA patient registration</strong><br><sub>Step-by-step registration with a duplicate check, consent, 1-click demo prefill and document reading.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <img src="./docs/screenshots/10_nurse_work_queue.png" alt="Nurse work queue" width="100%">
-      <br><strong>Nurse</strong><br><sub>Work queue of referrals that need a call or action today.</sub>
-    </td>
-    <td width="50%" align="center">
-      <img src="./docs/screenshots/09_register_patient.png" alt="Register patient" width="100%">
-      <br><strong>Register patient</strong><br><sub>Five-step intake with Scan-to-Fill slip extraction for nurses and doctors.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <img src="./docs/screenshots/13_hospital_desk.png" alt="Hospital desk" width="100%">
-      <br><strong>Hospital desk</strong><br><sub>Incoming referrals and arrival confirmation.</sub>
-    </td>
-    <td width="50%" align="center">
-      <img src="./docs/screenshots/14_admin_overview.png" alt="Administrator overview" width="100%">
-      <br><strong>Administrator</strong><br><sub>Programme counts, directory, staff and activity log.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <img src="./docs/screenshots/08_prevention_screening.png" alt="Prevention and screening" width="100%">
-      <br><strong>Prevention and screening</strong><br><sub>HPV vaccination, screening triage, vaccine inventory and precancer surveillance.</sub>
-    </td>
-    <td width="50%" align="center">
-      <img src="./docs/screenshots/04_patient_portal_mobile.png" alt="Patient portal on a phone" width="280" style="max-width: 100%; height: auto;">
-      <br><strong>Patient portal on a phone</strong><br><sub>Every portal adapts responsively to phone, tablet and laptop widths.</sub>
-    </td>
-  </tr>
-</table>
 
 ---
 
@@ -207,6 +127,9 @@ flowchart TD
 ## Portals and Features
 
 ### Landing Page
+
+<img src="./docs/screenshots/01_landing_page.png" alt="CerviSetu landing page" width="100%">
+
 - **Interactive 3D cervix model**: drag to rotate, zoom and switch between anatomy, screening (VIA) and common findings. The model is illustrative and labelled as such.
 - **14-day follow-up journey**: an interactive timeline from referral (day 0) to reminders (day 7) and the ASHA visit (day 14).
 - **Interactive product tour**: voice reminders, identity masking and the 14-day follow-up, shown in place.
@@ -215,11 +138,17 @@ flowchart TD
 - **Layout-aware header**: section links move into a menu when a language's labels do not fit, so nothing is pushed off screen.
 
 ### Care Gateway and Sign-in
+
+<img src="./docs/screenshots/02_care_gateway.png" alt="Care gateway" width="100%">
+
 - **One entry point** with separate paths for staff, ASHA workers and patients.
 - **Staff sign-in**: choose a role (doctor, nurse, ASHA worker, hospital desk or administrator) and sign in with a staff ID and PIN. Sessions are signed, HttpOnly cookies, with PIN lockout and audited sign-ins.
 - **Patients**: ABHA registration (sandbox) with every DPDP consent item, or mobile OTP login for returning patients.
 
 ### Patient Portal
+
+<img src="./docs/screenshots/03_patient_portal.png" alt="Patient portal" width="100%">
+
 A two-column layout on laptops that stacks naturally on tablets and phones.
 - **Your next step**: one clear sentence about what to do now, with the day of her referral ("Day 12 of 14").
 - **Referral centre card**: her assigned hospital, with **Get directions** (Google Maps), **I have been to the hospital** (tells her health post; the hospital then confirms) and **Estimate cost**.
@@ -232,8 +161,14 @@ A two-column layout on laptops that stacks naturally on tablets and phones.
 - **Session-protected**: she can only ever see her own record.
 
 ### Doctor Portal
+
+<img src="./docs/screenshots/05_doctor_dashboard.png" alt="Doctor dashboard" width="100%">
+
 - **Dashboard**: shows **urgent cases only**, with counts for review, follow-up and arrivals. Quick actions open referrals, a case record, report upload and a new screening.
 - **Referral cases**: opens on **Needs attention**, sorted by priority. Filters for **All patients**, review, follow-up, arrived, under care and closed, plus an urgency filter and search by name, patient ID or referral ID.
+
+<img src="./docs/screenshots/06_referral_cases.png" alt="Referral cases" width="100%">
+
 - **Case record**: a patient header with ID, urgency and route (health post → hospital), and a patient switcher.
   - **Overview**: screening summary, red flags, colposcopy, histopathology and next follow-up.
   - **Case record**: record colposcopy, biopsy, histopathology, MRI, final diagnosis, treatment plan and remarks, and move the status forward.
@@ -241,21 +176,36 @@ A two-column layout on laptops that stacks naturally on tablets and phones.
   - **Consultation and AI voice**: record or type a consultation and get an editable draft. Voice commands appear as buttons and do nothing until the doctor confirms.
   - **ABHA and DPDP consent**.
   - **Reports rail**: case details and attached reports (VIA and colposcopy images, histopathology, MRI), stored encrypted.
+
+<img src="./docs/screenshots/07_case_record.png" alt="Case record" width="100%">
+
 - **Register patient**: the same step-by-step registration nurses use (patient, screening result, history, consent, review) with Scan-to-Fill slip extraction.
 - **Follow-up tracker**: where every open referral is in the 14 days.
 - **ASHA network**: assign an ASHA worker and see field activity.
 - **Prevention and screening**: HPV vaccination (with outreach), screening triage and precancer surveillance.
+
+<img src="./docs/screenshots/08_prevention_screening.png" alt="Prevention and screening" width="100%">
+
 - **Audit and privacy**: the chained audit ledger with chain verification.
 - **Teaching cases**: reference cases for doctors, kept apart from real patient queues.
 
 ### Nurse Portal
+
+<img src="./docs/screenshots/10_nurse_work_queue.png" alt="Nurse work queue" width="100%">
+
 - **Work queue**: referrals that need a call or action today.
-- **New screening**: a 5-step intake (patient, screening result, history, consent, review and save) that creates a referral and routes it to the right hospital for the health post.
+- **New screening**: a 5-step intake (patient, screening result, history, consent, review and save) with Scan-to-Fill slip extraction that creates a referral and routes it to the right hospital for the health post.
+
+<img src="./docs/screenshots/09_register_patient.png" alt="Register patient" width="100%">
+
 - **Referrals**: the same filterable list, defaulting to all patients.
 - **Follow-up tracker** and **Prevention and screening**.
 - **Calls**: record call outcomes (no answer, spoke to her, family reminded) on days 11 to 13.
 
 ### ASHA Worker Portal
+
+<img src="./docs/screenshots/11_asha_followups.png" alt="ASHA follow-ups" width="100%">
+
 Designed for a phone in the field.
 - **Who needs you today**: home visits due (day 14 or later) first, then women whose reminders are still running.
 - **Patient panel**: call her, record the outcome, or record a home visit and her decision.
@@ -264,14 +214,23 @@ Designed for a phone in the field.
   - **Consent** for contact and follow-up. If follow-up is refused, the case goes to doctor review and no reminders are sent.
   - **Document upload**: screening report and referral slip only, and only with the woman's photo consent. ASHA workers can never upload or open clinical reports.
   - The health post always comes from her session, not the form, and the same request sent twice creates one record.
+
+<img src="./docs/screenshots/12_asha_register.png" alt="ASHA patient registration" width="100%">
+
 - **Privacy by design**: ASHA workers never see screening findings, only what they need to reach her.
 - **Closed**: women who arrived or completed care.
 
 ### Hospital Desk
+
+<img src="./docs/screenshots/13_hospital_desk.png" alt="Hospital desk" width="100%">
+
 - **Incoming referrals**: women referred to this hospital, with the health post and red flags.
 - **Confirm arrival**: stops the 14-day follow-up and moves the case to the doctor.
 
 ### Administrator Portal
+
+<img src="./docs/screenshots/14_admin_overview.png" alt="Administrator overview" width="100%">
+
 - **Overview**: total referrals, in follow-up, past day 14, arrived and declined, plus directory counts and recent actions. Administrators never see patient records.
 - **Hospitals**: add, edit, activate and deactivate referral hospitals.
 - **Health posts and routes**: which hospital each health post refers to, with a confirmation before a route changes.
@@ -292,6 +251,11 @@ Designed for a phone in the field.
 - **One switcher everywhere**, remembered on the device.
 
 ### Responsive Design
+
+<div align="center">
+  <img src="./docs/screenshots/04_patient_portal_mobile.png" alt="Patient portal on a phone" width="280" style="max-width: 100%; height: auto;">
+</div>
+
 - Checked at phone (320 to 430 px), tablet (768 to 1024 px) and laptop/desktop (1280 to 1920 px) widths.
 - The staff sidebar becomes a menu on phones. Wide tables scroll inside their own box instead of the page.
 - The case record's reports rail moves below the content on smaller screens.
