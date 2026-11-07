@@ -6,7 +6,7 @@ services:
     plan: free
     branch: main
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn backend.dashboard.app:app --host 0.0.0.0 --port $PORT
+    startCommand: python main.py
     healthCheckPath: /api/facilities
     envVars:
       - key: PYTHON_VERSION
@@ -31,3 +31,4 @@ services:
         sync: false
       - key: VAULT_SECRET_KEY
         generateValue: true
+
