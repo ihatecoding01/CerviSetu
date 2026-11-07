@@ -10,7 +10,7 @@ def test_token_vault_encryption():
         "full_name": "Rameshwar Prasad",
         "phone": "+91 9876543210",
         "village": "Kalyanpur",
-        "district": "Mirzapur"
+        "district": "Mumbai"
     }
 
     vault.store_pii(token, pii_payload)

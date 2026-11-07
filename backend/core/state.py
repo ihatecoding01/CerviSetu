@@ -61,15 +61,7 @@ class DiagnosticSynthesis(BaseModel):
     patient_message_sent: bool = False
 
 
-class NotificationDispatch(BaseModel):
-    """Record of an escalation alert dispatched."""
-    tier: str  # TIER_1_SMS, TIER_2_IVR, TIER_3_ASHA, TIER_4_AUTHORITY
-    timestamp: str
-    recipient_role: str
-    channel: str
-    message_content: str
-    status: str = "SIMULATED"
-    escalation_reason: str = ""
+
 
 
 class ClinicalAgentState(TypedDict):
@@ -94,12 +86,7 @@ class ClinicalAgentState(TypedDict):
     # Diagnostic Processing
     diagnostic_synthesis: Optional[Dict[str, Any]]
     
-    # Pillar 2 Outputs (Tracking & Escalation)
-    days_overdue: int
     cancer_severity_score: float
-    current_escalation_tier: Optional[str]
-    dispatched_notifications: Annotated[List[Dict[str, Any]], operator.add]
-    authority_escalation_dossier: Optional[Dict[str, Any]]
     
     # Workflow & Audit State
     audit_trail: Annotated[List[str], operator.add]

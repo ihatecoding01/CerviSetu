@@ -29,22 +29,8 @@ class DoctorSignOffRequest(BaseModel):
     ncg_verified: Optional[bool] = True
 
 
-class DoctorTriageRequest(BaseModel):
-    doctor_id: str
-    patient_token: str
-    toxicity_grade: int
-    symptom: str
-    intervention: str
 
 
-class NurseFractionLogRequest(BaseModel):
-    nurse_id: str
-    patient_token: str
-    fraction_number: int
-    machine_id: Optional[str] = "LINAC-SPOKE-01"
-    dose_gy: Optional[float] = 2.0
-    session_date: Optional[str] = None       # clinic-local YYYY-MM-DD, defaults to today
-    session_status: Optional[str] = "COMPLETED"  # or CANCELLED (does not count toward progress)
 
 
 class NurseSlipUploadRequest(BaseModel):
@@ -55,20 +41,8 @@ class NurseSlipUploadRequest(BaseModel):
     is_legible: bool
 
 
-class PatientSymptomCheckinRequest(BaseModel):
-    patient_token: str
-    symptoms: List[str]
-    severity_grade: int
-    channel: Optional[str] = "WHATSAPP"
-    voice_note_received: Optional[bool] = False
 
 
-class AshaHomeVisitRequest(BaseModel):
-    asha_id: str
-    patient_token: str
-    delay_root_cause: str
-    patient_contacted: bool
-    field_notes: Optional[str] = ""
 
 
 @router.get("/audit-logs")
@@ -217,91 +191,8 @@ async def log_doctor_sign_off(req: DoctorSignOffRequest):
     return {"status": "SUCCESS", "log_id": log_id, "block": block}
 
 
-@router.post("/logs/doctor/triage")
-async def log_doctor_triage(req: DoctorTriageRequest):
-    """Log a doctor's review and clinical triage of a Grade 2+ toxicity alert."""
-    log_id = f"DOC-TRIAGE-{secrets.token_hex(4).upper()}"
-    payload = {
-        "toxicity_grade": req.toxicity_grade,
-        "symptom": req.symptom,
-        "intervention": req.intervention
-    }
-    block = global_audit.record_user_event(
-        user_role=UserRole.DOCTOR,
-        action="DOCTOR_TOXICITY_ALERT_TRIAGE",
-        actor_id=req.doctor_id,
-        patient_token=req.patient_token,
-        details=payload,
-        severity="WARNING" if req.toxicity_grade >= 2 else "INFO",
-        channel="WEB_CAREUI"
-    )
-    global_db.log_user_activity(
-        log_id=log_id,
-        user_role=UserRole.DOCTOR,
-        actor_id=req.doctor_id,
-        patient_token=req.patient_token,
-        action_type="DOCTOR_TOXICITY_ALERT_TRIAGE",
-        channel="WEB_CAREUI",
-        severity="WARNING" if req.toxicity_grade >= 2 else "INFO",
-        payload=payload,
-        sha256_hash=block.get("current_hash"),
-        timestamp=block.get("timestamp")
-    )
-    return {"status": "SUCCESS", "log_id": log_id, "block": block}
 
 
-@router.post("/logs/nurse/fraction")
-async def log_nurse_fraction(req: NurseFractionLogRequest):
-    """Log a nurse's 1-tap session completion. With an approved plan this records the session and
-    recomputes the treatment clock; without one it stays an audit-only log (legacy demo behaviour)."""
-    from backend.tools.clock_service import ClockError, log_session
-
-    clock_result = None
-    if global_db.get_treatment_plan(req.patient_token):
-        try:
-            clock_result = log_session(
-                req.patient_token, req.fraction_number, req.session_date, req.session_status or "COMPLETED",
-                req.nurse_id, req.machine_id, req.dose_gy,
-            )
-        except ClockError as e:
-            raise HTTPException(status_code=e.status_code, detail=e.detail)
-        if clock_result["duplicate"]:
-            return {"status": "SUCCESS", "duplicate": True, "clock_updated": False, "clock": clock_result["clock"]}
-
-    log_id = f"NURSE-FRAC-{secrets.token_hex(4).upper()}"
-    payload = {
-        "fraction_number": req.fraction_number,
-        "machine_id": req.machine_id,
-        "dose_gy": req.dose_gy,
-        "session_status": req.session_status or "COMPLETED",
-    }
-    block = global_audit.record_user_event(
-        user_role=UserRole.NURSE_HEALTHCARE_WORKER,
-        action="NURSE_EBRT_FRACTION_LOG",
-        actor_id=req.nurse_id,
-        patient_token=req.patient_token,
-        details=payload,
-        severity="INFO",
-        channel="WEB_CAREUI"
-    )
-    global_db.log_user_activity(
-        log_id=log_id,
-        user_role=UserRole.NURSE_HEALTHCARE_WORKER,
-        actor_id=req.nurse_id,
-        patient_token=req.patient_token,
-        action_type="NURSE_EBRT_FRACTION_LOG",
-        channel="WEB_CAREUI",
-        severity="INFO",
-        payload=payload,
-        sha256_hash=block.get("current_hash"),
-        timestamp=block.get("timestamp")
-    )
-    if clock_result is None:
-        return {"status": "SUCCESS", "log_id": log_id, "block": block,
-                "clock_updated": False, "reason": "NO_ACTIVE_TREATMENT_PLAN"}
-    return {"status": "SUCCESS", "log_id": log_id, "block": block, "duplicate": False, "clock_updated": True,
-            "session_id": clock_result["session_id"], "clock": clock_result["clock"],
-            "escalation": clock_result["escalation"]}
 
 
 @router.post("/logs/nurse/slip-upload")
@@ -337,82 +228,14 @@ async def log_nurse_slip_upload(req: NurseSlipUploadRequest):
     return {"status": "SUCCESS", "log_id": log_id, "block": block}
 
 
-@router.post("/logs/patient/symptom-checkin")
-async def log_patient_symptom_checkin(req: PatientSymptomCheckinRequest):
-    """Log a patient's bi-weekly symptom check-in via vernacular WhatsApp or IVR."""
-    log_id = f"PAT-SYM-{secrets.token_hex(4).upper()}"
-    payload = {
-        "symptoms": req.symptoms,
-        "severity_grade": req.severity_grade,
-        "voice_note_received": req.voice_note_received
-    }
-    severity = "WARNING" if req.severity_grade >= 2 else "INFO"
-    block = global_audit.record_user_event(
-        user_role=UserRole.PATIENT,
-        action="PATIENT_SYMPTOM_CHECKIN",
-        actor_id=req.patient_token,
-        patient_token=req.patient_token,
-        details=payload,
-        severity=severity,
-        channel=req.channel or "WHATSAPP"
-    )
-    global_db.log_user_activity(
-        log_id=log_id,
-        user_role=UserRole.PATIENT,
-        actor_id=req.patient_token,
-        patient_token=req.patient_token,
-        action_type="PATIENT_SYMPTOM_CHECKIN",
-        channel=req.channel or "WHATSAPP",
-        severity=severity,
-        payload=payload,
-        sha256_hash=block.get("current_hash"),
-        timestamp=block.get("timestamp")
-    )
-    return {"status": "SUCCESS", "log_id": log_id, "block": block}
 
 
-@router.post("/logs/asha/home-visit")
-async def log_asha_home_visit(req: AshaHomeVisitRequest):
-    """Log an in-person home visit report and root cause conducted by a village ASHA community health worker."""
-    log_id = f"ASHA-VISIT-{secrets.token_hex(4).upper()}"
-    payload = {
-        "delay_root_cause": req.delay_root_cause,
-        "patient_contacted": req.patient_contacted,
-        "field_notes": req.field_notes
-    }
-    block = global_audit.record_user_event(
-        user_role=UserRole.NURSE_HEALTHCARE_WORKER,
-        action="ASHA_HOME_VISIT_COMPLETE",
-        actor_id=req.asha_id,
-        patient_token=req.patient_token,
-        details=payload,
-        severity="INFO",
-        channel="ASHA_PWA"
-    )
-    global_db.log_user_activity(
-        log_id=log_id,
-        user_role=UserRole.NURSE_HEALTHCARE_WORKER,
-        actor_id=req.asha_id,
-        patient_token=req.patient_token,
-        action_type="ASHA_HOME_VISIT_COMPLETE",
-        channel="ASHA_PWA",
-        severity="INFO",
-        payload=payload,
-        sha256_hash=block.get("current_hash"),
-        timestamp=block.get("timestamp")
-    )
-    return {"status": "SUCCESS", "log_id": log_id, "block": block}
 
 
 # ==========================================
 # Live SHA-256 Verification & ASHA Tickets
 # ==========================================
 
-class AshaTicketOutcomeRequest(BaseModel):
-    ticket_id: str
-    outcome: str  # RESOLVED_PATIENT_TRAVELING_TOMORROW, ESCORT_NEEDED_IMMEDIATE, UNREACHABLE
-    root_cause: Optional[str] = None
-    arrival_watch_hours: Optional[int] = 24
 
 
 @router.get("/logs/verify-chain")
@@ -428,45 +251,8 @@ async def verify_audit_chain():
     }
 
 
-@router.post("/logs/asha/ticket-outcome")
-async def update_asha_ticket_outcome(req: AshaTicketOutcomeRequest):
-    """Update ASHA field ticket outcome, set root cause and activate 24h arrival watch timer."""
-    updated = global_db.update_asha_ticket_outcome(
-        ticket_id=req.ticket_id,
-        outcome=req.outcome,
-        root_cause=req.root_cause,
-        arrival_watch_hours=req.arrival_watch_hours or 24
-    )
-
-    if "ESCORT" in req.outcome and updated.get("patient_token"):
-        from backend.tools import authority_cases
-        authority_cases.raise_case(updated["patient_token"], None, updated.get("days_missed") or 0,
-                                   f"ASHA field report: escort needed. Cause: {req.root_cause or 'not stated'}")
-
-    action = "ASHA_TICKET_FAST_TRACK_ESCORT" if "ESCORT" in req.outcome else "ASHA_TICKET_RESOLVED_TRAVELING_TOMORROW"
-    global_audit.record_user_event(
-        user_role=UserRole.NURSE_HEALTHCARE_WORKER,
-        action=action,
-        actor_id="ASHA-FIELD-LEAD",
-        patient_token=updated.get("patient_token", "UNKNOWN"),
-        details={
-            "ticket_id": req.ticket_id,
-            "outcome": req.outcome,
-            "root_cause": req.root_cause,
-            "arrival_watch_timer_hours": req.arrival_watch_hours or 24
-        },
-        severity="WARNING" if "ESCORT" in req.outcome else "INFO",
-        channel="ASHA_PWA"
-    )
-
-    return {"status": "SUCCESS", "ticket": updated}
 
 
-@router.get("/logs/asha/tickets")
-async def get_active_asha_tickets(asha_worker_id: Optional[str] = None):
-    """List active ASHA field tickets."""
-    tickets = global_db.get_active_asha_tickets(asha_worker_id=asha_worker_id)
-    return {"tickets": tickets, "total": len(tickets)}
 
 
 

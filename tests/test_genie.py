@@ -7,7 +7,7 @@ from backend.dashboard.routers import genie
 
 
 def test_genie_is_staff_only():
-    assert set(required_roles("POST", "/api/genie/ask")) == {"DOCTOR", "NURSE", "ASHA", "ADMIN"}
+    assert set(required_roles("POST", "/api/genie/ask")) == {"DOCTOR", "NURSE", "ASHA"}
 
 
 def test_fallback_answers_from_live_data(monkeypatch):
@@ -41,27 +41,29 @@ def test_internal_labels_are_hidden():
     assert genie._plain("From the LIVE DATA, see Clinical Intake (intake-tab).") == "From today's records, see Clinical Intake."
 
 
+ROW = {"patient_token": "PT-CASE-X", "screening_finding": "VIA positive", "status": "REFERRED", "lane": "visit_due",
+       "following": True, "follow_up_day": 11, "health_post": "Post", "hospital": "Hospital"}
+
+
 def test_follow_ups_get_history_and_board_patients_are_known(monkeypatch):
     seen = {}
     def fake(system, user, *a, **k):
         seen["user"] = user
-        return {"answer": "She has missed two.", "patients": ["PT-RURAL-1102"], "suggestions": ["What next?"]}
+        return {"answer": "She is on day 11.", "patients": ["PT-CASE-X"], "suggestions": ["What next?"]}
     monkeypatch.setattr(genie.global_llm, "structured", fake)
+    monkeypatch.setattr(genie.referral_pathway, "list_referrals", lambda: [ROW])
     body = TestClient(app).post("/api/genie/ask", json={
-        "question": "what about her?", "history": [{"role": "user", "text": "Who is overdue?"}],
-        "board": [{"token": "PT-RURAL-1102", "lane": "critical", "projected_day": 59, "attendance": "Overdue"}]}).json()
-    assert "Who is overdue?" in seen["user"] and "PT-RURAL-1102" in seen["user"]
-    assert "missed_sessions" not in seen["user"]
-    assert body["patients"] == ["PT-RURAL-1102"] and body["suggestions"] == ["What next?"]
+        "question": "what about her?", "history": [{"role": "user", "text": "Who is overdue?"}]}).json()
+    assert "Who is overdue?" in seen["user"] and "PT-CASE-X" in seen["user"]
+    assert body["patients"] == ["PT-CASE-X"] and body["suggestions"] == ["What next?"]
 
 
-def test_fallback_lists_critical_board_patient(monkeypatch):
+def test_fallback_lists_patient_needing_attention(monkeypatch):
     monkeypatch.setattr(genie.global_llm, "structured", lambda *a, **k: None)
-    body = TestClient(app).post("/api/genie/ask", json={
-        "question": "Who needs attention?",
-        "board": [{"token": "PT-RURAL-1102", "lane": "critical", "projected_day": 59, "attendance": "Overdue"}]}).json()
-    assert body["patients"][0] == "PT-RURAL-1102"
+    monkeypatch.setattr(genie.referral_pathway, "list_referrals", lambda: [ROW])
+    body = TestClient(app).post("/api/genie/ask", json={"question": "Who needs attention?"}).json()
+    assert body["patients"][0] == "PT-CASE-X"
 
 
 def test_tab_ids_become_screen_names():
-    assert genie._plain("Check the tracker-tab.") == "Check Rural Tracker."
+    assert genie._plain("Check the tracker-tab.") == "Check Referral Tracker."

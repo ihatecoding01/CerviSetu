@@ -46,15 +46,7 @@ IMAGE_QUALITY_THRESHOLDS = {
     "max_overexposed_pct": float(os.getenv("MAX_OVEREXPOSED_PCT", "60.0")),  # Max % pixels near 255
 }
 
-# Rural Follow-Up & Escalation Timeline (in days missed, audited compressed radiobiological windows)
-ESCALATION_POLICY = {
-    "tier_1_sms_days": 1,        # Day +1 missed -> Multilingual WhatsApp / SMS Nudge
-    "tier_2_ivr_days": 2,        # Day +2 missed -> Automated interactive voice IVR call + Nurse outreach
-    "tier_3_asha_days": 3,       # Day +3 missed -> Immediate ASHA Village Home Visit Ticket (stigma-safe)
-    "tier_4_authority_days": 5,  # Day +5 missed -> District CMO Statutory Emergency MMU/108 Escort
-}
-
-# Treatment clock calendar: session dates and "today" are clinic-local dates, not UTC
+# Follow-up dates and "today" are clinic-local dates, not UTC
 try:
     CLINIC_TIMEZONE = ZoneInfo(os.getenv("CERVISETU_CLINIC_TZ", "Asia/Kolkata"))
 except Exception:
@@ -69,7 +61,7 @@ def clinic_today() -> date:
 
 # Severity Score Weights (0.0 to 1.0)
 SEVERITY_THRESHOLDS = {
-    "high_risk_cutoff": 0.70,   # High risk triggers Tier 4 authority unmasking on non-response
+    "high_risk_cutoff": 0.70,   # Marks a record for prompt clinician review
     "moderate_risk_cutoff": 0.40,
 }
 

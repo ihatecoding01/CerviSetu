@@ -18,7 +18,7 @@ class Fake:
 
     def transcribe(self, audio, filename, language_code="unknown"):
         self.clips += 1
-        return {"transcript": "Grade 2 diarrhoea, hold chemo this week.", "language_code": "en-IN"}
+        return {"transcript": "Bleeding after contact, colposcopy done today.", "language_code": "en-IN"}
 
     def structured(self, system, user, schema, name, **kwargs):
         return self.draft
@@ -39,18 +39,17 @@ def _post(monkeypatch, fake, seconds=2):
 
 
 def test_draft_and_command_are_suggestions(monkeypatch):
-    res = _post(monkeypatch, Fake({"chief_complaints": "Diarrhoea", "clinical_history": "CCRT", "working_impression": "RT enteritis",
-                                   "toxicity_grade": 2, "differentials": ["Infective"], "medications": [{"name": "ORS"}]})).json()
-    assert res["draft"]["source"] == "AI_DRAFT" and res["draft"]["toxicity_grade"] == 2
+    res = _post(monkeypatch, Fake({"chief_complaints": "Bleeding", "clinical_history": "VIA positive", "working_impression": "Await histopathology",
+                                   "differentials": ["Cervicitis"], "medications": [{"name": "ORS"}]})).json()
+    assert res["draft"]["source"] == "AI_DRAFT"
     assert res["draft"]["medications"][0]["name"] == "ORS"
-    assert [c["command"] for c in res["commands"]] == ["CHEMO_HOLD"]
+    assert [c["command"] for c in res["commands"]] == ["RECORD_COLPOSCOPY"]
     assert res["decision_support_only"] is True
 
 
-def test_invalid_grade_dropped_and_no_ai_keeps_transcript(monkeypatch):
-    assert _post(monkeypatch, Fake({"chief_complaints": "x", "clinical_history": "", "working_impression": "", "toxicity_grade": 9})).json()["draft"]["toxicity_grade"] is None
+def test_no_ai_keeps_transcript(monkeypatch):
     res = _post(monkeypatch, Fake(None)).json()
-    assert res["draft"]["source"] == "TRANSCRIPT_ONLY" and "diarrhoea" in res["draft"]["chief_complaints"]
+    assert res["draft"]["source"] == "TRANSCRIPT_ONLY" and "Bleeding" in res["draft"]["chief_complaints"]
 
 
 def test_long_recording_is_split(monkeypatch):
@@ -72,5 +71,5 @@ def test_audio_replay_then_real_purge(monkeypatch):
 
 def test_typed_notes_and_empty_input(monkeypatch):
     monkeypatch.setattr(llm_client, "global_llm", Fake(None))
-    assert client.post(f"/api/encounter/{TOKEN}/voice-consult", data={"text": "Please log the fraction as delivered"}).json()["commands"][0]["command"] == "LOG_FRACTION"
+    assert client.post(f"/api/encounter/{TOKEN}/voice-consult", data={"text": "Please record the biopsy"}).json()["commands"][0]["command"] == "RECORD_BIOPSY"
     assert client.post(f"/api/encounter/{TOKEN}/voice-consult", data={"text": " "}).status_code == 422

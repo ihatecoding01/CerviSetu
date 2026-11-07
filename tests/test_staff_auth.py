@@ -28,7 +28,7 @@ def test_staff_routes_need_sign_in(client):
 
 
 def test_public_routes_stay_open(client):
-    assert client.get("/api/facilities/search?query=Mirzapur").status_code == 200
+    assert client.get("/api/facilities/search?query=Mumbai").status_code == 200
     assert client.get("/api/staff/session").json()["authenticated"] is False
 
 
@@ -52,17 +52,12 @@ def test_wrong_pin_rejected_and_locks(client):
 
 def test_roles_are_enforced(client):
     _demo(client, "ASHA")
-    assert client.get("/api/logs/asha/tickets").status_code != 401
-    r = client.post("/api/clinical/discharge-signoff", json={})
+    assert client.get("/api/referrals").status_code == 200
+    r = client.post("/api/referrals/REF-X/clinical", json={})
     assert r.status_code == 403 and r.json()["detail"]["code"] == "ROLE_NOT_ALLOWED"
-    assert client.get("/api/fhir/patient/PT-RURAL-7891").status_code == 403
+    assert client.get("/api/fhir/patient/PT-CASE-NISHI").status_code == 403
 
 
-def test_nurse_cannot_approve_chemo_but_doctor_can_reach_it(client):
-    _demo(client, "NURSE")
-    assert client.post("/api/clinical/chemo-clearance", json={}).status_code == 403
-    _demo(client, "DOCTOR")
-    assert client.post("/api/clinical/chemo-clearance", json={}).status_code not in (401, 403)
 
 
 def test_logout_revokes(client):

@@ -5,15 +5,12 @@ import time
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional, Tuple
 
-from backend.config import ESCALATION_POLICY
 from backend.core.database import global_db
 from backend.core.security import global_audit
-from backend.tools.treatment_clock import escalation_tiers
 
 NODE_INFO = {
     "intake": ("Intake & PII Vault", "Masks identity, reads the case"),
-    "diagnostic": ("Diagnostic Synthesis", "Clinical impression and pathway"),
-    "tracker": ("56-Day Adherence Tracker", "Follow-up and escalation"),
+    "diagnostic": ("Case Summary", "Summary and pathway for clinician review"),
 }
 
 with global_db._get_conn() as _conn:
@@ -29,7 +26,7 @@ def _summary(node: str, update: Dict[str, Any]) -> str:
     if node == "diagnostic":
         synthesis = update.get("diagnostic_synthesis") or {}
         return f"Urgency {synthesis.get('urgency', 'not set')}; {'AI draft' if synthesis.get('ai_generated') else 'rules-based'}."
-    return f"Escalation tier: {update.get('current_escalation_tier') or 'none'}."
+    return "Done."
 
 
 def traced_invoke(graph, state: Dict[str, Any], config: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
@@ -56,12 +53,15 @@ def traced_invoke(graph, state: Dict[str, Any], config: Dict[str, Any]) -> Tuple
 def latest_trace() -> Optional[Dict[str, Any]]:
     with global_db._get_conn() as conn:
         row = conn.execute("SELECT trace FROM agent_run_trace WHERE id = 1").fetchone()
-    return json.loads(row["trace"]) if row else None
+    if not row:
+        return None
+    trace = json.loads(row["trace"])
+    # Labels come from the current pathway, so a run saved earlier never shows old step names.
+    trace["nodes"] = [n for n in trace.get("nodes", []) if n.get("node") in NODE_INFO]
+    for node in trace["nodes"]:
+        node["name"], node["role"] = NODE_INFO[node["node"]]
+    return trace
 
-
-def what_if_tier(days_missed: int) -> str:
-    tiers = escalation_tiers(days_missed, ESCALATION_POLICY, high_risk=True)
-    return tiers[-1] if tiers else "no escalation"
 
 
 def latest_ledger_block() -> Dict[str, Any]:

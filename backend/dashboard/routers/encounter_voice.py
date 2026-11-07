@@ -35,7 +35,6 @@ DRAFT_SCHEMA: Dict[str, Any] = {
         "chief_complaints": {"type": "string"},
         "clinical_history": {"type": "string"},
         "working_impression": {"type": "string"},
-        "toxicity_grade": {"type": "integer", "description": "Estimated highest CTCAE grade, 0-4"},
         "differentials": {"type": "array", "items": {"type": "string"}},
         "red_flags": {"type": "array", "items": {"type": "string"}},
         "next_steps": {"type": "array", "items": {"type": "string"}},
@@ -47,23 +46,19 @@ DRAFT_SCHEMA: Dict[str, Any] = {
 }
 
 DRAFT_PROMPT = (
-    "You assist an oncologist treating cervical cancer with concurrent chemoradiation. From the consultation "
+    "You assist a doctor seeing a woman referred for cervical screening follow-up, colposcopy, biopsy or treatment planning. From the consultation "
     "transcript (it may be in an Indian language) and chart context, draft an English note. Use only what the "
     "transcript and context state; never invent findings, doses or history. List medications only if actually "
-    "prescribed in the transcript. toxicity_grade is your CTCAE v5 estimate from the described symptoms (for example "
-    "diarrhoea: under 4 stools a day over baseline is grade 1, 4 to 6 is grade 2, 7 or more is grade 3; assume a baseline of one stool a day unless stated); omit it if "
-    "no toxicity is described. red_flags lists only concerning findings that are present, never reassuring negatives "
-    "or plans. Treat a lab as abnormal only beyond these limits: ANC under 1500/uL, platelets under 100 x10^3/uL, "
-    "haemoglobin under 10 g/dL, creatinine over 1.5 mg/dL; normal labs are never red flags. working_impression, differentials, red_flags and next_steps are suggestions "
+    "prescribed in the transcript. Never state a diagnosis as confirmed; histopathology confirms it. red_flags lists only concerning findings that are present, never reassuring negatives "
+    "or plans. working_impression, differentials, red_flags and next_steps are suggestions "
     "for the clinician to review. Reply with one JSON object matching this schema: " + json.dumps(DRAFT_SCHEMA)
 )
 
 # Spoken commands, English and common Hindi/Hinglish. Matched deterministically, never auto-executed.
 COMMAND_RULES = [
-    ("CHEMO_HOLD", "Hold this week's chemotherapy", r"\b(hold|stop|withhold)\b.{0,20}\b(chemo|cisplatin)|\b(chemo|cisplatin)\b.{0,20}\b(hold|stop|withhold|rok)|कीमो.{0,15}(रोक|बंद)"),
-    ("CHEMO_REDUCE", "Reduce the chemotherapy dose", r"\breduce\b.{0,20}\b(chemo|cisplatin|dose)|\b(chemo|cisplatin)\b.{0,20}\breduce|कीमो.{0,15}(कम)"),
-    ("CHEMO_APPROVE", "Approve this week's chemotherapy", r"\b(approve|clear|give)\b.{0,20}\b(chemo|cisplatin)|\b(chemo|cisplatin)\b.{0,20}\b(approve|cleared)|कीमो.{0,15}(दे दो|मंज़ूर|मंजूर)"),
-    ("LOG_FRACTION", "Log today's EBRT fraction as delivered", r"\b(log|mark|record)\b.{0,25}\bfraction\b|\bfraction\b.{0,20}\b(delivered|given|done)"),
+    ("RECORD_ARRIVED", "Record that she arrived at the hospital", r"\b(arrived|reached|came)\b.{0,25}\bhospital\b|\bmark\b.{0,15}\barrived\b|अस्पताल.{0,15}(पहुँच|पहुंच|आई)"),
+    ("RECORD_COLPOSCOPY", "Record that colposcopy is done", r"\bcolposcopy\b.{0,20}\b(done|complete|completed|finished)\b|\b(record|mark)\b.{0,20}\bcolposcopy\b|कॉल्पोस्कोपी.{0,15}(हो गई|हुई)"),
+    ("RECORD_BIOPSY", "Record that a biopsy was taken", r"\bbiopsy\b.{0,20}\b(taken|done|completed)\b|\b(record|mark)\b.{0,20}\bbiopsy\b|बायोप्सी.{0,15}(ली|हो गई|हुई)"),
 ]
 
 
@@ -137,9 +132,8 @@ def _clean_draft(raw: Optional[Dict[str, Any]], transcript: str) -> Dict[str, An
     if not raw:
         # AI unavailable: still useful, the clinician gets the transcript to edit
         return {"source": "TRANSCRIPT_ONLY", "chief_complaints": transcript[:2000], "clinical_history": "",
-                "working_impression": "", "toxicity_grade": None, "differentials": [], "red_flags": [],
+                "working_impression": "", "differentials": [], "red_flags": [],
                 "next_steps": [], "medications": []}
-    grade = raw.get("toxicity_grade")
     meds = []
     for m in raw.get("medications") or []:
         if isinstance(m, dict) and str(m.get("name") or "").strip():
@@ -147,7 +141,6 @@ def _clean_draft(raw: Optional[Dict[str, Any]], transcript: str) -> Dict[str, An
     return {"source": "AI_DRAFT", "chief_complaints": str(raw.get("chief_complaints") or "")[:2000],
             "clinical_history": str(raw.get("clinical_history") or "")[:3000],
             "working_impression": str(raw.get("working_impression") or "")[:600],
-            "toxicity_grade": grade if isinstance(grade, int) and 0 <= grade <= 4 else None,
             "differentials": _strings(raw.get("differentials")), "red_flags": _strings(raw.get("red_flags")),
             "next_steps": _strings(raw.get("next_steps")), "medications": meds[:10]}
 

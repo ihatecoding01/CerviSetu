@@ -8,7 +8,7 @@ the session id, so logout revokes a session and a leaked database does not yield
 Roles and what they may do are defined in ROLE_RULES; `required_roles()` maps an API request to the
 roles allowed to make it, and the app middleware enforces it.
 
-Limits: the staff directory is a fixed demo roster with PINs (hashed at rest), there is no per-IP rate
+Limits: the staff directory starts from a test roster with PINs (hashed at rest), there is no per-IP rate
 limiting beyond the per-account lockout, and demo sign-in is refused when CERVISETU_ENV=production.
 """
 import base64
@@ -32,61 +32,108 @@ LOCKOUT_SECONDS = 5 * 60
 _KEY = hmac.new(VAULT_SECRET_KEY.encode(), b"cervisetu-staff-session-v1", hashlib.sha256).digest()
 _PIN_KEY = hmac.new(VAULT_SECRET_KEY.encode(), b"cervisetu-staff-pin-v1", hashlib.sha256).digest()
 
-DOCTOR, NURSE, ASHA, ADMIN = "DOCTOR", "NURSE", "ASHA", "ADMIN"
-ROLE_LABELS = {DOCTOR: "Doctor", NURSE: "Nurse", ASHA: "ASHA Worker", ADMIN: "Administrator"}
+DOCTOR, NURSE, ASHA, HOSPITAL, ADMIN = "DOCTOR", "NURSE", "ASHA", "HOSPITAL", "ADMIN"
+ROLE_LABELS = {DOCTOR: "Doctor", NURSE: "Nurse", ASHA: "ASHA Worker", HOSPITAL: "Hospital Desk", ADMIN: "Administrator"}
 
-# Demo staff roster. PINs come from CERVISETU_STAFF_DEMO_PIN (see .env.example) and are kept only as
-# keyed hashes in memory; the demo sign-in button does not need a PIN.
+# Test roster, saved to staff_accounts once. Administrators manage accounts from then on.
+# PINs come from CERVISETU_STAFF_DEMO_PIN (see .env.example); only keyed hashes are stored.
 _DEMO_PIN = os.getenv("CERVISETU_STAFF_DEMO_PIN", "246810")
-STAFF_DIRECTORY: Dict[str, Dict[str, str]] = {
-    "DR-1001": {"name": "Dr. A. Sharma", "role": DOCTOR, "facility": "Mirzapur District Spoke"},
-    "RN-2001": {"name": "Sister Sunita Patel", "role": NURSE, "facility": "Mirzapur District Spoke"},
-    "AW-3001": {"name": "Meena Devi", "role": ASHA, "facility": "Vindhyachal Rural Ward 2"},
-    "AD-4001": {"name": "District Programme Officer", "role": ADMIN, "facility": "Mirzapur District Health Society"},
-}
-DEMO_ACCOUNT_FOR_ROLE = {DOCTOR: "DR-1001", NURSE: "RN-2001", ASHA: "AW-3001", ADMIN: "AD-4001"}
+_DEFAULT_STAFF = [
+    ("DR-1001", "Dr. A. Sharma", DOCTOR, None, None),
+    ("RN-2001", "Sister Sunita Patel", NURSE, "Parel Health Post", None),
+    ("AW-3001", "Meena Devi", ASHA, "Malavani Health Post", None),
+    ("HD-5001", "KEM Referral Desk", HOSPITAL, None, "KEM Hospital"),
+    ("AD-4001", "Programme Administrator", ADMIN, None, None),
+]
+DEMO_ACCOUNT_FOR_ROLE = {DOCTOR: "DR-1001", NURSE: "RN-2001", ASHA: "AW-3001", HOSPITAL: "HD-5001", ADMIN: "AD-4001"}
+STAFF_DIRECTORY: Dict[str, Dict[str, Optional[str]]] = {}
+_PIN_HASHES: Dict[str, str] = {}
 
 
 def _pin_hash(staff_id: str, pin: str) -> str:
     return hmac.new(_PIN_KEY, f"{staff_id}:{pin}".encode(), hashlib.sha256).hexdigest()
 
 
-_PIN_HASHES = {sid: _pin_hash(sid, _DEMO_PIN) for sid in STAFF_DIRECTORY}
+def _load_directory() -> None:
+    with global_db._get_conn() as conn:
+        rows = conn.execute("SELECT * FROM staff_accounts WHERE active = 1").fetchall()
+    STAFF_DIRECTORY.clear()
+    _PIN_HASHES.clear()
+    for r in rows:
+        STAFF_DIRECTORY[r["staff_id"]] = {"name": r["name"], "role": r["role"], "health_post": r["health_post"], "hospital": r["hospital"]}
+        _PIN_HASHES[r["staff_id"]] = r["pin_hash"]
+
+
+def list_accounts() -> list:
+    with global_db._get_conn() as conn:
+        rows = conn.execute("SELECT staff_id, name, role, health_post, hospital, active FROM staff_accounts ORDER BY role, staff_id").fetchall()
+    return [{**dict(r), "active": bool(r["active"])} for r in rows]
+
+
+def save_account(staff_id: str, name: str, role: str, health_post: Optional[str], hospital: Optional[str], pin: Optional[str]) -> None:
+    with global_db._get_conn() as conn:
+        exists = conn.execute("SELECT 1 FROM staff_accounts WHERE staff_id = ?", (staff_id,)).fetchone()
+        if exists:
+            conn.execute("UPDATE staff_accounts SET name = ?, role = ?, health_post = ?, hospital = ? WHERE staff_id = ?",
+                         (name, role, health_post, hospital, staff_id))
+            if pin:
+                conn.execute("UPDATE staff_accounts SET pin_hash = ? WHERE staff_id = ?", (_pin_hash(staff_id, pin), staff_id))
+            conn.execute("UPDATE staff_sessions SET revoked = 1 WHERE staff_id = ?", (staff_id,))
+        else:
+            conn.execute("INSERT INTO staff_accounts (staff_id, name, role, health_post, hospital, pin_hash) VALUES (?, ?, ?, ?, ?, ?)",
+                         (staff_id, name, role, health_post, hospital, _pin_hash(staff_id, pin or "")))
+        conn.commit()
+    _load_directory()
+
+
+def set_account_active(staff_id: str, active: bool) -> bool:
+    with global_db._get_conn() as conn:
+        done = conn.execute("UPDATE staff_accounts SET active = ? WHERE staff_id = ?", (int(active), staff_id)).rowcount
+        if not active:
+            conn.execute("UPDATE staff_sessions SET revoked = 1 WHERE staff_id = ?", (staff_id,))
+        conn.commit()
+    _load_directory()
+    return bool(done)
+
+
+def ashas_at(health_post: str) -> list:
+    return sorted(sid for sid, s in STAFF_DIRECTORY.items() if s["role"] == ASHA and s["health_post"] == health_post)
+
 
 # (method or "*", path regex, allowed roles). First match wins; unmatched /api paths stay public.
-ALL_STAFF = (DOCTOR, NURSE, ASHA, ADMIN)
-CLINICAL = (DOCTOR, NURSE, ADMIN)
+# Administrators manage the directory and accounts only; patient-facing work stays with clinical and field staff.
+ALL_STAFF = (DOCTOR, NURSE, ASHA)
+CLINICAL = (DOCTOR, NURSE)
 ROLE_RULES = [
-    # Doctor decisions
-    ("POST", r"^/api/clinical/chemo-clearance$", (DOCTOR, ADMIN)),
-    ("POST", r"^/api/clinical/discharge-signoff$", (DOCTOR, ADMIN)),
-    ("POST", r"^/api/encounter/[^/]+/discharge-signoff$", (DOCTOR, ADMIN)),
-    ("POST", r"^/api/clinical/hub-deficiency$", (DOCTOR, ADMIN)),
-    ("POST", r"^/api/clinical/hub-transfer/[^/]+/deficiency-return$", (DOCTOR, ADMIN)),
-    ("POST", r"^/api/logs/doctor/", (DOCTOR, ADMIN)),
-    ("POST", r"^/api/patient/[^/]+/treatment-plan(/pause)?$", (DOCTOR, ADMIN)),
-    ("GET", r"^/api/vault/inspect/", (DOCTOR, ADMIN)),
-    ("GET", r"^/api/fhir/patient/", (DOCTOR, ADMIN)),
-    # Nurse and clinical floor actions
-    ("POST", r"^/api/logs/nurse/", (DOCTOR, NURSE, ADMIN)),
-    ("POST", r"^/api/patient/[^/]+/clock/no-show$", CLINICAL),
-    ("POST", r"^/api/clinical/(linac-downtime|downtime-toggle|facility-downtime)$", CLINICAL),
+    ("GET", r"^/api/patient/[^/]+$", CLINICAL),
+    ("POST", r"^/api/patient/[^/]+/ai-summary$", CLINICAL),
+    ("GET", r"^/api/abdm/profile/", CLINICAL),
+    ("GET", r"^/api/dev/ai-usage$", (DOCTOR,)),
+    ("POST", r"^/api/logs/event$", ALL_STAFF),
+    ("*", r"^/api/admin/", (ADMIN,)),
+    ("POST", r"^/api/logs/doctor/", (DOCTOR,)),
+    ("GET", r"^/api/vault/inspect/", (DOCTOR,)),
+    ("GET", r"^/api/fhir/patient/", (DOCTOR,)),
+    ("POST", r"^/api/logs/nurse/", CLINICAL),
     ("POST", r"^/api/run-case$", CLINICAL),
-    ("GET", r"^/api/clinical/chemo-clearance/", CLINICAL),
-    ("*", r"^/api/authority/", (DOCTOR, ADMIN)),
-    ("POST", r"^/api/genie/", ALL_STAFF),
+    ("POST", r"^/api/genie/ask$", ALL_STAFF),
     ("POST", r"^/api/documents/", CLINICAL),
     ("POST", r"^/api/messages/test$", CLINICAL),
-    ("GET", r"^/api/messages$", ALL_STAFF),
+    ("GET", r"^/api/messages$", CLINICAL),
     ("*", r"^/api/encounter/[^/]+/(voice-consult|consult-audio)", CLINICAL),
     ("*", r"^/api/patient/[^/]+/(purge-audio-cache|audio-cache)$", CLINICAL),
-    # ASHA field work
-    ("*", r"^/api/logs/asha/", (ASHA, DOCTOR, NURSE, ADMIN)),
-    # Shared staff views
-    ("GET", r"^/api/(cases|ward-board|audit-logs)$", ALL_STAFF),
-    ("GET", r"^/api/logs/(events|summary|verify-chain)$", ALL_STAFF),
+    # Referral pathway. Which referrals each account may touch is checked per record in the router.
+    ("POST", r"^/api/referrals/[^/]+/(status|clinical|review)$", (DOCTOR,)),
+    ("POST", r"^/api/referrals/[^/]+/arrival$", (HOSPITAL, DOCTOR)),
+    ("POST", r"^/api/referrals/[^/]+/visit$", (ASHA,)),
+    ("POST", r"^/api/referrals/[^/]+/contact$", (NURSE, ASHA)),
+    ("POST", r"^/api/referrals/[^/]+/files$", CLINICAL),
+    ("GET", r"^/api/referrals/[^/]+/files", CLINICAL),
+    ("GET", r"^/api/referrals", (DOCTOR, NURSE, ASHA, HOSPITAL)),
+    ("POST", r"^/api/referrals", CLINICAL),
+    ("GET", r"^/api/(cases|audit-logs)$", CLINICAL),
+    ("GET", r"^/api/logs/(events|summary|verify-chain)$", CLINICAL),
     ("*", r"^/api/prevention/", CLINICAL),
-    ("POST", r"^/api/(escalation/run-cycle|simulate-escalation)$", CLINICAL),
 ]
 _COMPILED = [(m, re.compile(p), roles) for m, p, roles in ROLE_RULES]
 
@@ -126,7 +173,17 @@ def _init_tables():
                 locked_until REAL DEFAULT 0
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS staff_accounts (
+                staff_id TEXT PRIMARY KEY, name TEXT NOT NULL, role TEXT NOT NULL, health_post TEXT, hospital TEXT,
+                pin_hash TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
+        """)
+        for sid, name, role, post, hospital in _DEFAULT_STAFF:
+            conn.execute("""INSERT OR IGNORE INTO staff_accounts (staff_id, name, role, health_post, hospital, pin_hash)
+                            VALUES (?, ?, ?, ?, ?, ?)""", (sid, name, role, post, hospital, _pin_hash(sid, _DEMO_PIN)))
         conn.commit()
+    _load_directory()
 
 
 _init_tables()
@@ -146,8 +203,9 @@ def _sign(payload: str) -> str:
 
 def public_profile(staff_id: str) -> Dict[str, str]:
     entry = STAFF_DIRECTORY[staff_id]
-    return {"staff_id": staff_id, "name": entry["name"], "role": entry["role"],
-            "role_label": ROLE_LABELS[entry["role"]], "facility": entry["facility"]}
+    facility = entry["health_post"] or entry["hospital"] or "Mumbai Cervical Care Programme"
+    return {"staff_id": staff_id, "name": entry["name"], "role": entry["role"], "role_label": ROLE_LABELS[entry["role"]],
+            "facility": facility, "health_post": entry["health_post"], "hospital": entry["hospital"]}
 
 
 class LoginError(Exception):

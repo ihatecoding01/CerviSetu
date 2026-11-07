@@ -1,6 +1,7 @@
 """FastAPI Application Factory and Modular Router Assembler for CerviSetu."""
 import asyncio
 import os
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI, HTTPException, Request
@@ -23,31 +24,19 @@ from backend.dashboard.routers import (
 from backend.dashboard.routers.encounter_voice import router as encounter_voice_router
 from backend.dashboard.routers.documents import router as documents_router
 from backend.dashboard.routers.messages import router as messages_router
-from backend.dashboard.routers.authority import router as authority_router
 from backend.dashboard.routers.genie import router as genie_router
+from backend.dashboard.routers.admin import router as admin_router
+from backend.dashboard.routers.referrals import router as referrals_router
 from backend.core import staff_session
-from backend.dashboard.routers.clinical import IntakeRequest, SimulationRequest
-from backend.tools.escalation_scheduler import escalation_loop
-from backend.dashboard.routers.logs import (
-    UserActivityLogRequest,
-    DoctorSignOffRequest,
-    DoctorTriageRequest,
-    NurseFractionLogRequest,
-    NurseSlipUploadRequest,
-    PatientSymptomCheckinRequest,
-    AshaHomeVisitRequest,
-)
-from backend.dashboard.routers.patient import (
-    AdvanceFraction15Request,
-    HubConfirmSlotRequest,
-)
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    """Start the daily missed-visit escalation loop (off in the test suite)."""
+    """Start the daily referral follow-up (off in the test suite)."""
     task = None
-    if not os.getenv("CERVISETU_DISABLE_SCHEDULER"):
-        task = asyncio.create_task(escalation_loop())
+    if not os.getenv("CERVISETU_DISABLE_SCHEDULER") and "pytest" not in sys.modules:
+        from backend.tools.referral_pathway import follow_up_loop, seed
+        seed()
+        task = asyncio.create_task(follow_up_loop())
     yield
     if task:
         task.cancel()
@@ -56,8 +45,8 @@ async def lifespan(_app: FastAPI):
 # Initialize FastAPI Application
 app = FastAPI(
     lifespan=lifespan,
-    title="CerviSetu - Clinical Diagnostic & Rural Patient Tracking AI",
-    description="Privacy-first LangGraph multi-agent clinical diagnostic and rural cancer tracking system",
+    title="CerviSetu - Cervical Referral Pathway",
+    description="Cervical screening referral, follow-up and clinical record API.",
     version="2.1.0",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -119,8 +108,9 @@ app.include_router(staff_router)
 app.include_router(encounter_voice_router)
 app.include_router(documents_router)
 app.include_router(messages_router)
-app.include_router(authority_router)
 app.include_router(genie_router)
+app.include_router(admin_router)
+app.include_router(referrals_router)
 
 # Static & Frontend Assets Directory
 STATIC_DIR = Path(__file__).resolve().parent / "static"

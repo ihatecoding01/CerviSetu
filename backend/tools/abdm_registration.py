@@ -23,7 +23,6 @@ from typing import Any, Dict, Optional
 
 from backend.config import ABDM_MODE, APP_ENV, VAULT_SECRET_KEY
 from backend.core.database import global_db
-from backend.tools.synthetic_journey import ensure_synthetic_journey
 from backend.core.security import global_audit, global_vault
 
 OTP_TTL_SECONDS = 600
@@ -34,7 +33,7 @@ OTP_MAX_SENDS = 3
 SYNTHETIC_ABHA_LABEL = "Synthetic ABHA Sandbox ID - not issued by ABDM"
 AUTH_NOTICE = "Test sign-in: sandbox OTP shown on screen; not secure production authentication."
 # The seeded demo patient can log in by mobile OTP like any registered patient
-DEMO_MOBILE_LINKS = {"9876543210": "PT-RURAL-7891"}
+DEMO_MOBILE_LINKS = {"9876543210": "PT-CASE-NISHI"}
 
 # The five consents shown on the CARE ABDM form; every one must be explicitly accepted
 CONSENT_ITEMS = {
@@ -125,7 +124,7 @@ def _init_table():
             )
         """)
         for mobile, token in DEMO_MOBILE_LINKS.items():
-            conn.execute("INSERT OR IGNORE INTO patient_mobile_links (mobile_hash, patient_token) VALUES (?, ?)",
+            conn.execute("INSERT OR REPLACE INTO patient_mobile_links (mobile_hash, patient_token) VALUES (?, ?)",
                          (_keyed_hash(mobile), token))
         conn.commit()
 
@@ -227,6 +226,17 @@ def request_otp(
                               {"mode": mode, "id_type": ident["id_type"], "simulated": True})
     sent_to = f"Aadhaar-linked mobile ******{mobile_digits[-4:]}" if mobile_digits else "Aadhaar-linked mobile"
     return _otp_response(session["txn_id"], session["otp"], sent_to, id_type=ident["id_type"])
+
+
+def link_mobile(mobile: str, token: str) -> bool:
+    """Link the number recorded at intake to her referral, so she can log in. A number already linked stays as it is."""
+    digits = _mobile10(mobile)
+    if not re.fullmatch(r"[6-9]\d{9}", digits):
+        return False
+    with global_db._get_conn() as conn:
+        conn.execute("INSERT OR IGNORE INTO patient_mobile_links (mobile_hash, patient_token) VALUES (?, ?)", (_keyed_hash(digits), token))
+        conn.commit()
+    return True
 
 
 def request_mobile_login(mobile: str) -> Dict[str, Any]:
@@ -379,7 +389,7 @@ def _assign_token(txn_id: str, pending_json: Optional[str], token: str) -> str:
 def _new_patient_token() -> str:
     for _ in range(ABHA_ID_MAX_ATTEMPTS):
         token = f"PT-ABHA-{secrets.token_hex(3).upper()}"
-        if not _find_abha("patient_token", token) and not global_db.get_treatment_plan(token):
+        if not _find_abha("patient_token", token):
             return token
     raise RegistrationError("ABHA_ID_UNAVAILABLE", "Could not allocate a Synthetic ABHA right now; please retry.", 503)
 
@@ -483,7 +493,7 @@ def verify_otp(txn_id: str, otp: str) -> Dict[str, Any]:
     Persistence spans independent stores (separate SQLite commits plus the file-backed vault), so this is
     NOT atomic. Instead every step is idempotent and the OTP is consumed last:
       lease -> assigned token (CAS) -> staged vault profile (txn-private key) -> ABHA row -> promote profile
-      -> mobile link -> synthetic journey -> consents -> audit (idempotency key) -> consume OTP (fenced).
+      -> mobile link -> consents -> audit (idempotency key) -> consume OTP (fenced).
     A failure or crash anywhere before consumption leaves the OTP PENDING; retrying the same OTP resumes
     on the same token and converges. Known limitations (accepted for the sandbox):
       * The audit log is an append-only file, not a DB table: ABDM_ABHA_VERIFIED carries an idempotency key
@@ -549,10 +559,6 @@ def _verify_claimed(txn_id: str, s: Dict[str, Any], lease: Dict[str, float]) -> 
             _create_abha_record(txn_id, token, s["identifier_hash"] if s["mode"] == "GENERATE" else None, pii)
         _promote_profile(txn_id, token)
         _link_mobile(pii.get("mobile"), token)
-        if not s["link_token"]:
-            # New demo patient: deterministic SYNTHETIC journey, isolated from real clinical queues
-            _renew(txn_id, lease)
-            ensure_synthetic_journey(token)
         created = True
 
     _renew(txn_id, lease)
@@ -589,10 +595,8 @@ def patient_profile(token: str) -> Dict[str, Any]:
     p = _profile(token)
     number = p.get("abha_number") or ""
     case = global_db.get_latest_case(token) or {}
-    plan = global_db.get_treatment_plan(token) or {}
     return {
         "stage": case.get("suspected_stage"),
-        "facility_name": plan.get("facility_name"),
         "patient_token": token,
         "display_name": p.get("name"),
         "abha_number_masked": f"XX-XXXX-XXXX-{number[-4:]}" if number else None,

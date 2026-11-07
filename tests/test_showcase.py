@@ -17,17 +17,17 @@ def test_prescription_parser_showcase():
     req = PrescriptionParseRequest(sample_id="sample_cervical_01")
     res = parse_prescription_showcase(req)
 
-    assert res["cancer_type"] == "CERVICAL"
-    assert res["stage"] == "Stage II" or "II" in res["stage"]
+    assert "HSIL" in res["cancer_type"]
+    assert res["biopsy_status"] == "CIN 2"
     assert len(res["bounding_boxes"]) >= 4
-    assert res["fractions_planned"]["curative_window_days"] == 56
+    assert res["referral"] == {"hospital": "KEM Hospital", "next_step": "Treatment plan by the hospital team", "follow_up_days": 14}
     assert "elapsed_ms" in res
     assert res["pii_shielded"]["vault_token"].startswith("PT-ANON")
 
 
 def test_voice_script_dialects():
     for dialect in ["HINDI", "BHOJPURI", "BENGALI", "MARATHI", "TAMIL", "TELUGU"]:
-        req = VoiceScriptRequest(language=dialect, fraction_number=18)
+        req = VoiceScriptRequest(language=dialect)
         res = get_voice_script(req)
 
         assert res["status"] == "SUCCESS"
@@ -50,23 +50,18 @@ def test_graph_trace_reports_real_runs_only(monkeypatch):
     monkeypatch.setattr(run_trace, "latest_trace", lambda: real)
     res = execute_graph_trace(GraphTraceRequest(simulated_days_overdue=3))
     assert res["source"] == "LATEST_REAL_RUN" and res["total_latency_ms"] == 12.5
-    assert "TIER_3_ASHA" in res["nodes"][-1]["summary"]
+    assert "Daily reminders" in res["nodes"][-1]["summary"]
+    assert "ASHA home visit" in execute_graph_trace(GraphTraceRequest(simulated_days_overdue=14))["nodes"][-1]["summary"]
     assert len(res["ledger_block"]["sha256"]) == 64
 
 
 def test_district_impact_formula():
-    req = DistrictImpactRequest(
-        district_population=2000000,
-        annual_cervical_cases=200,
-        spoke_clinics_count=5,
-        avg_travel_distance_km=70.0,
-    )
-    res = calculate_district_impact(req)
-
-    assert res["biological_metrics"]["days_saved_per_patient"] == 24
-    assert res["biological_metrics"]["estimated_lives_saved_annually"] > 0
-    assert res["social_metrics"]["total_travel_km_spared"] > 100000
-    assert res["social_metrics"]["estimated_out_of_pocket_savings_inr"] > 1000000
+    res = calculate_district_impact(DistrictImpactRequest(
+        women_screened=10000, abnormal_rate_pct=5, current_follow_up_pct=50, target_follow_up_pct=80))
+    assert res["women_with_abnormal_results"] == 500
+    assert res["completing_follow_up_now"] == 250
+    assert res["completing_follow_up_at_target"] == 400
+    assert res["additional_women_reaching_care"] == 150
 
 
 def test_pilot_lead_registration():

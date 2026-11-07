@@ -25,7 +25,7 @@ def test_no_session_denied():
     client = TestClient(app)
     token = _register(TestClient(app), "21345098761", "9811100001")["patient_token"]
     assert client.get(f"/api/portal/{token}/overview").status_code == 401
-    assert client.get(f"/api/portal/{token}/sessions").status_code == 401
+    assert client.get(f"/api/portal/{token}/overview").status_code == 401
     assert client.get("/api/portal/session").json() == {"authenticated": False, "patient_token": None}
 
 
@@ -38,7 +38,7 @@ def test_otp_issues_session_bound_to_patient_and_cross_patient_denied():
     assert ov.status_code == 200 and ov.json()["display_name"] == "Patient A"
     # Patient A's session cannot read Patient B
     assert a.get(f"/api/portal/{token_b}/overview").status_code == 403
-    assert a.get(f"/api/portal/{token_b}/sessions").status_code == 403
+    assert a.get(f"/api/portal/{token_b}/overview").status_code == 403
     assert b.get(f"/api/portal/{token_b}/overview").json()["display_name"] == "Patient B"
 
 
@@ -96,28 +96,7 @@ def test_abha_link_and_mobile_otp_resolve_to_same_patient():
     assert link.get("/api/portal/session").json()["patient_token"] == mob.get("/api/portal/session").json()["patient_token"]
 
 
-def test_session_history_is_persisted_and_scoped():
-    client = TestClient(app)
-    token = _register(client, "90123876549", "9811100009")["patient_token"]
-    h = client.get(f"/api/portal/{token}/sessions").json()
-    ov = client.get(f"/api/portal/{token}/overview").json()
-    completed = [e for e in h["events"] if e["type"] == "COMPLETED"]
-    assert len(completed) == ov["clock"]["completed_sessions"]
-    assert all(e["synthetic"] for e in h["events"]) and h["synthetic"] is True
-    assert "recorded_by" not in str(h) and "reason" not in str(h)
 
 
-def test_patient_without_plan_gets_empty_state():
-    client = TestClient(app)
-    m = client.post("/api/abdm/login/mobile/request", json={"mobile": "9876543210"}).json()
-    client.post("/api/abdm/otp/verify", json={"txn_id": m["txn_id"], "otp": m["sandbox_otp"]})
-    ov = client.get("/api/portal/PT-RURAL-7891/overview").json()
-    assert ov["has_plan"] is False and ov["clock"] is None
-    assert client.get("/api/portal/PT-RURAL-7891/sessions").json()["events"] == []
 
 
-def test_staff_patient_endpoints_unchanged():
-    staff = TestClient(app)
-    assert staff.get("/api/patient/PT-RURAL-7891/healing-clock").status_code == 200
-    assert staff.get("/api/ward-board").status_code == 200
-    assert staff.get("/api/cases").status_code == 200

@@ -23,10 +23,10 @@ client = TestClient(app)
 
 SYNTHETIC_SLIP = [
     "Patient: Kamla Devi  Phone: 98765 43210",
-    "Village: Rampur  District: Mirzapur",
+    "Village: Rampur  District: Mumbai",
     "Carcinoma cervix FIGO stage IIB",
     "Biopsy: squamous cell carcinoma",
-    "Plan: CCRT 25# EBRT + 4# HDR",
+    "Plan: colposcopy guided biopsy",
 ]
 OCR_TEXT = "\n".join(SYNTHETIC_SLIP)
 ENTITIES = {
@@ -174,7 +174,6 @@ def test_summary_endpoint_generates_draft_when_requested(monkeypatch):
 
 def _enable_client(monkeypatch):
     monkeypatch.setattr(llm_client, "LLM_DISABLED", False)
-    monkeypatch.setattr(llm_client, "GROQ_API_KEY", "")
     return llm_client.SarvamLLMClient(api_key="test-key-not-real")
 
 
@@ -368,24 +367,10 @@ def _voice(monkeypatch, fake, audio=b"RIFFfake", ctype="audio/wav"):
     return client.post("/api/patient/PT-VOICE-OPT/voice-symptoms", files={"audio": ("v.wav", audio, ctype)})
 
 
-def test_voice_red_flag_handled_by_rules_without_llm(monkeypatch):
-    fake = FakeVoice("mera naam Kamla hai, phone 98765 43210, khoon aa raha hai")
-    body = _voice(monkeypatch, fake).json()
-    assert fake.calls == []
-    assert body["triage"]["symptom_category"] == "BLEEDING" and body["triage"]["triage_source"] == "RULES"
-    assert "98765" not in body["transcript"]
 
 
-def test_voice_llm_receives_masked_transcript_and_output_validated(monkeypatch):
-    fake = FakeVoice("phone 98765 43210, bahut dast", {"voice_triage": {"symptom_category": "MADE_UP", "grade": 1}})
-    body = _voice(monkeypatch, fake).json()
-    assert "98765" not in fake.calls[0][1]
-    assert body["triage"]["symptom_category"] == "OTHER" and body["triage"]["grade"] == 2
 
 
-def test_voice_rejects_empty_or_non_audio(monkeypatch):
-    assert _voice(monkeypatch, FakeVoice("x"), audio=b"").status_code == 422
-    assert _voice(monkeypatch, FakeVoice("x"), ctype="text/plain").status_code == 422
 
 
 def test_ai_off_switch_disables_stt_and_tts():

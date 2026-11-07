@@ -144,7 +144,7 @@ class PIIShield:
     EMAIL_PATTERN = re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b')
     # Prefix is case-insensitive, but the name itself must be Capitalised words on the same line
     NAME_PREFIXES = re.compile(r'(?i:\b(Mr\.|Mrs\.|Ms\.|Shri|Smt\.|Dr\.|Patient:?|Name:?))[ \t]+([A-Z][a-z]+(?:[ \t]+[A-Z][a-z]+)*)')
-    # Village-level address fields; District is kept for hub-spoke routing
+    # Address fields masked before any AI call
     LOCATION_PATTERN = re.compile(r'(?i:\b(Village|Address|Locality|Gram|Mohalla))[ \t]*:[ \t]*([^,\n]+)')
 
     @classmethod

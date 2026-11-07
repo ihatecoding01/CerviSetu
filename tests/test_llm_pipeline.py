@@ -26,7 +26,7 @@ ENTITIES = {
     "cancer_type": "CERVICAL", "figo_stage": "IIIB", "biopsy_status": "POSITIVE",
     "histology": "squamous cell carcinoma", "symptoms": ["Post-coital bleeding"], "age": 48,
     "gender": "FEMALE", "screening_findings": ["VIA positive"],
-    "treatment_plan": "CCRT 25# EBRT + weekly cisplatin + 4# HDR", "follow_up_days": 14,
+    "treatment_plan": "Colposcopy guided biopsy", "follow_up_days": 14,
 }
 
 
@@ -37,7 +37,7 @@ def test_llm_fields_override_rules_and_recompute_severity():
     assert merged["extraction_source"] == "SARVAM_LLM"
     assert merged["suspected_stage"] == "Stage IIIB"
     assert merged["biopsy_status"] == "POSITIVE"
-    assert merged["treatment_plan"].startswith("CCRT")
+    assert merged["treatment_plan"].startswith("Colposcopy")
     assert merged["severity_score"] == 0.85
 
 

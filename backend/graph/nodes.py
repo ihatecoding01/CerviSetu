@@ -1,16 +1,14 @@
-﻿"""LangGraph node definitions for the clinical diagnostic and tracking multi-agent graph."""
+"""LangGraph node definitions for the clinical diagnostic and tracking multi-agent graph."""
 from typing import Any, Dict
 from backend.agents.ocr_intake_agent import OCRIntakeAgent
 from backend.agents.image_triage_agent import ImageTriageAgent
 from backend.agents.diagnostic_agent import DiagnosticAgent
-from backend.agents.tracker_agent import PatientTrackerAgent
 from backend.core.state import ClinicalAgentState
 
 # Instantiate Agent Singletons
 intake_agent = OCRIntakeAgent()
 image_triage_agent = ImageTriageAgent()
 diagnostic_agent = DiagnosticAgent()
-tracker_agent = PatientTrackerAgent()
 
 
 def intake_node(state: ClinicalAgentState) -> Dict[str, Any]:
@@ -30,7 +28,7 @@ def should_diagnose(state: ClinicalAgentState) -> str:
     image_passed = state.get("image_triage_passed", True)
     if not image_passed:
         # Halt diagnostic node to prevent hallucinated/corrupted analysis on blurry or non-medical images
-        return "skip_to_tracker"
+        return "skip_summary"
     return "proceed_to_diagnostic"
 
 
@@ -40,7 +38,3 @@ def diagnostic_node(state: ClinicalAgentState) -> Dict[str, Any]:
     return result
 
 
-def tracker_node(state: ClinicalAgentState) -> Dict[str, Any]:
-    """Node 4: Monitor overdue timelines and dispatch progressive multi-tier escalations."""
-    result = tracker_agent.process(state)
-    return result

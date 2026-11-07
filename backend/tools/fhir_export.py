@@ -84,7 +84,7 @@ def build_patient_bundle(patient_token: str) -> Dict[str, Any]:
                 "subject": {"reference": patient_ref},
                 "addresses": [{"reference": f"Condition/{case_id}-condition"}],
                 "description": intake["treatment_plan"],
-                "note": [{"text": "Overall treatment time target <=49 days, hard limit 56 days (GEC-ESTRO / NCG)."}],
+                "note": [{"text": "Draft plan; histopathology confirms a tissue diagnosis."}],
             }})
 
     return {

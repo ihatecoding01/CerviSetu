@@ -1,4 +1,4 @@
-﻿"""Diagnostic Synthesis Agent for AI-assisted clinical differential and workup recommendations."""
+"""Diagnostic Synthesis Agent for AI-assisted clinical differential and workup recommendations."""
 import json
 import secrets
 from typing import Any, Dict, List, Optional
@@ -8,12 +8,12 @@ from backend.core.state import ClinicalAgentState, DiagnosticSynthesis
 
 
 AI_SUMMARY_SYSTEM_PROMPT = (
-    "You assist radiation oncologists in an Indian district hub-and-spoke cervical cancer network. "
+    "You assist doctors in a Mumbai cervical screening and referral pathway. "
     "Given de-identified structured intake data, write: (1) a 2-3 sentence clinician summary that restates "
-    "the documented findings, notes missing data, and flags the 56-day overall treatment time limit for CCRT "
-    "when relevant; never invent findings or prescribe doses. (2) A short, warm patient message (max 2 sentences) "
-    "in simple Hindi (Devanagari) and the same in simple English, telling her the next step and to keep every "
-    "appointment. Do not mention the word cancer in the patient message. Do not give medical advice or numbers."
+    "the documented findings, notes missing data, states that blanks are not negative results and that histopathology "
+    "confirms a diagnosis, and never delays referral; never invent findings or prescribe doses. (2) A short, warm patient message (max 2 sentences) "
+    "in simple Hindi (Devanagari) and the same in simple English, telling her the next step and to keep her "
+    "hospital visit. Do not mention the word cancer in the patient message. Do not give medical advice or numbers."
 )
 
 AI_SUMMARY_SCHEMA = {
@@ -109,12 +109,12 @@ class DiagnosticAgent:
 
         synthesis = DiagnosticSynthesis(
             differential_diagnosis=differentials,
-            primary_impression=f"Suspected {cancer_type} ({stage}) - Urgency: {urgency}",
+            primary_impression=f"Screening record for clinician review - Urgency: {urgency}",
             confidence_level=confidence_level,
             confidence_score=confidence_score,
             red_flag_symptoms=red_flags,
             recommended_workup=workup,
-            treatment_pathway_notes=f"Recommended standard multidisciplinary oncology tumor board review for {cancer_type} ({stage}).",
+            treatment_pathway_notes="For the treating clinician to decide. This summary is not a diagnosis.",
             urgency=urgency
         )
 
@@ -132,15 +132,6 @@ class DiagnosticAgent:
             intake_data=intake,
             diagnostic_data=synthesis.model_dump(),
             status="ACTIVE"
-        )
-
-        # Initialize Follow-Up Tracker in database
-        global_db.update_follow_up(
-            tracker_id=f"TRK-{secrets.token_hex(4).upper()}",
-            patient_token=patient_token,
-            case_id=case_id,
-            due_date="in 7 days",
-            days_overdue=state.get("days_overdue", 0)
         )
 
         global_audit.record_event(

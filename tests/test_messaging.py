@@ -4,7 +4,6 @@ from fastapi.testclient import TestClient
 
 from backend.dashboard.app import app
 from backend.tools import messaging as m
-from backend.tools.tracker_tools import MultiChannelReminderTool
 
 client = TestClient(app)
 OK = httpx.MockTransport(lambda r: httpx.Response(201, json={"sid": "SM1"}))
@@ -31,11 +30,6 @@ def test_live_only_reaches_allowed_numbers(monkeypatch):
     assert m.send("SMS", "hi", None, live=True, transport=OK)["status"] == m.NO_NUMBER
 
 
-def test_simulation_flag_never_goes_live(monkeypatch):
-    _live(monkeypatch)
-    assert m.send("SMS", "hi", "9000000001", live=False, transport=OK)["status"] == m.SIMULATED
-    assert MultiChannelReminderTool.dispatch_tier_1_sms("PT-SIM").status == m.SIMULATED
-    assert MultiChannelReminderTool.dispatch_tier_2_ivr("PT-SIM").status == m.SIMULATED
 
 
 def test_failure_is_recorded_as_failure(monkeypatch):
