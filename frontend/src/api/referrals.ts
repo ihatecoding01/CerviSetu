@@ -104,6 +104,13 @@ async function call<T>(path: string, body?: unknown): Promise<T> {
   return data as T;
 }
 
+export interface AshaRegistration {
+  request_id: string; patient_name: string; age: number | null; phone: string; preferred_language: string; area: string;
+  screening_date: string; screening_method: string; screening_result: string; refer: boolean; referral_date: string; notes: string;
+  consent_contact: string; consent_followup: string;
+}
+export interface DuplicateMatch { referral_id: string; patient_name: string; area: string; status: string; referred_on: string | null; yours: boolean }
+
 export const STATUS_LABELS: Record<string, string> = {
   ROUTINE_SCREENING: "Routine Screening",
   REFERRED: "Referred",
@@ -137,6 +144,8 @@ export const referralApi = {
   contact: (id: string, outcome: string, note: string) => call<Referral>(`/${id}/contact`, { outcome, note }),
   visit: (id: string, outcome: string, consent: string | null, note: string) => call<Referral>(`/${id}/visit`, { outcome, consent, note }),
   assignAsha: (id: string) => call<Referral>(`/${id}/assign-asha`, {}),
+  register: (input: AshaRegistration) => call<Referral>("/register", input),
+  duplicates: (q: { name?: string; phone?: string; query?: string }) => call<{ matches: DuplicateMatch[] }>("/duplicates", q),
   files: (id: string) => call<{ files: ReferralFile[] }>(`/${id}/files`),
   fileUrl: (id: string, fileId: string) => `${BASE_URL}/api/referrals/${id}/files/${fileId}`,
   upload: async (id: string, kind: string, file: File, photoConsent: boolean) => {

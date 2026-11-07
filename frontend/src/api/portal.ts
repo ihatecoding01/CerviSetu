@@ -73,10 +73,11 @@ export const portalApi = {
   askGenie: async (token: string, question: string, language = "en", history: PatientGenieTurn[] = []): Promise<PatientGenieResponse> => {
     let res: Response;
     try {
-      res = await apiFetch(`${BASE_URL}/api/genie/patient-ask`, {
+      // Bound to her own session on the server, like every other portal call
+      res = await apiFetch(`${BASE_URL}/api/portal/${encodeURIComponent(token)}/genie`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, question, language, history }),
+        body: JSON.stringify({ question, language, history }),
       });
     } catch {
       throw new PortalError("failed");

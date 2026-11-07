@@ -41,3 +41,15 @@ export async function geocode(baseUrl: string, query: string): Promise<Point | n
     return null;
   }
 }
+
+/**
+ * Travel time in usual city traffic. The routing service gives free-flow time (empty roads), which badly
+ * understates Mumbai trips. Without a paid live-traffic API we show a range from typical city car speeds
+ * (about 14 to 25 km/h door to door), never shorter than the free-flow time. Live traffic: open directions.
+ */
+export function trafficRange(km: number, freeFlowMin: number): string {
+  const r5 = (n: number) => Math.max(5, Math.round(n / 5) * 5);
+  const low = r5(Math.max(freeFlowMin, (km / 25) * 60));
+  const high = Math.max(low + 10, r5((km / 14) * 60));
+  return `${low} to ${high} min by car in usual traffic`;
+}

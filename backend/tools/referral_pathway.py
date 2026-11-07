@@ -7,7 +7,7 @@ import hashlib
 import json
 import os
 import secrets
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -31,7 +31,9 @@ FOLLOW_UP_DAYS = 14
 REMINDER = "Namaste. This is your health centre. Your hospital visit is still pending. Please go soon. Press 1 if you have visited, 2 for help, 3 for a nurse call back."
 
 FAMILY_REMINDER = "Namaste. This is your family's health centre. Please remind her about her pending hospital visit."
-UPLOAD_KINDS = {"VIA_IMAGE", "COLPOSCOPY_IMAGE", "HISTOPATHOLOGY_REPORT", "MRI_REPORT", "OTHER_REPORT"}
+UPLOAD_KINDS = {"VIA_IMAGE", "COLPOSCOPY_IMAGE", "HISTOPATHOLOGY_REPORT", "MRI_REPORT", "OTHER_REPORT", "SCREENING_REPORT", "REFERRAL_SLIP"}
+# ASHA workers may attach screening paperwork only, never clinical reports
+ASHA_UPLOAD_KINDS = {"SCREENING_REPORT", "REFERRAL_SLIP", "OTHER_REPORT"}
 IMAGE_KINDS = {"VIA_IMAGE", "COLPOSCOPY_IMAGE"}
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 _FILE_AES = AESGCM(hashlib.sha256(VAULT_SECRET_KEY.encode() + b"cervisetu-referral-files-v1").digest())
@@ -611,3 +613,76 @@ def seed() -> None:
                                               "treatment_plan": case["plan"]}, "SEED")
         if rita["status"] == ARRIVED:
             update_status(rita["referral_id"], REPORT, "SEED")
+
+
+# ASHA registration ------------------------------------------------------------------------------------------
+# An ASHA registers a woman screened at her own health post. The record goes through create() like any other
+# referral (vault, route, events, audit) and is assigned to her. She never enters clinical findings beyond the
+# screening result, and her consent answers decide reminders and follow-up under the existing rules.
+SCREENING_METHODS = {"VIA", "VILI", "PAP", "HPV", "OTHER"}
+SCREENING_RESULTS = {"POSITIVE", "NEGATIVE", "SUSPICIOUS", "INCONCLUSIVE"}
+_recent_registrations: Dict[str, Dict[str, Any]] = {}
+
+
+def _digits(phone: str) -> str:
+    return "".join(c for c in phone or "" if c.isdigit())[-10:]
+
+
+def find_duplicates(staff: Dict[str, Any], name: str = "", phone: str = "", query: str = "") -> List[Dict[str, Any]]:
+    """Possible matches at this ASHA's own health post only. Nothing is merged; she may open only her own patients."""
+    post = staff.get("health_post")
+    name_l, q = (name or "").strip().lower(), (query or "").strip().lower()
+    phone_d = _digits(phone)
+    with global_db._get_conn() as conn:
+        rows = [dict(r) for r in conn.execute("SELECT * FROM referrals WHERE health_post = ?", (post,)).fetchall()]
+    out = []
+    for row in rows:
+        pii = global_vault.retrieve_pii(row["patient_token"]) or {}
+        pname = (pii.get("name") or "").lower()
+        hit = (name_l and len(name_l) >= 3 and (pname == name_l or name_l in pname)) or (phone_d and len(phone_d) == 10 and _digits(pii.get("phone", "")) == phone_d) \
+            or (q and len(q) >= 3 and (q in pname or q == row["referral_id"].lower() or q == row["patient_token"].lower()))
+        if hit:
+            mine = row.get("assigned_asha") == staff["staff_id"]
+            out.append({"referral_id": row["referral_id"], "patient_name": pii.get("name") or "", "area": row["area"],
+                        "status": row["status"], "referred_on": row["referred_on"], "yours": mine})
+    return out[:10]
+
+
+def register_by_asha(data: Dict[str, Any], staff: Dict[str, Any]) -> Dict[str, Any]:
+    key = data.get("request_id") or ""
+    if key and key in _recent_registrations:  # a double tap or a retry returns the first result, not a second record
+        return _recent_registrations[key]
+    method, result = data["screening_method"], data["screening_result"]
+    if method not in SCREENING_METHODS or result not in SCREENING_RESULTS:
+        raise ReferralError(422, "Choose the screening method and result from the list.")
+    if data["consent_contact"] not in ("GRANTED", "WITHHELD") or data["consent_followup"] not in ("GRANTED", "WITHHELD"):
+        raise ReferralError(422, "Ask her about contact and follow-up, and record both answers.")
+    today = clinic_today()
+    screened = date.fromisoformat(data["screening_date"])
+    referred = date.fromisoformat(data.get("referral_date") or today.isoformat())
+    if screened > today or referred > today or (today - screened).days > 90 or referred < screened or (today - referred).days > 14:
+        raise ReferralError(422, "Check the dates. Screening must be in the last 90 days and the referral within the last 14 days, not before screening.")
+    refer = bool(data["refer"])
+    now = datetime.now().isoformat(timespec="seconds")
+    form = {"screening_date": screened.isoformat(), "screening_method": method, "preferred_language": data.get("preferred_language") or "",
+            "notes": data.get("notes") or "", "registered_by": staff["staff_id"], "registered_role": "ASHA",
+            "consent_contact": data["consent_contact"], "consent_followup": data["consent_followup"],
+            "consent_obtained_by": staff["staff_id"], "consent_recorded_at": now}
+    row = create({"patient_name": data["patient_name"].strip(), "age": data.get("age"), "area": data.get("area") or "",
+                  "phone": data.get("phone") or "", "health_post": staff["health_post"],
+                  "screening_finding": f"{method}: {result.capitalize()}", "refer": refer,
+                  "message_consent": data["consent_contact"], "form": form},
+                 staff["staff_id"], referred_on=referred if refer else None)
+    with global_db._get_conn() as conn:
+        conn.execute("UPDATE referrals SET assigned_asha = ? WHERE referral_id = ?", (staff["staff_id"], row["referral_id"]))
+        conn.commit()
+    _event(row["referral_id"], "REGISTERED_BY_ASHA", 0, detail=staff["staff_id"], actor=staff["staff_id"])
+    _audit("REFERRAL_REGISTERED_BY_ASHA", row["patient_token"], staff["staff_id"], referral_id=row["referral_id"],
+           consent_contact=data["consent_contact"], consent_followup=data["consent_followup"])
+    if refer and data["consent_followup"] == "WITHHELD":
+        # Same rule as a refusal at a home visit: the referral is marked declined and goes to a doctor for review
+        record_visit(row["referral_id"], "MET_PATIENT", "NEGATIVE", "Declined follow-up at registration", staff["staff_id"])
+    out = _view(_get(row["referral_id"]))
+    if key:
+        _recent_registrations[key] = out
+    return out

@@ -268,7 +268,7 @@ export function WhoTargetsProtocolElement({
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-700">
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-[#BA2D0B] text-white">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-[#9D174D] text-white">
                   WHO 2030 Elimination Targets
                 </span>
                 <span className="text-xs font-semibold text-slate-300">
@@ -285,9 +285,9 @@ export function WhoTargetsProtocolElement({
 
             {/* Slide 2 Elimination Rule Pill */}
             <div className="flex items-center gap-2 bg-slate-800/90 px-3 py-1.5 rounded-xl border border-slate-700 shrink-0">
-              <ShieldCheck className="size-4 text-[#DBFE87]" />
+              <ShieldCheck className="size-4 text-[#E0F2FE]" />
               <div className="text-right">
-                <div className="text-[11px] font-bold text-[#DBFE87]">Target: &lt;4 Cases / 100k</div>
+                <div className="text-[11px] font-bold text-[#E0F2FE]">Target: &lt;4 Cases / 100k</div>
                 <div className="text-[10px] text-slate-400">90-70-90 elimination pathway</div>
               </div>
             </div>
@@ -299,22 +299,22 @@ export function WhoTargetsProtocolElement({
             <div
               className={`p-3 rounded-xl border transition-all ${
                 isGirl13to15
-                  ? "bg-[#BA2D0B]/20 border-[#BA2D0B] ring-1 ring-[#BA2D0B]"
+                  ? "bg-[#9D174D]/20 border-[#9D174D] ring-1 ring-[#9D174D]"
                   : "bg-slate-800/60 border-slate-700/80 hover:border-slate-600"
               }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="size-7 rounded-lg bg-[#BA2D0B] text-white flex items-center justify-center font-bold text-xs">
+                  <div className="size-7 rounded-lg bg-[#9D174D] text-white flex items-center justify-center font-bold text-xs">
                     90
                   </div>
                   <div>
                     <span className="text-xs font-bold text-white block">Vaccinate</span>
-                    <span className="text-[10px] text-[#DBFE87] font-semibold">Ages 13 to 15 Cohort</span>
+                    <span className="text-[10px] text-[#E0F2FE] font-semibold">Ages 13 to 15 Cohort</span>
                   </div>
                 </div>
                 {isGirl13to15 && (
-                  <Badge variant="primary" size="xs" className="bg-[#BA2D0B] text-white">
+                  <Badge variant="primary" size="xs" className="bg-[#9D174D] text-white">
                     Active Cohort
                   </Badge>
                 )}
@@ -383,7 +383,7 @@ export function WhoTargetsProtocolElement({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <div className="size-7 rounded-lg bg-[#BA2D0B] text-white flex items-center justify-center">
+                <div className="size-7 rounded-lg bg-[#9D174D] text-white flex items-center justify-center">
                   <HeartPulse className="size-4" />
                 </div>
                 <CardTitle className="text-base font-bold text-slate-900">
@@ -455,7 +455,7 @@ export function WhoTargetsProtocolElement({
                 value={patientName}
                 placeholder="e.g. Ananya Kumari"
                 onChange={(e) => setPatientName(e.target.value)}
-                className="w-full text-xs p-2 rounded-lg border border-slate-300 bg-white focus:outline-none focus:border-[#BA2D0B]"
+                className="w-full text-xs p-2 rounded-lg border border-slate-300 bg-white focus:outline-none focus:border-[#9D174D]"
               />
             </div>
 
@@ -465,7 +465,7 @@ export function WhoTargetsProtocolElement({
                   Age (Years)
                 </label>
                 {isGirl13to15 && (
-                  <span className="text-[10px] font-bold text-[#BA2D0B] bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+                  <span className="text-[10px] font-bold text-[#9D174D] bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
                     Ages 13–15 Cohort
                   </span>
                 )}
@@ -481,7 +481,7 @@ export function WhoTargetsProtocolElement({
                 max={100}
                 value={age}
                 onChange={(e) => setAge(parseInt(e.target.value, 10) || 0)}
-                className="w-full text-xs p-2 rounded-lg border border-slate-300 bg-white font-semibold focus:outline-none focus:border-[#BA2D0B]"
+                className="w-full text-xs p-2 rounded-lg border border-slate-300 bg-white font-semibold focus:outline-none focus:border-[#9D174D]"
               />
             </div>
 
@@ -519,12 +519,12 @@ export function WhoTargetsProtocolElement({
             <div className="p-4 rounded-xl border-2 border-slate-300 bg-white shadow-xs flex flex-col gap-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="size-9 rounded-xl bg-[#BA2D0B] text-white flex items-center justify-center shrink-0">
+                  <div className="size-9 rounded-xl bg-[#9D174D] text-white flex items-center justify-center shrink-0">
                     <Syringe className="size-5" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold uppercase tracking-wider text-[#BA2D0B] bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#9D174D] bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
                         WHO Target 1 &middot; Adolescent HPV Protocol
                       </span>
                       <span className="text-xs text-slate-500 font-medium">Cohort: Girls Ages 13–15</span>
@@ -576,7 +576,7 @@ export function WhoTargetsProtocolElement({
                     }}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 ${
                       hpvVaccinated === false
-                        ? "bg-[#BA2D0B] text-white shadow-xs"
+                        ? "bg-[#9D174D] text-white shadow-xs"
                         : "bg-white text-slate-700 border border-slate-300 hover:bg-slate-100"
                     }`}
                   >
@@ -691,7 +691,7 @@ export function WhoTargetsProtocolElement({
                         type="checkbox"
                         checked={dispatchOutreach}
                         onChange={(e) => setDispatchOutreach(e.target.checked)}
-                        className="rounded text-[#BA2D0B]"
+                        className="rounded text-[#9D174D]"
                       />
                       <span>Dispatch automated vernacular SMS/IVR outreach to guardian and notify ASHA</span>
                     </label>
@@ -701,7 +701,7 @@ export function WhoTargetsProtocolElement({
                       size="sm"
                       disabled={actionLoading}
                       onClick={() => handleScheduleAction("SCHEDULE_VACCINATION")}
-                      className="bg-[#BA2D0B] hover:bg-[#a02609] text-white text-xs font-bold gap-1.5 shrink-0"
+                      className="bg-[#9D174D] hover:bg-[#a02609] text-white text-xs font-bold gap-1.5 shrink-0"
                     >
                       <Calendar className="size-3.5" />
                       {actionLoading ? "Scheduling..." : "Schedule HPV Vaccination"}

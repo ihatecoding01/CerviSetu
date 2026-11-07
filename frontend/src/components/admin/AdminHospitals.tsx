@@ -143,7 +143,7 @@ export function AdminHospitals({ isAdmin }: { isAdmin: boolean }) {
             Where these coordinates came from
             <input maxLength={120} value={form.location_source} onChange={(e) => setForm({ ...form, location_source: e.target.value })} className={inputClass} data-testid="hospital-location-source" />
             {form.latitude !== null && form.longitude !== null && (
-              <a className="mt-1 inline-block font-semibold text-[#0F766E] underline" target="_blank" rel="noreferrer" href={`https://www.openstreetmap.org/?mlat=${form.latitude}&mlon=${form.longitude}#map=17/${form.latitude}/${form.longitude}`}>Check this point on the map</a>
+              <a className="mt-1 inline-block font-semibold text-[#0369A1] underline" target="_blank" rel="noreferrer" href={`https://www.openstreetmap.org/?mlat=${form.latitude}&mlon=${form.longitude}#map=17/${form.latitude}/${form.longitude}`}>Check this point on the map</a>
             )}
           </label>
         </div>
@@ -160,7 +160,7 @@ export function AdminHospitals({ isAdmin }: { isAdmin: boolean }) {
           </div>
         </fieldset>
 
-        {error && <p role="alert" className="mt-4 text-sm text-[#BA2D0B]">{error}</p>}
+        {error && <p role="alert" className="mt-4 text-sm text-[#9D174D]">{error}</p>}
 
         <div className="mt-5 flex flex-wrap gap-2">
           <button type="submit" disabled={saving} data-testid="hospital-save" className="flex cursor-pointer items-center gap-2 rounded-full bg-black px-5 py-2.5 text-xs font-semibold text-white hover:bg-black/85 disabled:opacity-50">
@@ -213,7 +213,7 @@ export function AdminHospitals({ isAdmin }: { isAdmin: boolean }) {
                       <MapPin className="mt-0.5 size-3.5 shrink-0" />
                       <span className="min-w-0 break-words">{[h.area, h.address].filter(Boolean).join(" · ")}</span>
                     </p>
-                    {h.latitude == null && <p className="mt-1 text-xs font-semibold text-[#BA2D0B]">No map location. Patients cannot see this centre on the map.</p>}
+                    {h.latitude == null && <p className="mt-1 text-xs font-semibold text-[#9D174D]">No map location. Patients cannot see this centre on the map.</p>}
                     {h.phone && (
                       <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-600" data-no-translate>
                         <Phone className="size-3.5 shrink-0" />

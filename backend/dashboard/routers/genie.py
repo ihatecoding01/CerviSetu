@@ -55,6 +55,25 @@ ANSWER_SCHEMA: Dict[str, Any] = {
 }
 
 
+# What Genie does for each role. Every role shares the same limits: no diagnosis, no record changes.
+ROLE_BRIEFS: Dict[str, str] = {
+    "DOCTOR": ("You help a doctor at the referral hospital. Summarise authorised case information, point to missing documents "
+               "(colposcopy, biopsy, histopathology, MRI), and explain where to record them. Anything clinical you say is a draft "
+               "for the doctor to review and confirm; the doctor makes every clinical decision."),
+    "NURSE": ("You help a nurse at a health post. Explain intake fields and what is still missing, help word patient-friendly "
+              "messages, and explain the referral workflow. Do not make clinical decisions or suggest a diagnosis."),
+    "ASHA": ("You help an ASHA worker with her follow-up visits. Explain her follow-up tasks, what each status label means, how "
+             "to record a call or home visit outcome, and offer short, respectful scripts for talking to the woman and her family. "
+             "You cannot see or discuss screening results, diagnoses or treatment, and you cannot change a referral's status."),
+    "HOSPITAL": ("You help the hospital registration desk. Explain how to find an expected patient and confirm her arrival. "
+                 "Do not discuss clinical findings."),
+    "ADMIN": ("You help the programme administrator. Explain the aggregate programme counts, where to manage hospitals, health "
+              "posts, routes and staff, and what audit events mean. You have no access to patient-level records and must say so "
+              "if asked about a patient."),
+}
+ROLE_TABS = {"DOCTOR": TAB_IDS, "NURSE": {"overview-tab", "prevention-tab", "intake-tab", "tracker-tab"}}
+
+
 class Turn(BaseModel):
     role: str
     text: str
@@ -272,16 +291,30 @@ def _plain(text: str) -> str:
 
 
 async def _snapshot(staff: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """The live referral board, with coded patient IDs only."""
-    rows = [{
-        "token": r["patient_token"], "finding": r["screening_finding"], "status": r["status"], "lane": r["lane"],
-        "day": r["follow_up_day"] if r["following"] else None, "route": f"{r['health_post']} to {r['hospital'] or 'not referred'}",
-    } for r in referral_pathway.list_referrals() if referral_pathway.visible_to(staff, r)]
+    """The live referral board, with coded patient IDs only, limited to what this role may see.
+
+    ASHA workers never see screening findings, and administrators see counts only (no patient rows).
+    """
+    role = (staff or {}).get("role")
+    if role == "ADMIN":
+        return {"as_of_date": date.today().isoformat(), "referrals": [], "counts": referral_pathway.aggregate_counts()}
+    rows = []
+    for r in referral_pathway.list_referrals():
+        if not referral_pathway.visible_to(staff, r):
+            continue
+        row = {"token": r["patient_token"], "status": r["status"], "lane": r["lane"],
+               "day": r["follow_up_day"] if r["following"] else None,
+               "route": f"{r['health_post']} to {r['hospital'] or 'not referred'}"}
+        row["finding"] = "not shown to ASHA workers" if role == "ASHA" else r["screening_finding"]
+        rows.append(row)
     return {"as_of_date": date.today().isoformat(), "referrals": rows}
 
 
 def _records_text(snap: Dict[str, Any]) -> str:
     """Records as plain sentences, so the assistant talks about patients and not database fields."""
+    if "counts" in snap:
+        counts = ", ".join(f"{k.replace('_', ' ')}: {v}" for k, v in snap["counts"].items())
+        return f"Date: {snap['as_of_date']}\nProgramme counts (aggregate only, no patient records): {counts}"
     lines = [f"Date: {snap['as_of_date']}", "Women on the referral board:"]
     for r in snap["referrals"]:
         day = f", day {r['day']} of 14 follow-up" if r["day"] else ""
@@ -325,13 +358,16 @@ async def ask(req: GenieQuestion, request: Request) -> Dict[str, Any]:
     if len(question) > MAX_QUESTION:
         raise HTTPException(status_code=422, detail=f"Please keep questions under {MAX_QUESTION} characters.")
 
-    snap = await _snapshot(getattr(request.state, "staff", None))
+    staff = getattr(request.state, "staff", None)
+    role = (staff or {}).get("role") or "DOCTOR"
+    snap = await _snapshot(staff)
     known = {r["token"] for r in snap["referrals"]}
     masked, _ = PIIShield.mask_text(question)
     earlier = "\n".join(f"{'Staff' if t.role == 'user' else 'Genie'}: {PIIShield.mask_text(t.text[:800])[0]}" for t in req.history[-10:])
     system = (
-        "You are Genie, a warm, sharp colleague to doctors, nurses and ASHA workers in a cervical cancer "
-        "screening and referral network. Talk like a helpful person in a real conversation: natural sentences, short, the "
+        "You are Genie, a warm, sharp colleague in a cervical cancer screening and referral network. "
+        + ROLE_BRIEFS.get(role, ROLE_BRIEFS["DOCTOR"]) + " "
+        "You are an AI assistant: say so if asked, and never claim to be a clinician. Talk like a helpful person in a real conversation: natural sentences, short, the "
         "direct answer first, no headings, never field names or JSON-like wording. Use the conversation so far to "
         "understand follow-ups such as 'her' or 'what about the second one'. Greetings and small talk get a brief "
         "friendly reply. Facts about patients come only from TODAY'S RECORDS; if something is not there, say you "
@@ -346,7 +382,8 @@ async def ask(req: GenieQuestion, request: Request) -> Dict[str, Any]:
         "suggestions: up to 3 short follow-up questions the staff member might ask next, in the same language. "
         "Reply with one JSON object matching this schema: " + json.dumps(ANSWER_SCHEMA)
     )
-    user = (f"HOW THE APP IS ORGANISED:\n{GUIDE_TEXT}\n\nTODAY'S RECORDS:\n{_records_text(snap)}\n\n"
+    guide = GUIDE_TEXT if role in ROLE_TABS else "(this role has its own screens; describe them in words)"
+    user = (f"HOW THE APP IS ORGANISED:\n{guide}\n\nTODAY'S RECORDS:\n{_records_text(snap)}\n\n"
             f"CONVERSATION SO FAR:\n{earlier or '(none)'}\n\nSTAFF MEMBER NOW SAYS: {masked}")
     raw = global_llm.structured(system, user, ANSWER_SCHEMA, "genie_answer", max_tokens=800)
 
@@ -355,8 +392,19 @@ async def ask(req: GenieQuestion, request: Request) -> Dict[str, Any]:
         tab = raw.get("open_tab")
         suggestions = [str(x)[:90] for x in raw.get("suggestions") or [] if str(x).strip()][:3]
         return {"source": "AI", "answer": _plain(str(raw["answer"]))[:2000], "patients": patients,
-                "open_tab": tab if tab in TAB_IDS else None, "suggestions": suggestions, "as_of_date": snap["as_of_date"]}
-    return {"source": "LIVE_DATA", "suggestions": [], **_from_data(question, snap), "as_of_date": snap["as_of_date"]}
+                "open_tab": tab if tab in ROLE_TABS.get(role, set()) else None, "suggestions": suggestions,
+                "as_of_date": snap["as_of_date"], "role": role}
+    answer = _admin_answer(snap) if role == "ADMIN" else _from_data(question, snap)
+    if answer.get("open_tab") not in ROLE_TABS.get(role, set()):
+        answer["open_tab"] = None
+    return {"source": "LIVE_DATA", "suggestions": [], **answer, "as_of_date": snap["as_of_date"], "role": role}
+
+
+def _admin_answer(snap: Dict[str, Any]) -> Dict[str, Any]:
+    """Without the AI, an administrator gets the aggregate counts only."""
+    counts = ", ".join(f"{k.replace('_', ' ')}: {v}" for k, v in snap["counts"].items())
+    return {"answer": f"Programme counts today: {counts}. Patient-level records are not available to administrators.",
+            "patients": [], "open_tab": None}
 
 
 @router.post("/transcribe")
@@ -384,7 +432,16 @@ async def speak(req: SpeakRequest) -> Dict[str, Any]:
 
 
 @router.post("/patient-ask")
-async def patient_ask(req: PatientGenieQuestion) -> Dict[str, Any]:
+async def patient_ask(req: PatientGenieQuestion, request: Request) -> Dict[str, Any]:
+    """Same answer as the portal's Genie, and only for the signed-in patient's own record (or a teaching case)."""
+    from backend.core import patient_session
+    from backend.dashboard.routers.portal import _require
+
+    _require(req.token.strip().upper(), request.cookies.get(patient_session.COOKIE_NAME))
+    return await patient_answer(req)
+
+
+async def patient_answer(req: PatientGenieQuestion) -> Dict[str, Any]:
     """Patient care companion: guides on hospital directions, preparation, and government schemes.
     
     STRICT NON-DIAGNOSTIC GUARDRAIL: If the user asks for diagnostic solutions, medical diagnosis,
@@ -402,7 +459,7 @@ async def patient_ask(req: PatientGenieQuestion) -> Dict[str, Any]:
     case = teaching_cases.BY_TOKEN.get(token) if not row else None
 
     patient_name = (row or {}).get("patient_name") or (case or {}).get("name") or "Sister"
-    hospital = (row or {}).get("hospital") or "KEM Hospital"
+    hospital = (row or {}).get("hospital") or "your referral centre"
     health_post = (row or {}).get("health_post") or (case or {}).get("post") or "Parel Health Post"
     area = (row or {}).get("area") or (case or {}).get("area") or "Parel"
     day = (row or {}).get("follow_up_day") or (case or {}).get("ago") or 12

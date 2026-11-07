@@ -90,8 +90,8 @@ class PatientPortalGenieIn(BaseModel):
 async def patient_genie_endpoint(token: str, req: PatientPortalGenieIn, cookie: Optional[str] = SessionCookie) -> Dict[str, Any]:
     """Genie conversation endpoint bound to this patient."""
     _require(token, cookie)
-    from backend.dashboard.routers.genie import PatientGenieQuestion, Turn, patient_ask
+    from backend.dashboard.routers.genie import PatientGenieQuestion, Turn, patient_answer
     
     turns = [Turn(role=h.get("role", "user"), text=h.get("text", "")) for h in req.history]
     q = PatientGenieQuestion(token=token, question=req.question, language=req.language, history=turns)
-    return await patient_ask(q)
+    return await patient_answer(q)

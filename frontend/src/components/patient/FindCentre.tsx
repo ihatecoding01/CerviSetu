@@ -1,9 +1,10 @@
+import { createPortal } from "react-dom";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Car, ChevronDown, ChevronRight, Clock, Crosshair, Hospital, LocateFixed, MapPin, Minus, Navigation, Plus, Route, Search } from "lucide-react";
 import { portalApi, type CareCentre, type CentresResponse } from "../../api/portal";
-import { directionsUrl, fetchRoute, geocode, straightLineKm, type Point, type RouteResult } from "../../lib/geo";
+import { directionsUrl, fetchRoute, trafficRange, geocode, straightLineKm, type Point, type RouteResult } from "../../lib/geo";
 
 const teardrop = (color: string, size: number) =>
   L.divIcon({
@@ -26,7 +27,10 @@ const place_ = (c: CareCentre) => [c.address, c.area].filter(Boolean).join(", ")
 const mapBtn = "flex size-11 items-center justify-center bg-white text-slate-800 hover:bg-slate-50 cursor-pointer disabled:text-slate-300";
 
 /** Her location lives only in this component's state. It is never sent to CerviSetu, and goes when she clears it or leaves. */
-export default function FindCentre({ token }: { token: string }) {
+export interface AssignedInfo { place: string | null; directions: string | null }
+
+/** `stacked` puts the map on top and the controls under it, for a narrow column beside the patient's next step. */
+export default function FindCentre({ token, stacked = false, onAssigned, locationSlot }: { token: string; stacked?: boolean; onAssigned?: (a: AssignedInfo) => void; locationSlot?: HTMLElement | null }) {
   const [data, setData] = useState<CentresResponse | null>(null);
   const [failed, setFailed] = useState(false);
   const [here, setHere] = useState<Point | null>(null);
@@ -40,6 +44,7 @@ export default function FindCentre({ token }: { token: string }) {
   const [selectedRoute, setSelectedRoute] = useState<RouteResult | null>(null);
   const [routeFailed, setRouteFailed] = useState(false);
   const [mapFailed, setMapFailed] = useState(false);
+  const [showList, setShowList] = useState(!stacked);
   const mapHost = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const layer = useRef<L.LayerGroup | null>(null);
@@ -52,6 +57,10 @@ export default function FindCentre({ token }: { token: string }) {
   }, [token]);
 
   const assignedPoint = useMemo(() => (data?.assigned ? pointOf(data.assigned) : null), [data]);
+  useEffect(() => {
+    if (!data) return;
+    onAssigned?.({ place: data.assigned ? place_(data.assigned) || null : null, directions: assignedPoint ? directionsUrl(assignedPoint.lat, assignedPoint.lng) : null });
+  }, [data, assignedPoint, onAssigned]);
   const listed = useMemo(() => {
     const all = (data?.nearby ?? []).map((c) => ({ c, km: here && pointOf(c) ? straightLineKm(here, pointOf(c) as Point) : null }));
     return here ? all.filter((x) => x.km !== null && x.km <= radius).sort((a, b) => (a.km as number) - (b.km as number)) : all;
@@ -186,31 +195,32 @@ export default function FindCentre({ token }: { token: string }) {
   const assignedKm = here && assignedPoint ? straightLineKm(here, assignedPoint) : null;
   const panel = "bg-white border-slate-200 p-5";
   return (
-    <section aria-labelledby="find-centre-title" className="grid grid-cols-1 gap-3 lg:grid-cols-[38fr_62fr] lg:grid-rows-[auto_1fr] lg:gap-x-4 lg:gap-y-0" data-testid="find-centre">
-      <div className={`${panel} rounded-2xl border lg:rounded-b-none lg:border-b-0 lg:pb-3`}>
-        <div className="flex items-center gap-3">
+    <section aria-labelledby="find-centre-title" className={stacked ? "flex flex-col gap-3" : "grid grid-cols-1 gap-3 lg:grid-cols-[38fr_62fr] lg:grid-rows-[auto_1fr] lg:gap-x-4 lg:gap-y-0"} data-testid="find-centre">
+      {stacked && locationSlot && here ? createPortal(
+      <div className={stacked ? (locationSlot && here ? "" : "order-2 rounded-xl border border-slate-200 bg-white p-4") : `${panel} rounded-2xl border lg:rounded-b-none lg:border-b-0 lg:pb-3`}>
+        {stacked ? <h2 id="find-centre-title" className="sr-only">Map of your referral centre</h2> : <><div className="flex items-center gap-3">
           <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#D5EFEF] text-[#0F766E]"><MapPin className="size-6" aria-hidden="true" /></span>
           <h2 id="find-centre-title" className="text-2xl font-bold text-black">Find Your Centre</h2>
         </div>
-        <p className="mt-2 text-sm text-slate-600">See your assigned referral centre, nearby facilities, distance and directions.</p>
+        <p className="mt-2 text-sm text-slate-600">See your assigned referral centre, nearby facilities, distance and directions.</p></>}
 
-        <div className="mt-4 rounded-2xl border border-[#F19941]/60 bg-[#FFF8F1] p-4" data-testid="assigned-centre">
-          <div className="flex gap-3">
+        <div className={stacked ? "empty:hidden mb-3" : "mt-4 rounded-2xl border border-[#F19941]/60 bg-[#FFF8F1] p-4"} data-testid="assigned-centre">
+          {!stacked && <div className="flex gap-3">
             <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#FBDDC0] text-[#C8400F]"><Hospital className="size-6" aria-hidden="true" /></span>
             <div className="min-w-0">
               <span className="inline-block rounded-full bg-[#FBDDC0] px-3 py-0.5 text-xs font-semibold text-black">Your Referral Centre</span>
               <p className="mt-1.5 text-lg font-bold leading-snug text-black">{data.assigned?.name ?? data.assigned_name}</p>
               {data.assigned && <p className="text-sm text-slate-600">{place_(data.assigned)}</p>}
             </div>
-          </div>
+          </div>}
           {data.assigned_status === "LOCATION_MISSING" && <p className="mt-3 text-sm font-medium text-[#BA2D0B]" data-testid="assigned-missing">The map location of this centre has not been added yet. Please ask your health worker for directions.</p>}
           {data.assigned_status === "NOT_IN_DIRECTORY" && <p className="mt-3 text-sm font-medium text-[#BA2D0B]" data-testid="assigned-missing">This centre is not available in the directory right now. Please ask your health worker for directions.</p>}
           {assignedKm !== null && (
-            <div className="mt-3 text-sm text-slate-800" data-testid="assigned-distance">
+            <div className="mt-3 first:mt-0 text-sm text-slate-800" data-testid="assigned-distance">
               {assignedRoute ? (
                 <p className="flex flex-wrap items-center gap-x-4 gap-y-1 font-semibold">
                   <span className="flex items-center gap-1.5"><Car className="size-4 text-[#0F766E]" aria-hidden="true" />{`${assignedRoute.km.toFixed(1)} km by road`}</span>
-                  <span className="flex items-center gap-1.5"><Clock className="size-4 text-[#0F766E]" aria-hidden="true" />{`About ${assignedRoute.minutes} min by car`}</span>
+                  <span className="flex items-center gap-1.5"><Clock className="size-4 text-[#0F766E]" aria-hidden="true" />{trafficRange(assignedRoute.km, assignedRoute.minutes)}</span>
                 </p>
               ) : <p>{`${assignedKm.toFixed(1)} km in a straight line. The road distance will be longer.`}</p>}
             </div>
@@ -219,14 +229,84 @@ export default function FindCentre({ token }: { token: string }) {
           {selectedPoint && assignedPoint && (
             <button type="button" onClick={() => setSelected(null)} className="mt-3 flex min-h-11 w-full items-center justify-center rounded-xl border-2 border-[#C8400F] bg-white px-4 text-sm font-semibold text-[#A93509] cursor-pointer" data-testid="back-to-assigned">Show My Referral Centre on Map</button>
           )}
-          {assignedPoint && (
+          {assignedPoint && !stacked && (
             <a href={directionsUrl(assignedPoint.lat, assignedPoint.lng)} target="_blank" rel="noreferrer" className="mt-3 flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#C8400F] px-4 text-sm font-semibold text-white hover:bg-[#A93509]" data-testid="assigned-directions">
               <Navigation className="size-4" aria-hidden="true" />Get Directions
             </a>
           )}
         </div>
 
-        <div className="mt-3">
+        <div className={stacked ? "" : "mt-3"}>
+          {here ? (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="min-w-0 flex-1 basis-48 text-xs text-slate-600" data-testid="location-on">Your location is not saved or shared with your care team. To draw the route, a map service receives the start and end points.</p>
+              <button type="button" onClick={clear} className="min-h-11 rounded-xl border border-slate-300 px-3 text-sm font-semibold" data-testid="location-clear">Clear My Location</button>
+            </div>
+          ) : (
+            <>
+              <p className="text-xs text-slate-600">Share your location to see how far your centre is. This is your choice. It is not saved or shared with your care team. To draw the route, a map service receives the start and end points.</p>
+              <div className="mt-2 grid grid-cols-3 gap-1.5">
+                <button type="button" onClick={useMyLocation} className="flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-xl border border-slate-300 p-1.5 text-xs font-semibold" data-testid="location-use"><LocateFixed className="size-4" aria-hidden="true" />Use My Location</button>
+                <button type="button" aria-expanded={manual} onClick={() => setManual(!manual)} className="flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-xl border border-slate-300 p-1.5 text-xs font-semibold" data-testid="location-manual"><Search className="size-4" aria-hidden="true" />Type My Area</button>
+                <button type="button" aria-pressed={picking} onClick={startPicking} className={`flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-xl border p-1.5 text-xs font-semibold ${picking ? "border-[#0F766E] bg-[#D5EFEF] text-[#0B5D57]" : "border-slate-300"}`} data-testid="location-pick"><MapPin className="size-4" aria-hidden="true" />Choose on Map</button>
+              </div>
+            </>
+          )}
+          {picking && !here && <p role="status" className="mt-2 text-sm font-medium text-[#0B5D57]" data-testid="pick-note">Tap the map where you are.</p>}
+          {manual && !here && (
+            <form onSubmit={search} className="mt-2">
+              <label className="text-sm font-semibold text-black" htmlFor="centre-place">Locality, landmark or pincode</label>
+              <div className="mt-1 flex gap-2">
+                <input id="centre-place" value={place} maxLength={120} onChange={(e) => setPlace(e.target.value)} className="min-h-11 min-w-0 flex-1 rounded-xl border border-slate-300 px-3 text-sm" data-testid="location-input" />
+                <button type="submit" className="min-h-11 shrink-0 rounded-xl bg-black px-4 text-sm font-semibold text-white" data-testid="location-search">Search</button>
+              </div>
+              <p className="mt-1 text-xs text-slate-600">What you type may be sent to OpenStreetMap to find the place. Enter an area, not your full house address.</p>
+            </form>
+          )}
+          {locNote && <p role="status" className="mt-2 text-sm font-medium text-slate-800" data-testid="location-note">{locNote}</p>}
+        </div>
+      </div>,
+        locationSlot) : (
+      <div className={stacked ? (locationSlot && here ? "" : "order-2 rounded-xl border border-slate-200 bg-white p-4") : `${panel} rounded-2xl border lg:rounded-b-none lg:border-b-0 lg:pb-3`}>
+        {stacked ? <h2 id="find-centre-title" className="sr-only">Map of your referral centre</h2> : <><div className="flex items-center gap-3">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#D5EFEF] text-[#0F766E]"><MapPin className="size-6" aria-hidden="true" /></span>
+          <h2 id="find-centre-title" className="text-2xl font-bold text-black">Find Your Centre</h2>
+        </div>
+        <p className="mt-2 text-sm text-slate-600">See your assigned referral centre, nearby facilities, distance and directions.</p></>}
+
+        <div className={stacked ? "empty:hidden mb-3" : "mt-4 rounded-2xl border border-[#F19941]/60 bg-[#FFF8F1] p-4"} data-testid="assigned-centre">
+          {!stacked && <div className="flex gap-3">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#FBDDC0] text-[#C8400F]"><Hospital className="size-6" aria-hidden="true" /></span>
+            <div className="min-w-0">
+              <span className="inline-block rounded-full bg-[#FBDDC0] px-3 py-0.5 text-xs font-semibold text-black">Your Referral Centre</span>
+              <p className="mt-1.5 text-lg font-bold leading-snug text-black">{data.assigned?.name ?? data.assigned_name}</p>
+              {data.assigned && <p className="text-sm text-slate-600">{place_(data.assigned)}</p>}
+            </div>
+          </div>}
+          {data.assigned_status === "LOCATION_MISSING" && <p className="mt-3 text-sm font-medium text-[#BA2D0B]" data-testid="assigned-missing">The map location of this centre has not been added yet. Please ask your health worker for directions.</p>}
+          {data.assigned_status === "NOT_IN_DIRECTORY" && <p className="mt-3 text-sm font-medium text-[#BA2D0B]" data-testid="assigned-missing">This centre is not available in the directory right now. Please ask your health worker for directions.</p>}
+          {assignedKm !== null && (
+            <div className="mt-3 first:mt-0 text-sm text-slate-800" data-testid="assigned-distance">
+              {assignedRoute ? (
+                <p className="flex flex-wrap items-center gap-x-4 gap-y-1 font-semibold">
+                  <span className="flex items-center gap-1.5"><Car className="size-4 text-[#0F766E]" aria-hidden="true" />{`${assignedRoute.km.toFixed(1)} km by road`}</span>
+                  <span className="flex items-center gap-1.5"><Clock className="size-4 text-[#0F766E]" aria-hidden="true" />{trafficRange(assignedRoute.km, assignedRoute.minutes)}</span>
+                </p>
+              ) : <p>{`${assignedKm.toFixed(1)} km in a straight line. The road distance will be longer.`}</p>}
+            </div>
+          )}
+          {routeFailed && <p className="mt-1 text-xs text-slate-600" data-testid="route-failed">Travel time is not available right now.</p>}
+          {selectedPoint && assignedPoint && (
+            <button type="button" onClick={() => setSelected(null)} className="mt-3 flex min-h-11 w-full items-center justify-center rounded-xl border-2 border-[#C8400F] bg-white px-4 text-sm font-semibold text-[#A93509] cursor-pointer" data-testid="back-to-assigned">Show My Referral Centre on Map</button>
+          )}
+          {assignedPoint && !stacked && (
+            <a href={directionsUrl(assignedPoint.lat, assignedPoint.lng)} target="_blank" rel="noreferrer" className="mt-3 flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#C8400F] px-4 text-sm font-semibold text-white hover:bg-[#A93509]" data-testid="assigned-directions">
+              <Navigation className="size-4" aria-hidden="true" />Get Directions
+            </a>
+          )}
+        </div>
+
+        <div className={stacked ? "" : "mt-3"}>
           {here ? (
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="min-w-0 flex-1 basis-48 text-xs text-slate-600" data-testid="location-on">Your location is not saved or shared with your care team. To draw the route, a map service receives the start and end points.</p>
@@ -256,9 +336,10 @@ export default function FindCentre({ token }: { token: string }) {
           {locNote && <p role="status" className="mt-2 text-sm font-medium text-slate-800" data-testid="location-note">{locNote}</p>}
         </div>
       </div>
+      )}
 
-      <div className="relative lg:col-start-2 lg:row-span-2 lg:row-start-1">
-        <div ref={mapHost} className={`relative z-0 h-[420px] w-full overflow-hidden rounded-2xl border border-slate-200 lg:h-full lg:min-h-[680px] ${picking ? "[&_.leaflet-container]:cursor-crosshair cursor-crosshair" : ""}`} data-testid="centre-map" />
+      <div className={stacked ? "relative order-1" : "relative lg:col-start-2 lg:row-span-2 lg:row-start-1"}>
+        <div ref={mapHost} className={`relative z-0 w-full overflow-hidden border border-slate-200 ${stacked ? "h-[360px] lg:h-[420px] rounded-xl" : "h-[420px] rounded-2xl lg:h-full lg:min-h-[680px]"} ${picking ? "[&_.leaflet-container]:cursor-crosshair cursor-crosshair" : ""}`} data-testid="centre-map" />
         <div className="absolute bottom-[76px] right-3 z-10 flex flex-col gap-2 sm:bottom-[72px]">
           <div className="flex flex-col divide-y divide-slate-200 overflow-hidden rounded-xl shadow-md">
             <button type="button" className={mapBtn} aria-label="Zoom in" title="Zoom in" onClick={() => map.current?.zoomIn()} data-testid="map-zoom-in"><Plus className="size-5" /></button>
@@ -269,8 +350,8 @@ export default function FindCentre({ token }: { token: string }) {
         </div>
         <ul className="absolute inset-x-3 bottom-3 z-10 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 rounded-2xl bg-white px-3 py-2 text-xs text-slate-700 shadow-md">
           <li className="flex items-center gap-1.5"><span className="size-3 rounded-full bg-[#2E9E3F]" />Start: your location</li>
-          <li className="flex items-center gap-1.5"><span className="size-3 rounded-full bg-[#C8400F]" />Assigned Referral Centre</li>
-          <li className="flex items-center gap-1.5"><span className="size-3 rounded-full bg-[#0F9488]" />Nearby Centre</li>
+          <li className="flex items-center gap-1.5"><span className="size-3 rounded-full bg-[#C8400F]" />Your assigned centre</li>
+          <li className="flex items-center gap-1.5"><span className="size-3 rounded-full bg-[#0F9488]" />Nearby centres (not a substitute)</li>
           {route && <li className="flex items-center gap-1.5"><span className="h-1 w-6 rounded-full bg-[#1D6FE8]" />Route</li>}
           {!route && here && assignedPoint && <li className="flex items-center gap-1.5" data-testid="legend-direct"><span className="w-6 border-t-[3px] border-dotted border-[#1D6FE8]" />Straight line, not a road route</li>}
         </ul>
@@ -283,9 +364,11 @@ export default function FindCentre({ token }: { token: string }) {
         {mapFailed && <p role="status" className="absolute inset-x-3 top-3 z-10 rounded-xl bg-white p-2 text-sm text-slate-700 shadow-md" data-testid="map-failed">The map could not load. The list and directions below still work.</p>}
       </div>
 
-      <div className={`${panel} rounded-2xl border lg:col-start-1 lg:row-start-2 lg:rounded-t-none lg:border-t-0 lg:pt-1`}>
+      <div className={stacked ? "order-3 rounded-xl border border-slate-200 bg-white p-4" : `${panel} rounded-2xl border lg:col-start-1 lg:row-start-2 lg:rounded-t-none lg:border-t-0 lg:pt-1`}>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-base font-bold text-black">{here ? `Nearby Centres (within ${radius} km)` : "Other Listed Centres"}</h3>
+          {stacked
+            ? <button type="button" aria-expanded={showList} onClick={() => setShowList((v) => !v)} className="flex items-center gap-1.5 text-sm font-semibold text-black cursor-pointer" data-testid="nearby-toggle">{here ? `Nearby centres (within ${radius} km)` : "Other centres"}<ChevronDown className={`size-4 transition-transform ${showList ? "rotate-180" : ""}`} aria-hidden="true" /></button>
+            : <h3 className="text-base font-bold text-black">{here ? `Nearby Centres (within ${radius} km)` : "Other Listed Centres"}</h3>}
           {here && (
             <label className="flex items-center gap-1 text-xs text-slate-700"><span className="sr-only">Within</span>
               <select aria-label="Within" value={radius} onChange={(e) => setRadius(Number(e.target.value))} className="min-h-11 rounded-lg border border-slate-300 px-1" data-testid="radius">
@@ -295,8 +378,8 @@ export default function FindCentre({ token }: { token: string }) {
           )}
         </div>
         <p className="mt-1 text-xs text-slate-600">These are not your assigned centre. Please go to your referral centre unless your health worker tells you otherwise.</p>
-        {listed.length === 0 && <p className="mt-2 text-sm text-slate-700" data-testid="nearby-empty">No listed centres in this distance. Try a wider distance.</p>}
-        <ul className="mt-2 space-y-2" data-testid="nearby-list">
+        {showList && listed.length === 0 && <p className="mt-2 text-sm text-slate-700" data-testid="nearby-empty">No listed centres in this distance. Try a wider distance.</p>}
+        {showList && <ul className="mt-2 space-y-2" data-testid="nearby-list">
           {listed.map(({ c, km }) => {
             const open = selected === c.name;
             return (
@@ -311,7 +394,7 @@ export default function FindCentre({ token }: { token: string }) {
                 </button>
                 {open && (
                   <div className="px-3 pb-3 text-xs text-slate-700" data-testid="nearby-details">
-                    {selectedRoute && <p className="mb-1 text-sm font-semibold text-black" data-testid="nearby-route">{`${selectedRoute.km.toFixed(1)} km by road`} · {`About ${selectedRoute.minutes} min by car`}</p>}
+                    {selectedRoute && <p className="mb-1 text-sm font-semibold text-black" data-testid="nearby-route">{`${selectedRoute.km.toFixed(1)} km by road`} · {trafficRange(selectedRoute.km, selectedRoute.minutes)}</p>}
                     {place_(c) && <p>{place_(c)}</p>}
                     {c.services.length > 0 && <p className="mt-1">{c.services.join(", ").replace(/_/g, " ").toLowerCase()}</p>}
                     <p className="mt-1 font-semibold text-[#BA2D0B]">This is not your assigned centre.</p>
@@ -321,7 +404,7 @@ export default function FindCentre({ token }: { token: string }) {
               </li>
             );
           })}
-        </ul>
+        </ul>}
       </div>
     </section>
   );

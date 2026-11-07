@@ -16,6 +16,7 @@ export interface AppRoute {
 
 const TAB_PATH_MAP: Record<string, Tab> = {
   overview: "overview-tab",
+  cases: "cases-tab",
   prevention: "prevention-tab",
   encounter: "encounter-tab",
   intake: "intake-tab",
@@ -29,6 +30,7 @@ const TAB_PATH_MAP: Record<string, Tab> = {
 
 const TAB_TO_SLUG: Record<Tab, string> = {
   "overview-tab": "overview",
+  "cases-tab": "cases",
   "prevention-tab": "prevention",
   "encounter-tab": "encounter",
   "intake-tab": "intake",

@@ -27,6 +27,7 @@ from backend.dashboard.routers.messages import router as messages_router
 from backend.dashboard.routers.genie import router as genie_router
 from backend.dashboard.routers.admin import router as admin_router
 from backend.dashboard.routers.referrals import router as referrals_router
+from backend.dashboard.routers.i18n import router as i18n_router
 from backend.core import staff_session
 
 @asynccontextmanager
@@ -121,6 +122,7 @@ app.include_router(messages_router)
 app.include_router(genie_router)
 app.include_router(admin_router)
 app.include_router(referrals_router)
+app.include_router(i18n_router)
 
 # Static & Frontend Assets Directory
 STATIC_DIR = Path(__file__).resolve().parent / "static"

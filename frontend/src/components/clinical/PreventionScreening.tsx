@@ -190,7 +190,7 @@ export function PreventionScreening() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
         <div>
           <div className="flex items-center gap-2">
-            <span className="size-8 rounded-lg bg-[#BA2D0B] text-white flex items-center justify-center font-bold">
+            <span className="size-8 rounded-lg bg-[#9D174D] text-white flex items-center justify-center font-bold">
               <ShieldCheck className="size-4.5" />
             </span>
             <h1 className="text-2xl font-bold tracking-tight text-black">
@@ -204,12 +204,12 @@ export function PreventionScreening() {
         </div>
 
         {/* Global Action Selector Tabs */}
-        <div className="flex items-center gap-1.5 p-1 bg-gray-100 rounded-lg">
+        <div className="flex items-center gap-1.5 p-1 bg-gray-100 rounded-lg max-w-full overflow-x-auto">
           <button
             onClick={() => setActiveTab("vaccination")}
-            className={`px-3 py-1.5 rounded text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
               activeTab === "vaccination"
-                ? "bg-[#BA2D0B] text-white shadow-2xs"
+                ? "bg-[#9D174D] text-white shadow-2xs"
                 : "text-gray-700 hover:text-black"
             }`}
           >
@@ -218,9 +218,9 @@ export function PreventionScreening() {
           </button>
           <button
             onClick={() => setActiveTab("screening")}
-            className={`px-3 py-1.5 rounded text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
               activeTab === "screening"
-                ? "bg-[#BA2D0B] text-white shadow-2xs"
+                ? "bg-[#9D174D] text-white shadow-2xs"
                 : "text-gray-700 hover:text-black"
             }`}
           >
@@ -229,9 +229,9 @@ export function PreventionScreening() {
           </button>
           <button
             onClick={() => setActiveTab("precancer")}
-            className={`px-3 py-1.5 rounded text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
               activeTab === "precancer"
-                ? "bg-[#BA2D0B] text-white shadow-2xs"
+                ? "bg-[#9D174D] text-white shadow-2xs"
                 : "text-gray-700 hover:text-black"
             }`}
           >
@@ -258,7 +258,7 @@ export function PreventionScreening() {
               <CardHeader className="pb-1">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-gray-600">Adolescents Enrolled (9-14y)</span>
-                  <div className="size-8 rounded-lg bg-[#DBFE87]/40 text-black flex items-center justify-center font-bold">
+                  <div className="size-8 rounded-lg bg-[#E0F2FE]/40 text-black flex items-center justify-center font-bold">
                     <Users className="size-4" />
                   </div>
                 </div>
@@ -273,7 +273,7 @@ export function PreventionScreening() {
               <CardHeader className="pb-1">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-gray-600">Dose 2 Retention Target</span>
-                  <div className="size-8 rounded-lg bg-[#F19941]/20 text-[#BA2D0B] flex items-center justify-center font-bold">
+                  <div className="size-8 rounded-lg bg-[#0284C7]/20 text-[#9D174D] flex items-center justify-center font-bold">
                     <Calendar className="size-4" />
                   </div>
                 </div>
@@ -288,7 +288,7 @@ export function PreventionScreening() {
               <CardHeader className="pb-1">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-gray-600">Vaccine Brands Stocked</span>
-                  <div className="size-8 rounded-lg bg-[#90C3CB]/30 text-slate-900 flex items-center justify-center font-bold">
+                  <div className="size-8 rounded-lg bg-[#BAE6FD]/30 text-slate-900 flex items-center justify-center font-bold">
                     <Syringe className="size-4" />
                   </div>
                 </div>
@@ -346,13 +346,13 @@ export function PreventionScreening() {
                       <TableRow key={v.vaccine_id} className="hover:bg-gray-50/80 transition-colors">
                         <TableCell>
                           <div className="flex items-center gap-2.5">
-                            <div className="size-8 rounded-lg bg-[#DBFE87] text-black font-bold text-xs flex items-center justify-center border border-[#c4e872]">
+                            <div className="size-8 rounded-lg bg-[#E0F2FE] text-black font-bold text-xs flex items-center justify-center border border-[#BAE6FD]">
                               {v.patient_name[0] || "P"}
                             </div>
                             <div>
                               <div className="text-sm font-bold text-black">{v.patient_name}</div>
                               <div className="text-xs text-gray-500 font-mono flex items-center gap-1">
-                                <span className="text-[#BA2D0B] font-semibold">{v.patient_token}</span>
+                                <span className="text-[#9D174D] font-semibold">{v.patient_token}</span>
                                 <span>&middot; {v.age}Y</span>
                               </div>
                             </div>
@@ -390,7 +390,7 @@ export function PreventionScreening() {
                             onClick={() => handleTriggerOutreach(v.vaccine_id)}
                             className="text-xs font-semibold gap-1 text-black border-slate-200"
                           >
-                            <Send className="size-3 text-[#BA2D0B]" />
+                            <Send className="size-3 text-[#9D174D]" />
                             {v.outreach_sent ? "Resend Reminder" : "Dispatch SMS"}
                           </Button>
                         </TableCell>
@@ -437,8 +437,8 @@ export function PreventionScreening() {
               </p>
             </div>
 
-            <div className="p-3.5 bg-[#F19941]/20 border border-[#F19941] rounded-xl">
-              <div className="text-xs font-bold text-[#BA2D0B] uppercase tracking-wider">
+            <div className="p-3.5 bg-[#0284C7]/20 border border-[#0284C7] rounded-xl">
+              <div className="text-xs font-bold text-[#9D174D] uppercase tracking-wider">
                 High-Grade (CIN-3 / HSIL)
               </div>
               <div className="text-xs font-semibold text-black mt-1">Dense / Punctation / Mosaic</div>
@@ -451,7 +451,7 @@ export function PreventionScreening() {
               <div className="text-xs font-bold text-rose-950 uppercase tracking-wider">
                 Suspected Invasive Cancer
               </div>
-              <div className="text-xs font-semibold text-[#BA2D0B] mt-1">Exophytic / Ulcerative Mass</div>
+              <div className="text-xs font-semibold text-[#9D174D] mt-1">Exophytic / Ulcerative Mass</div>
               <p className="text-xs text-rose-950 mt-1">
                 Bleeding on touch. Urgent referral to gynaecologic oncology.
               </p>
@@ -503,7 +503,7 @@ export function PreventionScreening() {
                       <TableRow key={s.screening_id} className="hover:bg-gray-50/80 transition-colors">
                         <TableCell>
                           <div className="font-mono text-xs font-bold text-black">{s.screening_id}</div>
-                          <div className="font-mono text-xs text-[#BA2D0B]">{s.patient_token}</div>
+                          <div className="font-mono text-xs text-[#9D174D]">{s.patient_token}</div>
                         </TableCell>
                         <TableCell>
                           <div className="text-sm font-bold text-black">{s.patient_name}</div>
@@ -519,7 +519,7 @@ export function PreventionScreening() {
                           <div className="text-xs text-gray-600 mt-0.5">{s.notes}</div>
                         </TableCell>
                         <TableCell>
-                          <div className="text-xs font-semibold text-black bg-[#DBFE87]/40 px-2 py-1 rounded inline-block border border-[#DBFE87]">
+                          <div className="text-xs font-semibold text-black bg-[#E0F2FE]/40 px-2 py-1 rounded inline-block border border-[#E0F2FE]">
                             {s.triage_status}
                           </div>
                         </TableCell>
@@ -536,7 +536,7 @@ export function PreventionScreening() {
                                 patient_name: s.patient_name,
                               }));
                             }}
-                            className="text-xs font-semibold text-[#BA2D0B] border-slate-200"
+                            className="text-xs font-semibold text-[#9D174D] border-slate-200"
                           >
                             Open Precancer Workup &rarr;
                           </Button>
@@ -565,7 +565,7 @@ export function PreventionScreening() {
           {/* Procedure Standards Banner */}
           <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3">
-              <div className="size-8 rounded-lg bg-[#BA2D0B] text-white flex items-center justify-center shrink-0">
+              <div className="size-8 rounded-lg bg-[#9D174D] text-white flex items-center justify-center shrink-0">
                 <HeartPulse className="size-5" />
               </div>
               <div>
@@ -625,7 +625,7 @@ export function PreventionScreening() {
                       <TableRow key={p.precancer_id} className="hover:bg-gray-50/80 transition-colors">
                         <TableCell>
                           <div className="font-mono text-xs font-bold text-black">{p.precancer_id}</div>
-                          <div className="font-mono text-xs text-[#BA2D0B] font-semibold">{p.patient_token}</div>
+                          <div className="font-mono text-xs text-[#9D174D] font-semibold">{p.patient_token}</div>
                         </TableCell>
                         <TableCell>
                           <div className="text-sm font-bold text-black">{p.patient_name}</div>
@@ -697,7 +697,7 @@ export function PreventionScreening() {
                   placeholder="e.g. Priya Sharma"
                   value={newVac.patient_name}
                   onChange={(e) => setNewVac({ ...newVac, patient_name: e.target.value })}
-                  className="w-full text-xs p-2.5 rounded-lg border border-gray-300 mt-1 focus:outline-none focus:border-[#BA2D0B]"
+                  className="w-full text-xs p-2.5 rounded-lg border border-gray-300 mt-1 focus:outline-none focus:border-[#9D174D]"
                 />
               </div>
 
@@ -764,7 +764,7 @@ export function PreventionScreening() {
                 <Button variant="outline" size="sm" type="button" onClick={() => setShowVacModal(false)}>
                   Cancel
                 </Button>
-                <Button variant="obsidian" size="sm" type="submit" className="bg-[#BA2D0B] text-white">
+                <Button variant="obsidian" size="sm" type="submit" className="bg-[#9D174D] text-white">
                   Save Vaccine Administration
                 </Button>
               </div>
@@ -791,7 +791,7 @@ export function PreventionScreening() {
                   placeholder="e.g. Rekha Devi"
                   value={newScreen.patient_name}
                   onChange={(e) => setNewScreen({ ...newScreen, patient_name: e.target.value })}
-                  className="w-full text-xs p-2.5 rounded-lg border border-gray-300 mt-1 focus:outline-none focus:border-[#BA2D0B]"
+                  className="w-full text-xs p-2.5 rounded-lg border border-gray-300 mt-1 focus:outline-none focus:border-[#9D174D]"
                 />
               </div>
 
@@ -847,7 +847,7 @@ export function PreventionScreening() {
                 <Button variant="outline" size="sm" type="button" onClick={() => setShowScreenModal(false)}>
                   Cancel
                 </Button>
-                <Button variant="obsidian" size="sm" type="submit" className="bg-[#BA2D0B] text-white">
+                <Button variant="obsidian" size="sm" type="submit" className="bg-[#9D174D] text-white">
                   Save &amp; Generate Triage Pathway
                 </Button>
               </div>
@@ -944,7 +944,7 @@ export function PreventionScreening() {
                 <Button variant="outline" size="sm" type="button" onClick={() => setShowPrecancerModal(false)}>
                   Cancel
                 </Button>
-                <Button variant="obsidian" size="sm" type="submit" className="bg-[#BA2D0B] text-white">
+                <Button variant="obsidian" size="sm" type="submit" className="bg-[#9D174D] text-white">
                   Schedule Surveillance &amp; Save
                 </Button>
               </div>

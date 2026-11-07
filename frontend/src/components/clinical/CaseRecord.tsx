@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Download, Upload } from "lucide-react";
 import { referralApi, STATUS_LABELS, STATUS_ORDER, type Referral, type ReferralFile } from "../../api/referrals";
+import { Notice, Pill, when } from "../app/Status";
+import { btn, ui } from "../app/ui";
 
 const PA = ["Present", "Absent"];
 const FINDINGS: { key: string; label: string; options?: string[]; type?: string }[] = [
@@ -17,10 +19,22 @@ const FINDINGS: { key: string; label: string; options?: string[]; type?: string 
 const HISTOLOGY = ["Metaplasia", "CIN 1", "CIN 2", "CIN 3", "CIS", "Invasive cancer", "Other"];
 const INTAKE_LABELS: [string, string][] = [["presenting_complaints", "Presenting complaints"], ["other_complaint", "Other complaint"], ["parity", "Parity (G P L A)"], ["previous_procedures", "Previous cervical procedures"], ["medical_history", "Medical history"], ["pap_result", "Pap result"], ["hpv_dna", "HPV DNA"], ["via_findings", "Cervical examination / VIA findings"], ["working_diagnosis", "Working impression (not a diagnosis)"], ["action_taken", "Action taken"]];
 const FILE_KINDS: [string, string][] = [["VIA_IMAGE", "VIA image"], ["COLPOSCOPY_IMAGE", "Colposcopy image"], ["HISTOPATHOLOGY_REPORT", "Histopathology report"], ["MRI_REPORT", "MRI report"], ["OTHER_REPORT", "Other report"]];
-const field = "w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-sm";
 const REVIEW: Record<string, string> = { REFUSED: "She refused the referral", NO_CONTACT: "No contact by day 14" };
 
-/** The doctor's record. Nothing here is inferred: an empty field reads as pending. */
+function Block({ title, tag, note, children }: { title: string; tag: string; note?: string; children: ReactNode }) {
+  return (
+    <section className={`${ui.panel} p-4 sm:p-5`}>
+      <div className="flex flex-wrap items-center justify-between gap-2"><h2 className={ui.h3}>{title}</h2><span className="text-xs text-slate-500">{tag}</span></div>
+      {note && <p className="mt-1 text-xs text-slate-500">{note}</p>}
+      <div className="mt-4">{children}</div>
+    </section>
+  );
+}
+const Field = ({ label, children, wide }: { label: string; children: ReactNode; wide?: boolean }) => (
+  <label className={`flex flex-col gap-1.5 min-w-0 ${wide ? "sm:col-span-2" : ""}`}><span className={ui.label}>{label}</span>{children}</label>
+);
+
+/** The doctor's record. Screening, diagnostic findings, histopathology and the final diagnosis are kept apart; nothing is inferred. */
 export function CaseRecord({ referral, onChanged }: { referral: Referral; onChanged: () => Promise<void> | void }) {
   const [findings, setFindings] = useState<Record<string, string>>(referral.colposcopy_findings ?? {});
   const [text, setText] = useState({ biopsy: referral.biopsy ?? "", histopathology: referral.histopathology ?? "", mri: referral.mri ?? "", final_diagnosis: referral.final_diagnosis ?? "", treatment_plan: referral.treatment_plan ?? "", remarks: referral.remarks ?? "", next_follow_up: referral.next_follow_up ?? "" });
@@ -30,8 +44,11 @@ export function CaseRecord({ referral, onChanged }: { referral: Referral; onChan
   const [reviewNote, setReviewNote] = useState("");
   const [note, setNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const id = referral.referral_id;
   const arrived = STATUS_ORDER.indexOf(referral.status) >= 1;
+  const select = `${ui.input}`;
 
   const loadFiles = () => referralApi.files(id).then((r) => setFiles(r.files)).catch((e) => setError(e.message));
   useEffect(() => { void loadFiles(); }, [id]);
@@ -39,90 +56,124 @@ export function CaseRecord({ referral, onChanged }: { referral: Referral; onChan
   const act = async (fn: () => Promise<unknown>, done: string) => {
     setError(null);
     setNote(null);
+    setBusy(true);
     try {
       await fn();
       setNote(done);
+      setDirty(false);
       await onChanged();
     } catch (e) {
       setError(e instanceof Error ? e.message : "This could not be saved.");
+    } finally {
+      setBusy(false);
     }
   };
+  const setF = (k: string, v: string) => { setFindings({ ...findings, [k]: v }); setDirty(true); };
+  const setT = (k: keyof typeof text, v: string) => { setText({ ...text, [k]: v }); setDirty(true); };
+  const nextStatuses = STATUS_ORDER.filter((s) => STATUS_ORDER.indexOf(s) > STATUS_ORDER.indexOf(referral.status) && STATUS_ORDER.indexOf(s) > 1);
 
   return (
-    <div className="flex flex-col gap-4 max-w-3xl" data-testid="case-record">
+    <div className="flex flex-col gap-4 max-w-4xl" data-testid="case-record">
       {referral.doctor_review && (
-        <section className="rounded-2xl border border-amber-300 bg-amber-50 p-4 flex flex-col gap-2" data-testid="review-banner">
-          <h2 className="text-sm font-bold text-amber-950">Needs your review: {REVIEW[referral.doctor_review] ?? referral.doctor_review}</h2>
-          <input className={`${field} h-10`} value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} placeholder="Your decision" />
-          <button className="self-start h-9 rounded-lg bg-black text-white px-3 text-xs font-semibold cursor-pointer" onClick={() => act(() => referralApi.resolveReview(id, reviewNote), "Review closed.")}>Close review</button>
+        <section className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex flex-col gap-2" data-testid="review-banner">
+          <h2 className="text-sm font-semibold text-amber-950">Needs your review: {REVIEW[referral.doctor_review] ?? referral.doctor_review}</h2>
+          {referral.doctor_review_note ? <p className="text-sm text-amber-900">Your decision: {referral.doctor_review_note}</p> : (
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input className={ui.input} value={reviewNote} onChange={(e) => setReviewNote(e.target.value)} placeholder="Your decision, for the record" />
+              <button type="button" disabled={busy || !reviewNote.trim()} className={btn("primary", "shrink-0")} onClick={() => act(() => referralApi.resolveReview(id, reviewNote), "Review closed.")}>Close review</button>
+            </div>
+          )}
         </section>
       )}
-      {!arrived && <p className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">The record opens after the hospital confirms her arrival.</p>}
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5" data-testid="intake-summary">
-        <h2 className="text-sm font-bold mb-3">Health post intake</h2>
-        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">{INTAKE_LABELS.map(([k, label]) => (
-          <div key={k} className="min-w-0"><dt className="text-xs font-semibold text-slate-500">{label}</dt><dd className="break-words">{referral.form?.[k] || "Not entered"}</dd></div>
-        ))}</dl>
-      </section>
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
-        <h2 className="text-sm font-bold mb-3">Colposcopy</h2>
+      {!arrived && <Notice tone="guidance">The clinical record opens after the hospital confirms her arrival.</Notice>}
+
+      <Block title="1. Screening at the health post" tag="Entered by the health post. Read only." note="Screening results are not a diagnosis.">
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm" data-testid="intake-summary">
+          {INTAKE_LABELS.map(([k, label]) => (
+            <div key={k} className="min-w-0"><dt className={ui.label}>{label}</dt><dd className={`break-words ${referral.form?.[k] ? "" : "text-slate-400"}`}>{referral.form?.[k] || "Not entered"}</dd></div>
+          ))}
+        </dl>
+      </Block>
+
+      <Block title="2. Colposcopy" tag="Diagnostic findings. Entered by you.">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {FINDINGS.map((f) => (
-            <label key={f.key} className="flex flex-col gap-1.5 text-xs font-semibold text-slate-700">{f.label}
+            <Field key={f.key} label={f.label}>
               {f.options ? (
-                <select className={`${field} h-10`} value={findings[f.key] ?? ""} onChange={(e) => setFindings({ ...findings, [f.key]: e.target.value })}>
+                <select disabled={!arrived} className={select} value={findings[f.key] ?? ""} onChange={(e) => setF(f.key, e.target.value)}>
                   <option value="">Pending</option>{f.options.map((o) => <option key={o}>{o}</option>)}
                 </select>
-              ) : <input type={f.type ?? "text"} className={`${field} h-10`} value={findings[f.key] ?? ""} onChange={(e) => setFindings({ ...findings, [f.key]: e.target.value })} />}
+              ) : <input disabled={!arrived} type={f.type ?? "text"} className={ui.input} value={findings[f.key] ?? ""} onChange={(e) => setF(f.key, e.target.value)} />}
+            </Field>
+          ))}
+        </div>
+      </Block>
+
+      <Block title="3. Biopsy, histopathology and imaging" tag="Laboratory and imaging results." note="Histopathology confirms a tissue diagnosis. Leave it as pending until the report is in.">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="Biopsy">
+            <select disabled={!arrived} className={select} value={text.biopsy} onChange={(e) => setT("biopsy", e.target.value)} data-testid="record-biopsy">
+              <option value="">Pending</option>{["Yes", "No", "Not indicated"].map((o) => <option key={o}>{o}</option>)}
+            </select>
+          </Field>
+          <Field label="Histopathology">
+            <select disabled={!arrived} className={select} value={text.histopathology} onChange={(e) => setT("histopathology", e.target.value)} data-testid="record-histopathology">
+              <option value="">Pending</option>{HISTOLOGY.map((o) => <option key={o}>{o}</option>)}
+              {text.histopathology && !HISTOLOGY.includes(text.histopathology) && <option>{text.histopathology}</option>}
+            </select>
+          </Field>
+          <Field label="MRI" wide><textarea disabled={!arrived} rows={2} placeholder="Pending" className={`${ui.input} py-2`} value={text.mri} onChange={(e) => setT("mri", e.target.value)} data-testid="record-mri" /></Field>
+        </div>
+      </Block>
+
+      <Block title="4. Final diagnosis and plan" tag="Clinician-confirmed. Entered by you.">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="Final diagnosis" wide><textarea disabled={!arrived} rows={2} placeholder="Pending" className={`${ui.input} py-2`} value={text.final_diagnosis} onChange={(e) => setT("final_diagnosis", e.target.value)} data-testid="record-final_diagnosis" /></Field>
+          {text.final_diagnosis.trim() && !text.histopathology && <div className="sm:col-span-2"><Notice tone="attention">Histopathology is still pending. Please make sure this final diagnosis is confirmed before saving.</Notice></div>}
+          <Field label="Treatment plan" wide><textarea disabled={!arrived} rows={2} placeholder="Pending" className={`${ui.input} py-2`} value={text.treatment_plan} onChange={(e) => setT("treatment_plan", e.target.value)} data-testid="record-treatment_plan" /></Field>
+          <Field label="Next follow-up date"><input disabled={!arrived} type="date" className={ui.input} value={text.next_follow_up} onChange={(e) => setT("next_follow_up", e.target.value)} /></Field>
+          <Field label="Remarks" wide><textarea disabled={!arrived} rows={2} placeholder="Optional" className={`${ui.input} py-2`} value={text.remarks} onChange={(e) => setT("remarks", e.target.value)} data-testid="record-remarks" /></Field>
+        </div>
+      </Block>
+
+      <div className="sticky bottom-0 z-10 -mx-1 px-1 py-3 bg-[#FAFAFC]/95 backdrop-blur-sm border-t border-black/[0.06] flex flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" disabled={!arrived || busy} className={btn("primary")} onClick={() => act(() => referralApi.clinical(id, { ...text, next_follow_up: text.next_follow_up || undefined, colposcopy: findings.impression ?? "", colposcopy_findings: findings }), "Record saved.")} data-testid="record-save">{busy ? "Saving..." : "Save record"}</button>
+          {dirty && <span className="text-xs text-amber-800">Unsaved changes</span>}
+          {arrived && nextStatuses.length > 0 && (
+            <label className="flex items-center gap-2 text-sm">
+              <span className="text-slate-600">Record step:</span>
+              <select className={`${ui.input} !min-h-10 w-auto`} value="" disabled={busy} onChange={(e) => { const s = e.target.value; if (s) void act(() => referralApi.setStatus(id, { status: s }), `${STATUS_LABELS[s]} recorded.`); }} data-testid="record-step">
+                <option value="">Choose</option>{nextStatuses.map((s) => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
+              </select>
             </label>
-          ))}
+          )}
         </div>
-      </section>
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <h2 className="sm:col-span-2 text-sm font-bold">Reports and plan</h2>
-        <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-700">Biopsy
-          <select className={`${field} h-10`} value={text.biopsy} onChange={(e) => setText({ ...text, biopsy: e.target.value })} data-testid="record-biopsy">
-            <option value="">Pending</option>{["Yes", "No", "Not indicated"].map((o) => <option key={o}>{o}</option>)}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1.5 text-xs font-semibold text-slate-700">Next follow-up date
-          <input type="date" className={`${field} h-10`} value={text.next_follow_up} onChange={(e) => setText({ ...text, next_follow_up: e.target.value })} />
-        </label>
-        <label className="sm:col-span-2 flex flex-col gap-1.5 text-xs font-semibold text-slate-700">Histopathology
-          <select className={`${field} h-10`} value={text.histopathology} onChange={(e) => setText({ ...text, histopathology: e.target.value })} data-testid="record-histopathology">
-            <option value="">Pending</option>{HISTOLOGY.map((o) => <option key={o}>{o}</option>)}
-            {text.histopathology && !HISTOLOGY.includes(text.histopathology) && <option>{text.histopathology}</option>}
-          </select>
-        </label>
-        {([["mri", "MRI"], ["final_diagnosis", "Final diagnosis"], ["treatment_plan", "Treatment plan"], ["remarks", "Remarks"]] as const).map(([k, label]) => (
-          <label key={k} className="sm:col-span-2 flex flex-col gap-1.5 text-xs font-semibold text-slate-700">{label}
-            <textarea rows={2} placeholder="Pending" className={`${field} py-2`} value={text[k]} onChange={(e) => setText({ ...text, [k]: e.target.value })} data-testid={`record-${k}`} />
-          </label>
-        ))}
-        <div className="sm:col-span-2 flex flex-wrap items-center gap-2">
-          <button disabled={!arrived} className="h-10 rounded-lg bg-black text-white px-4 text-sm font-semibold cursor-pointer disabled:opacity-50" onClick={() => act(() => referralApi.clinical(id, { ...text, next_follow_up: text.next_follow_up || undefined, colposcopy: findings.impression ?? "", colposcopy_findings: findings }), "Record saved.")} data-testid="record-save">Save record</button>
-          {STATUS_ORDER.filter((s) => STATUS_ORDER.indexOf(s) > STATUS_ORDER.indexOf(referral.status) && STATUS_ORDER.indexOf(s) > 1).map((s) => (
-            <button key={s} disabled={!arrived} className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold cursor-pointer disabled:opacity-50" onClick={() => act(() => referralApi.setStatus(id, { status: s }), `${STATUS_LABELS[s]} recorded.`)}>Record: {STATUS_LABELS[s]}</button>
-          ))}
-        </div>
-      </section>
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 flex flex-col gap-3">
-        <h2 className="text-sm font-bold">Files</h2>
-        {files.length === 0 ? <p className="text-sm text-slate-500">No files yet.</p> : (
-          <ul className="flex flex-col gap-1.5">{files.map((f) => (
-            <li key={f.file_id} className="flex flex-col gap-2">{f.kind.endsWith("IMAGE") && <img src={referralApi.fileUrl(id, f.file_id) + "?inline=1"} alt={f.filename} className="max-h-72 w-full max-w-md rounded-lg border border-slate-200 object-contain" data-testid="record-image" />}<a className="flex items-center gap-2 text-sm underline break-all" href={referralApi.fileUrl(id, f.file_id)}><Download className="size-4 shrink-0" />{f.filename}</a></li>
+        {note && <p className="text-sm text-emerald-800" role="status" data-testid="record-note">{note}</p>}
+        {error && <p className="text-sm text-rose-800" role="alert">{error}</p>}
+      </div>
+
+      <Block title="Images and reports" tag="Files kept with this referral.">
+        {files.length === 0 ? <p className={ui.muted}>No files yet.</p> : (
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">{files.map((f) => (
+            <li key={f.file_id} className="rounded-md border border-black/[0.08] p-2 flex flex-col gap-2">
+              {f.kind.endsWith("IMAGE") && <img src={referralApi.fileUrl(id, f.file_id) + "?inline=1"} alt={f.filename} className="max-h-56 w-full rounded object-contain bg-slate-50" data-testid="record-image" />}
+              <div className="flex items-center justify-between gap-2 text-sm">
+                <a className="flex items-center gap-1.5 font-medium text-[#0369A1] hover:underline break-all" href={referralApi.fileUrl(id, f.file_id)}><Download className="size-4 shrink-0" />{f.filename}</a>
+                <Pill>{FILE_KINDS.find(([v]) => v === f.kind)?.[1] ?? f.kind}</Pill>
+              </div>
+              <p className="text-xs text-slate-500">{when(f.uploaded_at, true)}</p>
+            </li>
           ))}</ul>
         )}
-        <div className="flex flex-wrap items-center gap-3">
-          <select className={`${field} h-10 sm:w-auto`} value={kind} onChange={(e) => setKind(e.target.value)}>{FILE_KINDS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <select className={`${ui.input} w-auto`} value={kind} onChange={(e) => setKind(e.target.value)} aria-label="File type">{FILE_KINDS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
           {kind.endsWith("IMAGE") && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={photoConsent} onChange={(e) => setPhotoConsent(e.target.checked)} />She agreed to this photo</label>}
-          <label className="h-10 inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 text-xs font-semibold cursor-pointer"><Upload className="size-4" />Choose file
+          <label className={btn("secondary")}><Upload className="size-4" />Choose file
             <input type="file" accept="image/png,image/jpeg,application/pdf" className="sr-only" data-testid="record-file" onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ""; if (file) void act(async () => { await referralApi.upload(id, kind, file, photoConsent); await loadFiles(); }, "File saved."); }} />
           </label>
         </div>
-      </section>
-      {note && <p className="text-sm text-emerald-800" data-testid="record-note">{note}</p>}
-      {error && <p className="text-sm text-rose-800" role="alert">{error}</p>}
+      </Block>
     </div>
   );
 }
