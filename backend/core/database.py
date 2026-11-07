@@ -1,12 +1,15 @@
 """Encrypted SQLite database persistence layer for clinical cases and patient tracking."""
 import json
+import logging
 import secrets
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from backend.config import DB_PATH
+from backend.core.supabase_client import global_supabase
 
+logger = logging.getLogger("cervisetu.database")
 
 # region_code marking generated demo patients; kept out of every real clinical queue
 SYNTHETIC_REGION = "SYNTHETIC_ABDM"
@@ -17,6 +20,54 @@ class ClinicalDatabase:
     def __init__(self, db_path: Optional[Path] = None):
         self.db_path = str(db_path or DB_PATH)
         self._init_schema()
+        self._sync_from_supabase()
+
+    def _sync_from_supabase(self):
+        """Warm up local database from Supabase cloud PostgreSQL if available."""
+        if not global_supabase.is_configured:
+            return
+        try:
+            with self._get_conn() as conn:
+                # 1. Sync patients
+                count = conn.execute("SELECT count(*) as c FROM patients").fetchone()["c"]
+                if count == 0:
+                    rows = global_supabase.select("patients", limit=200)
+                    for r in rows:
+                        conn.execute(
+                            "INSERT OR IGNORE INTO patients (patient_token, age, gender, region_code, created_at) VALUES (?, ?, ?, ?, ?)",
+                            (r.get("patient_token"), r.get("age"), r.get("gender"), r.get("region_code"), r.get("created_at"))
+                        )
+                # 2. Sync cases
+                case_count = conn.execute("SELECT count(*) as c FROM clinical_cases").fetchone()["c"]
+                if case_count == 0:
+                    rows = global_supabase.select("clinical_cases", limit=200)
+                    for r in rows:
+                        conn.execute(
+                            "INSERT OR IGNORE INTO clinical_cases (case_id, patient_token, cancer_type, suspected_stage, severity_score, intake_json, diagnostic_json, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            (r.get("case_id"), r.get("patient_token"), r.get("cancer_type"), r.get("suspected_stage"), r.get("severity_score"),
+                             json.dumps(r.get("intake_json") or {}), json.dumps(r.get("diagnostic_json") or {}), r.get("status"), r.get("created_at"))
+                        )
+                # 3. Sync HPV vaccinations
+                vac_count = conn.execute("SELECT count(*) as c FROM hpv_vaccinations").fetchone()["c"]
+                if vac_count == 0:
+                    rows = global_supabase.select("hpv_vaccinations", limit=200)
+                    for r in rows:
+                        conn.execute(
+                            "INSERT OR IGNORE INTO hpv_vaccinations (vaccine_id, patient_token, patient_name, age, dose_number, vaccine_brand, administered_date, next_due_date, school_or_center, status, outreach_sent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            (r.get("vaccine_id"), r.get("patient_token"), r.get("patient_name"), r.get("age"), r.get("dose_number"), r.get("vaccine_brand"), r.get("administered_date"), r.get("next_due_date"), r.get("school_or_center"), r.get("status"), 1 if r.get("outreach_sent") else 0)
+                        )
+                # 4. Sync screening records
+                scr_count = conn.execute("SELECT count(*) as c FROM screening_records").fetchone()["c"]
+                if scr_count == 0:
+                    rows = global_supabase.select("screening_records", limit=200)
+                    for r in rows:
+                        conn.execute(
+                            "INSERT OR IGNORE INTO screening_records (screening_id, patient_token, patient_name, age, invitation_date, test_type, test_date, result, clinical_staging, triage_action, clinician_reviewed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            (r.get("screening_id"), r.get("patient_token"), r.get("patient_name"), r.get("age"), r.get("invitation_date"), r.get("test_type"), r.get("test_date"), r.get("result"), r.get("clinical_staging"), r.get("triage_action"), 1 if r.get("clinician_reviewed") else 0)
+                        )
+                conn.commit()
+        except Exception as exc:
+            logger.warning(f"Supabase warm-up sync notice: {exc}")
 
     def _get_conn(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)
@@ -214,6 +265,11 @@ class ClinicalDatabase:
                 VALUES (?, ?, ?, ?)
             """, (patient_token, age, gender, region_code))
             conn.commit()
+        if global_supabase.is_configured:
+            try:
+                global_supabase.insert("patients", {"patient_token": patient_token, "age": age, "gender": gender, "region_code": region_code}, upsert=True)
+            except Exception as e:
+                logger.warning(f"Failed to sync patient to Supabase: {e}")
 
     def save_clinical_case(
         self,
@@ -242,6 +298,20 @@ class ClinicalDatabase:
                 status
             ))
             conn.commit()
+        if global_supabase.is_configured:
+            try:
+                global_supabase.insert("clinical_cases", {
+                    "case_id": case_id,
+                    "patient_token": patient_token,
+                    "cancer_type": cancer_type,
+                    "suspected_stage": suspected_stage,
+                    "severity_score": severity_score,
+                    "intake_json": intake_data,
+                    "diagnostic_json": diagnostic_data,
+                    "status": status
+                }, upsert=True)
+            except Exception as e:
+                logger.warning(f"Failed to sync clinical case to Supabase: {e}")
 
     def save_scan_record(
         self,
@@ -477,6 +547,25 @@ class ClinicalDatabase:
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (vaccine_id, patient_token, patient_name, age, dose_number, vaccine_brand, adm_date, next_due_date, school_or_center, status, outreach_sent))
             conn.commit()
+
+        if global_supabase.is_configured:
+            try:
+                global_supabase.insert("hpv_vaccinations", {
+                    "vaccine_id": vaccine_id,
+                    "patient_token": patient_token,
+                    "patient_name": patient_name,
+                    "age": age,
+                    "dose_number": dose_number,
+                    "vaccine_brand": vaccine_brand,
+                    "administered_date": adm_date,
+                    "next_due_date": next_due_date,
+                    "school_or_center": school_or_center,
+                    "status": status,
+                    "outreach_sent": bool(outreach_sent)
+                }, upsert=True)
+            except Exception as e:
+                logger.warning(f"Failed to sync HPV vaccination to Supabase: {e}")
+
         return {
             "vaccine_id": vaccine_id,
             "patient_token": patient_token,
@@ -538,6 +627,25 @@ class ClinicalDatabase:
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (screening_id, patient_token, patient_name, age, invitation_date, test_type, t_date, result, clinical_staging, triage_action, clinician_reviewed))
             conn.commit()
+
+        if global_supabase.is_configured:
+            try:
+                global_supabase.insert("screening_records", {
+                    "screening_id": screening_id,
+                    "patient_token": patient_token,
+                    "patient_name": patient_name,
+                    "age": age,
+                    "invitation_date": invitation_date,
+                    "test_type": test_type,
+                    "test_date": t_date,
+                    "result": result,
+                    "clinical_staging": clinical_staging,
+                    "triage_action": triage_action,
+                    "clinician_reviewed": bool(clinician_reviewed)
+                }, upsert=True)
+            except Exception as e:
+                logger.warning(f"Failed to sync screening record to Supabase: {e}")
+
         return {
             "screening_id": screening_id,
             "patient_token": patient_token,

@@ -345,3 +345,101 @@ INSERT INTO public.patient_healing_clock (patient_token, ebrt_start_date, ebrt_f
     ('PT-ANON-2D91', '2026-09-18', 25, 4, 29, 48, 'COMPLETED', 'SUCCESS')
 ON CONFLICT (patient_token) DO NOTHING;
 
+-- =====================================================================================
+-- TABLE: referrals & referral tracking (Dual-Track Secondary Care)
+-- =====================================================================================
+CREATE TABLE IF NOT EXISTS public.referrals (
+    referral_id TEXT PRIMARY KEY,
+    patient_token TEXT NOT NULL,
+    age INTEGER,
+    area TEXT NOT NULL,
+    health_post TEXT NOT NULL,
+    hospital TEXT,
+    screening_finding TEXT NOT NULL,
+    colposcopy TEXT NOT NULL DEFAULT '',
+    histopathology TEXT NOT NULL DEFAULT '',
+    red_flags TEXT NOT NULL DEFAULT '',
+    urgent INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL,
+    referred_on TEXT,
+    arrived_on TEXT,
+    consent TEXT,
+    consent_note TEXT,
+    next_follow_up TEXT,
+    fictional INTEGER NOT NULL DEFAULT 0,
+    form_json JSONB DEFAULT '{}'::jsonb,
+    assigned_asha TEXT,
+    message_consent TEXT,
+    family_consent INTEGER NOT NULL DEFAULT 0,
+    stopped_at TEXT,
+    doctor_review TEXT,
+    doctor_review_note TEXT,
+    colposcopy_json JSONB DEFAULT '{}'::jsonb,
+    biopsy TEXT NOT NULL DEFAULT '',
+    mri TEXT NOT NULL DEFAULT '',
+    final_diagnosis TEXT NOT NULL DEFAULT '',
+    treatment_plan TEXT NOT NULL DEFAULT '',
+    remarks TEXT NOT NULL DEFAULT '',
+    visit_outcome TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.referral_events (
+    event_id TEXT PRIMARY KEY,
+    referral_id TEXT NOT NULL,
+    event_date TEXT NOT NULL,
+    follow_up_day INTEGER,
+    kind TEXT NOT NULL,
+    channel TEXT,
+    detail TEXT,
+    status TEXT,
+    actor TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.health_posts (
+    name TEXT PRIMARY KEY,
+    area TEXT NOT NULL,
+    active INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS public.referral_routes (
+    health_post TEXT PRIMARY KEY,
+    hospital TEXT NOT NULL,
+    updated_by TEXT NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.admin_hospitals (
+    hospital_id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    hospital_type TEXT NOT NULL,
+    area TEXT NOT NULL,
+    address TEXT NOT NULL DEFAULT '',
+    phone TEXT NOT NULL DEFAULT '',
+    services TEXT NOT NULL,
+    active INTEGER NOT NULL DEFAULT 1,
+    created_by TEXT NOT NULL,
+    latitude REAL,
+    longitude REAL,
+    location_source TEXT NOT NULL DEFAULT '',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Row Level Security policies for newly added tables
+ALTER TABLE public.referrals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.hpv_vaccinations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.screening_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admin_hospitals ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow service role full access to referrals" ON public.referrals FOR ALL USING (true);
+CREATE POLICY "Allow public read access to referrals" ON public.referrals FOR SELECT USING (true);
+CREATE POLICY "Allow service role full access to hpv_vaccinations" ON public.hpv_vaccinations FOR ALL USING (true);
+CREATE POLICY "Allow public read access to hpv_vaccinations" ON public.hpv_vaccinations FOR SELECT USING (true);
+CREATE POLICY "Allow service role full access to screening_records" ON public.screening_records FOR ALL USING (true);
+CREATE POLICY "Allow public read access to screening_records" ON public.screening_records FOR SELECT USING (true);
+CREATE POLICY "Allow service role full access to admin_hospitals" ON public.admin_hospitals FOR ALL USING (true);
+CREATE POLICY "Allow public read access to admin_hospitals" ON public.admin_hospitals FOR SELECT USING (true);
+
+
