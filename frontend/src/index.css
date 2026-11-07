@@ -120,6 +120,35 @@ body {
   background: linear-gradient(180deg, #FFFFFF 0%, #FCF8FA 45%, #F8FAFC 100%);
 }
 
+/* Animated Card Perimeter Border Trace (Calm & Micro) */
+.trace-rect {
+  stroke-dasharray: 8 92;
+  stroke-dashoffset: 0;
+  opacity: 0;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.trace-card:hover .trace-rect {
+  opacity: 1;
+  animation: perimeter-trace 5.5s linear infinite;
+}
+
+@keyframes perimeter-trace {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trace-card:hover .trace-rect {
+    animation: none;
+    opacity: 0.8;
+  }
+}
+
 /* Concentric / Radial Glowing Orbs */
 @keyframes pulse-subtle {
   0%, 100% { transform: scale(1); opacity: 0.9; }

@@ -14,8 +14,14 @@ function Card({
   className,
   size = "default",
   variant = "default",
+  traceColor,
+  children,
   ...props
-}: React.ComponentProps<"div"> & { size?: "default" | "sm"; variant?: CardVariant }) {
+}: React.ComponentProps<"div"> & {
+  size?: "default" | "sm";
+  variant?: CardVariant;
+  traceColor?: string;
+}) {
   const variantClasses = {
     default: "bg-white/95 border-black/15 shadow-2xs",
     pink: "card-gradient-pink border-black/15 shadow-2xs",
@@ -30,12 +36,33 @@ function Card({
       data-slot="card"
       data-size={size}
       className={cn(
-        "group/card border text-slate-900 flex flex-col gap-5 overflow-hidden rounded-lg py-4 text-sm has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3",
+        "group/card border text-slate-900 flex flex-col gap-5 overflow-hidden rounded-lg py-4 text-sm has-[>img:first-child]:pt-0 data-[size=sm]:gap-3 data-[size=sm]:py-3 relative",
+        traceColor ? "trace-card" : "",
         variantClasses[variant],
         className
       )}
       {...props}
-    />
+    >
+      {traceColor && (
+        <svg className="pointer-events-none absolute inset-0 size-full overflow-visible rounded-lg z-10" aria-hidden="true">
+          <rect
+            x="0.75"
+            y="0.75"
+            width="calc(100% - 1.5px)"
+            height="calc(100% - 1.5px)"
+            rx="7"
+            ry="7"
+            fill="none"
+            stroke={traceColor}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            pathLength={100}
+            className="trace-rect"
+          />
+        </svg>
+      )}
+      {children}
+    </div>
   );
 }
 
