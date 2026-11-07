@@ -3,7 +3,12 @@
 > **Document Purpose**: Complete, turn-key video demonstration production script, camera direction, and narrative voiceover for CerviSetu.  
 > **Target Run Time**: 7 to 9 Minutes (Modular: can be adapted to a 3-minute executive pitch or an 8-minute comprehensive technical review).  
 > **Presenter Tone**: Authoritative, clinically grounded, empathetic, and evidence-driven.  
-> **Target Audience**: Health Hackathon Judges, Clinical Oncologists, Ministry of Health & Family Welfare (MoHFW) / National Health Authority (NHA) Evaluators, and Public Health Technologists.
+> **Target Audience**: Health Hackathon Judges, Clinical Oncologists, Ministry of Health & Family Welfare (MoHFW) / National Health Authority (NHA) Evaluators, and Public Health Technologists.  
+> **Submission Links**:
+> - 🌐 **Live Web MVP**: [https://cervi-setu.pages.dev/](https://cervi-setu.pages.dev/)
+> - ▶️ **Implementation Video Walkthrough**: [Watch on Google Drive](https://drive.google.com/file/d/16l-TvH1dR5j1hMcbAAils9efy5uEkBBj/view?usp=sharing)
+> - 📄 **2-Page Solution Brief**: [View on Google Drive](https://drive.google.com/file/d/1BsL-AtmQBqwCRf0Hlhza8K8Dn3J2iIAw/view?usp=sharing)
+> - 📊 **Presentation / Pitch Deck**: [Open Google Slides](https://docs.google.com/presentation/d/1DWDuXUPUlsiF7aNQ_xHp2cximp8js2nM/edit?usp=sharing&ouid=112906296684609349584&rtpof=true&sd=true)
 
 ---
 

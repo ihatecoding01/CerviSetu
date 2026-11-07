@@ -14,7 +14,10 @@
 > **Team Name**: CerviSetu Care Collective  
 > **Team Code**: `HT2026-TEAM-CERVISETU`  
 > **Repository**: [GitHub: ihatecoding01/health_hackathon](https://github.com/ihatecoding01/health_hackathon)  
-> **Live Working Prototype**: `http://localhost:5173/` (FastAPI + React 19 / CARE UI)
+> **Live Working Prototype**: [https://cervi-setu.pages.dev/](https://cervi-setu.pages.dev/)  
+> **Video Demo Walkthrough**: [Watch on Google Drive](https://drive.google.com/file/d/16l-TvH1dR5j1hMcbAAils9efy5uEkBBj/view?usp=sharing)  
+> **2-Page Solution Brief**: [Read on Google Drive](https://drive.google.com/file/d/1BsL-AtmQBqwCRf0Hlhza8K8Dn3J2iIAw/view?usp=sharing)  
+> **Presentation / Pitch Deck**: [Open Google Slides](https://docs.google.com/presentation/d/1DWDuXUPUlsiF7aNQ_xHp2cximp8js2nM/edit?usp=sharing&ouid=112906296684609349584&rtpof=true&sd=true)
 
 ![CerviSetu District Hub-and-Spoke Gateway](/docs/screenshots/01_landing_page.png)
 
@@ -438,9 +441,11 @@ flowchart LR
 > **Team Name**: CerviSetu Care Collective  
 > **Team Code**: `HT2026-TEAM-CERVISETU`  
 > **Contact Email**: `team@cervisetu.care` | `contact@ohc.network`  
-> **Live Prototype URL**: [http://localhost:5173/](http://localhost:5173/)  
+> **Live Prototype URL**: [https://cervi-setu.pages.dev/](https://cervi-setu.pages.dev/)  
 > **Repository**: [https://github.com/ihatecoding01/health_hackathon](https://github.com/ihatecoding01/health_hackathon)  
-> **Demo Video Link**: [Insert 3-Minute Video Demo URL]  
+> **Demo Video Link**: [Watch Video on Google Drive](https://drive.google.com/file/d/16l-TvH1dR5j1hMcbAAils9efy5uEkBBj/view?usp=sharing)  
+> **2-Page Solution Brief**: [Read on Google Drive](https://drive.google.com/file/d/1BsL-AtmQBqwCRf0Hlhza8K8Dn3J2iIAw/view?usp=sharing)  
+> **Presentation / Pitch Deck**: [Open Google Slides](https://docs.google.com/presentation/d/1DWDuXUPUlsiF7aNQ_xHp2cximp8js2nM/edit?usp=sharing&ouid=112906296684609349584&rtpof=true&sd=true)  
 
 ---
 

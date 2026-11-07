@@ -4,6 +4,11 @@
   <h3>Cervical Cancer Referral Pathway for India's Health Posts, Hospitals and ASHA Workers</h3>
   <p><strong>No woman lost between an abnormal screening and care.</strong></p>
 
+  <a href="https://cervi-setu.pages.dev/"><img alt="Live Web MVP" src="https://img.shields.io/badge/🌐%20LIVE%20MVP-cervi--setu.pages.dev-018C7F?style=for-the-badge&labelColor=0F172A"></a>
+  <a href="https://drive.google.com/file/d/16l-TvH1dR5j1hMcbAAils9efy5uEkBBj/view?usp=sharing"><img alt="Implementation Video" src="https://img.shields.io/badge/▶%20VIDEO%20DEMO-Google%20Drive-E11D48?style=for-the-badge&labelColor=0F172A"></a>
+  <a href="https://drive.google.com/file/d/1BsL-AtmQBqwCRf0Hlhza8K8Dn3J2iIAw/view?usp=sharing"><img alt="2-Page Solution Brief" src="https://img.shields.io/badge/📄%20SOLUTION%20BRIEF-2--Page%20PDF-2563EB?style=for-the-badge&labelColor=0F172A"></a>
+  <a href="https://docs.google.com/presentation/d/1DWDuXUPUlsiF7aNQ_xHp2cximp8js2nM/edit?usp=sharing&ouid=112906296684609349584&rtpof=true&sd=true"><img alt="Pitch Deck" src="https://img.shields.io/badge/📊%20PITCH%20DECK-Google%20Slides-D97706?style=for-the-badge&labelColor=0F172A"></a>
+  <br>
   <a href="#running-the-test-suite"><img alt="pytest" src="https://img.shields.io/badge/pytest-245%20tests-4C9A2A?style=for-the-badge&labelColor=555555&logo=pytest&logoColor=white"></a>
   <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/Python-3.14%2B-3776AB?style=for-the-badge&labelColor=555555&logo=python&logoColor=white"></a>
   <a href="https://react.dev/"><img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&labelColor=555555&logo=react&logoColor=white"></a>
@@ -19,8 +24,7 @@
 <br>
 
 <div align="center">
-  <!-- Replace # with the implementation video link. A scene-by-scene script is in docs/VIDEO_DEMO_WALKTHROUGH.md -->
-  <a href="#"><img alt="Watch the implementation video" src="https://img.shields.io/badge/▶%20WATCH%20THE%20IMPLEMENTATION%20VIDEO-018C7F?style=for-the-badge"></a>
+  <a href="https://drive.google.com/file/d/16l-TvH1dR5j1hMcbAAils9efy5uEkBBj/view?usp=sharing"><img alt="Watch the implementation video" src="https://img.shields.io/badge/▶%20WATCH%20THE%20IMPLEMENTATION%20VIDEO-018C7F?style=for-the-badge"></a>
 </div>
 
 <br>
@@ -71,21 +75,21 @@ Screenshots of the running application. Every patient shown is fictional demo da
   <tr>
     <td width="50%" align="center">
       <img src="./docs/screenshots/01_landing_page.png" alt="CerviSetu landing page" width="100%">
-      <br><strong>Landing page</strong><br><sub>Interactive 3D cervix model, the 14-day follow-up journey and a product tour.</sub>
+      <br><strong>Landing page</strong><br><sub>Interactive 3D cervix model, the 14-day follow-up journey and showcase studios.</sub>
     </td>
     <td width="50%" align="center">
       <img src="./docs/screenshots/02_care_gateway.png" alt="Care gateway" width="100%">
-      <br><strong>Care gateway</strong><br><sub>One entry point for staff, ASHA workers and patients.</sub>
+      <br><strong>Care gateway</strong><br><sub>One entry point with Orion cards for staff, ASHA mobilizers and patients.</sub>
     </td>
   </tr>
   <tr>
     <td width="50%" align="center">
       <img src="./docs/screenshots/03_patient_portal.png" alt="Patient portal" width="100%">
-      <br><strong>Patient portal</strong><br><sub>Next step, referral centre, directions, cost estimate and a map of nearby centres.</sub>
+      <br><strong>Patient portal</strong><br><sub>Next step, referral centre, directions, cost estimate and interactive navigation map.</sub>
     </td>
     <td width="50%" align="center">
       <img src="./docs/screenshots/05_doctor_dashboard.png" alt="Doctor dashboard" width="100%">
-      <br><strong>Doctor dashboard</strong><br><sub>Urgent cases first, with counts for review, follow-up and arrivals.</sub>
+      <br><strong>Doctor dashboard</strong><br><sub>Urgent cases first, with counts for review, follow-up, arrivals and the Clinical & Field Intelligence Hub.</sub>
     </td>
   </tr>
   <tr>
@@ -95,17 +99,17 @@ Screenshots of the running application. Every patient shown is fictional demo da
     </td>
     <td width="50%" align="center">
       <img src="./docs/screenshots/07_case_record.png" alt="Case record" width="100%">
-      <br><strong>Case record</strong><br><sub>Screening summary, care journey, clinical findings, follow-up history and reports.</sub>
+      <br><strong>Case record</strong><br><sub>Screening summary, care journey, clinical findings, follow-up history and opt-in OCR document reading.</sub>
     </td>
   </tr>
   <tr>
     <td width="50%" align="center">
       <img src="./docs/screenshots/11_asha_followups.png" alt="ASHA follow-ups" width="100%">
-      <br><strong>ASHA worker</strong><br><sub>Who needs you today: home visits due, then reminders running.</sub>
+      <br><strong>ASHA worker</strong><br><sub>Who needs you today: home visits due (day 14+), field call/visit logging, and contact history.</sub>
     </td>
     <td width="50%" align="center">
       <img src="./docs/screenshots/12_asha_register.png" alt="ASHA patient registration" width="100%">
-      <br><strong>ASHA patient registration</strong><br><sub>Step-by-step registration with a duplicate check, consent and document upload.</sub>
+      <br><strong>ASHA patient registration</strong><br><sub>Step-by-step registration with a duplicate check, consent, 1-click demo prefill and document reading.</sub>
     </td>
   </tr>
   <tr>
@@ -115,7 +119,7 @@ Screenshots of the running application. Every patient shown is fictional demo da
     </td>
     <td width="50%" align="center">
       <img src="./docs/screenshots/09_register_patient.png" alt="Register patient" width="100%">
-      <br><strong>Register patient</strong><br><sub>Five-step intake for nurses and doctors.</sub>
+      <br><strong>Register patient</strong><br><sub>Five-step intake with Scan-to-Fill slip extraction for nurses and doctors.</sub>
     </td>
   </tr>
   <tr>
@@ -131,11 +135,11 @@ Screenshots of the running application. Every patient shown is fictional demo da
   <tr>
     <td width="50%" align="center">
       <img src="./docs/screenshots/08_prevention_screening.png" alt="Prevention and screening" width="100%">
-      <br><strong>Prevention and screening</strong><br><sub>HPV vaccination, screening triage and precancer surveillance.</sub>
+      <br><strong>Prevention and screening</strong><br><sub>HPV vaccination, screening triage, vaccine inventory and precancer surveillance.</sub>
     </td>
     <td width="50%" align="center">
-      <img src="./docs/screenshots/04_patient_portal_mobile.png" alt="Patient portal on a phone" width="45%">
-      <br><strong>Patient portal on a phone</strong><br><sub>Every portal adapts to phone, tablet and laptop widths.</sub>
+      <img src="./docs/screenshots/04_patient_portal_mobile.png" alt="Patient portal on a phone" width="280" style="max-width: 100%; height: auto;">
+      <br><strong>Patient portal on a phone</strong><br><sub>Every portal adapts responsively to phone, tablet and laptop widths.</sub>
     </td>
   </tr>
 </table>
@@ -228,7 +232,7 @@ A two-column layout on laptops that stacks naturally on tablets and phones.
 - **Session-protected**: she can only ever see her own record.
 
 ### Doctor Portal
-- **Dashboard**: shows **urgent cases only**, with counts for needs review, arrived and reports pending, in follow-up, and home visits due. Quick actions open referrals, a case record, report upload and a new screening.
+- **Dashboard**: shows **urgent cases only**, with counts for review, follow-up and arrivals. Quick actions open referrals, a case record, report upload and a new screening.
 - **Referral cases**: opens on **Needs attention**, sorted by priority. Filters for **All patients**, review, follow-up, arrived, under care and closed, plus an urgency filter and search by name, patient ID or referral ID.
 - **Case record**: a patient header with ID, urgency and route (health post → hospital), and a patient switcher.
   - **Overview**: screening summary, red flags, colposcopy, histopathology and next follow-up.
@@ -237,7 +241,7 @@ A two-column layout on laptops that stacks naturally on tablets and phones.
   - **Consultation and AI voice**: record or type a consultation and get an editable draft. Voice commands appear as buttons and do nothing until the doctor confirms.
   - **ABHA and DPDP consent**.
   - **Reports rail**: case details and attached reports (VIA and colposcopy images, histopathology, MRI), stored encrypted.
-- **Register patient**: the same step-by-step registration nurses use (patient, screening result, history, consent, review).
+- **Register patient**: the same step-by-step registration nurses use (patient, screening result, history, consent, review) with Scan-to-Fill slip extraction.
 - **Follow-up tracker**: where every open referral is in the 14 days.
 - **ASHA network**: assign an ASHA worker and see field activity.
 - **Prevention and screening**: HPV vaccination (with outreach), screening triage and precancer surveillance.
@@ -314,7 +318,7 @@ Designed for a phone in the field.
 - **Image quality guard**: blurry photos are rejected (Laplacian variance) before reading.
 
 ### Document Reading (OCR, decision support)
-- In the doctor's case record, **Read document** runs OCR (Sarvam Vision) on an attached Pap, HPV, VIA, colposcopy, biopsy, histopathology, lab or consultation document, including multi-page PDFs.
+- In the doctor's case record and intake registration, **Read document** and **Scan-to-Fill slip extraction** run OCR (Sarvam Vision) on screening slips, Pap, HPV, VIA, colposcopy, biopsy, histopathology and lab reports, including multi-page PDFs.
 - Proposed findings are shown with the source text, page, a *High confidence* or *Needs review* label with reasons, and the value already in the record side by side.
 - The doctor edits and ticks the fields to keep. Only those are saved. Status, final diagnosis and treatment are never changed by OCR. A short AI summary is clearly labelled as unconfirmed.
 - Patient ID mismatches, blurred scans, unclear wording and conflicts are flagged. Duplicate uploads are kept once. Nurses can read, only doctors confirm, ASHA workers upload screening papers only, and patients and administrators have no access.

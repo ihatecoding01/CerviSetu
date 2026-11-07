@@ -4,6 +4,11 @@
 > **Total Estimated Run Time**: 8 – 10 Minutes (Modular: Can be presented in full or trimmed for 5-minute hackathon pitches)  
 > **Target Audience**: Hackathon Judges, Clinical Evaluators, Public Health Officials (MoHFW/NHA), and Healthcare Workers  
 > **Presenter Tone**: Confident, empathetic, clinically grounded, and technologically authoritative  
+> **Submission Links**:
+> - 🌐 **Live Web MVP**: [https://cervi-setu.pages.dev/](https://cervi-setu.pages.dev/)
+> - ▶️ **Implementation Video Walkthrough**: [Watch on Google Drive](https://drive.google.com/file/d/16l-TvH1dR5j1hMcbAAils9efy5uEkBBj/view?usp=sharing)
+> - 📄 **2-Page Solution Brief**: [View on Google Drive](https://drive.google.com/file/d/1BsL-AtmQBqwCRf0Hlhza8K8Dn3J2iIAw/view?usp=sharing)
+> - 📊 **Presentation / Pitch Deck**: [Open Google Slides](https://docs.google.com/presentation/d/1DWDuXUPUlsiF7aNQ_xHp2cximp8js2nM/edit?usp=sharing&ouid=112906296684609349584&rtpof=true&sd=true)  
 
 ---
 
