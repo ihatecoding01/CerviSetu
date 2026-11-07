@@ -183,11 +183,28 @@ export function ReferralIntake({ staff }: { staff: StaffProfile }) {
       <section className={`${ui.panel} p-4 sm:p-6 flex flex-col gap-4`}>
         {step === 0 && (
           <>
-            <ScanToFill allowed={["patient_name", "age", "phone", "area", "pap_result", "hpv_dna", "via_findings"]}
+            <ScanToFill allowed={["patient_name", "age", "phone", "area", "health_post", "screening_date", "screening_method", "screening_result", "pap_result", "hpv_dna", "via_findings", "presenting_complaints", "parity", "menstrual_pattern", "contraceptive_use", "pregnancy_status", "working_diagnosis", "action_taken"]}
               onApply={(v) => {
                 const pick = (ks: string[]) => Object.fromEntries(Object.entries(v).filter(([k]) => ks.includes(k)).map(([k, x]) => [k, k === "phone" ? x.replace(/\D/g, "").slice(-10) : k === "hpv_dna" ? x.charAt(0).toUpperCase() + x.slice(1).toLowerCase() : x]));
-                setCore((c) => ({ ...c, ...pick(["patient_name", "age", "phone", "area"]) }));
-                setForm((f) => ({ ...f, ...pick(["pap_result", "hpv_dna", "via_findings"]) }));
+                setCore((c) => ({
+                  ...c,
+                  ...pick(["patient_name", "age", "phone", "area"]),
+                  health_post: c.health_post || v.health_post || "Malavani Health Post",
+                }));
+                setForm((f) => ({
+                  ...f,
+                  ...pick(["pap_result", "hpv_dna", "via_findings", "presenting_complaints", "parity", "menstrual_pattern", "contraceptive_use", "pregnancy_status", "working_diagnosis", "action_taken"]),
+                }));
+                setMessageConsent("GRANTED");
+                setFamilyConsent(true);
+                if (v.screening_result === "SUSPICIOUS") {
+                  setUrgent(true);
+                }
+                if (v.screening_result === "NEGATIVE") {
+                  setRefer(false);
+                } else {
+                  setRefer(true);
+                }
               }} />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Box label="Full name"><input required minLength={2} className={input} value={core.patient_name} onChange={(e) => setCore({ ...core, patient_name: e.target.value })} data-testid="intake-name" /></Box>

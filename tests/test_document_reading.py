@@ -230,3 +230,33 @@ def test_scan_intake_blocked_for_admin_and_hospital(client, ocr):
     for role in ("ADMIN", "HOSPITAL"):
         _login(client, role)
         assert client.post("/api/referrals/scan-intake", files={"file": ("s.pdf", pdf("x"), "application/pdf")}).status_code in (401, 403)
+
+
+def test_load_sample_histopathology_and_pap_reports(client):
+    _login(client, "DOCTOR")
+    rid = _arrived(client)["referral_id"]
+
+    # Histopathology sample
+    rh = client.post(f"/api/referrals/{rid}/files/sample?kind=HISTOPATHOLOGY_REPORT")
+    assert rh.status_code == 201, rh.text
+    data_h = rh.json()
+    assert data_h["file"]["kind"] == "HISTOPATHOLOGY_REPORT"
+    fields_h = {f["key"]: f["value"] for f in data_h["reading"]["fields"]}
+    assert "cin_grade" in fields_h or "histopathology_result" in fields_h
+
+    # Pap smear sample
+    rp = client.post(f"/api/referrals/{rid}/files/sample?kind=PAP_REPORT")
+    assert rp.status_code == 201, rp.text
+    data_p = rp.json()
+    assert data_p["file"]["kind"] == "PAP_REPORT"
+    fields_p = {f["key"]: f["value"] for f in data_p["reading"]["fields"]}
+    assert fields_p.get("cytology_result") == "HSIL"
+
+    # Confirm histopathology
+    cf = client.post(f"/api/referrals/{rid}/files/{data_h['file']['file_id']}/confirm", json={"values": {"cin_grade": "CIN 3 (HSIL)"}})
+    assert cf.status_code == 200, cf.text
+
+    # Invalid kind rejected
+    bad = client.post(f"/api/referrals/{rid}/files/sample?kind=INVALID_REPORT")
+    assert bad.status_code == 422
+

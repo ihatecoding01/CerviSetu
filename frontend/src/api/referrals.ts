@@ -154,6 +154,8 @@ export const referralApi = {
   reading: (id: string, fileId: string) => call<{ reading: DocumentReading | null }>(`/${id}/files/${fileId}/reading`),
   confirmReading: (id: string, fileId: string, values: Record<string, string>) => call<{ reading: DocumentReading; referral: Referral }>(`/${id}/files/${fileId}/confirm`, { values }),
   rejectReading: (id: string, fileId: string) => call<{ reading: DocumentReading }>(`/${id}/files/${fileId}/reject`, {}),
+  loadSampleFile: (id: string, kind: "HISTOPATHOLOGY_REPORT" | "PAP_REPORT") =>
+    call<{ file: ReferralFile; reading: DocumentReading }>(`/${id}/files/sample?kind=${kind}`, {}),
   removeFile: async (id: string, fileId: string) => {
     const res = await apiFetch(`${BASE_URL}/api/referrals/${id}/files/${fileId}`, { method: "DELETE" });
     const data = await res.json().catch(() => ({}));

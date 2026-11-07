@@ -130,6 +130,7 @@ ROLE_RULES = [
     ("POST", r"^/api/referrals/scan-intake$", (DOCTOR, NURSE, ASHA)),
     ("POST", r"^/api/referrals/(register|duplicates)$", (ASHA,)),
     ("DELETE", r"^/api/referrals/[^/]+/files/[^/]+$", (DOCTOR,)),
+    ("POST", r"^/api/referrals/[^/]+/files/sample$", CLINICAL),
     ("POST", r"^/api/referrals/[^/]+/files/[^/]+/(confirm|reject)$", (DOCTOR,)),
     ("POST", r"^/api/referrals/[^/]+/files/[^/]+/read$", CLINICAL),
     ("GET", r"^/api/referrals/[^/]+/files/[^/]+/reading$", CLINICAL),

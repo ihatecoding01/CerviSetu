@@ -646,6 +646,9 @@ def seed() -> None:
         with global_db._get_conn() as conn:
             conn.execute("UPDATE referrals SET assigned_asha = 'AW-3001' WHERE patient_token = 'PT-CASE-RADHA'")
             conn.commit()
+    with global_db._get_conn() as conn:
+        conn.execute("DELETE FROM document_readings WHERE file_id IN (SELECT file_id FROM referral_files WHERE kind = 'VIA_IMAGE')")
+        conn.commit()
 
 
 # ASHA registration ------------------------------------------------------------------------------------------

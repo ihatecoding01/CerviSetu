@@ -95,12 +95,20 @@ export function CaseRecord({ referral, onChanged }: { referral: Referral; onChan
         <div className="flex flex-wrap items-center justify-between gap-2"><h2 className={ui.h3}>Upload and read a report</h2><span className="text-xs text-slate-500">OCR · decision support, not a diagnosis</span></div>
         <p className="mt-1 text-sm text-slate-600">Upload a Pap, HPV, colposcopy, biopsy, histopathology or lab report. CerviSetu reads it and proposes findings with the source text. Tick what is correct and confirm, and it is saved to her record. You can still enter everything by hand below.</p>
         <div className="mt-4">
-        <div className="mb-4 flex flex-wrap items-center gap-3">
-          <select className={`${ui.input} sm:w-auto`} value={kind} onChange={(e) => setKind(e.target.value)} aria-label="File type">{FILE_KINDS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
-          {kind.endsWith("IMAGE") && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={photoConsent} onChange={(e) => setPhotoConsent(e.target.checked)} />She agreed to this photo</label>}
-          <label className={btn("primary")}><Upload className="size-4" />Upload and read
+        <div className="mb-4 flex flex-wrap items-center gap-2.5">
+          <select className={`${ui.input} sm:w-auto text-xs !min-h-9`} value={kind} onChange={(e) => setKind(e.target.value)} aria-label="File type">{FILE_KINDS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
+          {kind.endsWith("IMAGE") && <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={photoConsent} onChange={(e) => setPhotoConsent(e.target.checked)} />She agreed to this photo</label>}
+          <label className={btn("primary", "!min-h-9 text-xs cursor-pointer")}><Upload className="size-3.5" />Upload and read
             <input type="file" accept="image/png,image/jpeg,application/pdf" className="sr-only" data-testid="record-file" onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ""; if (file) void act(async () => { const saved = await referralApi.upload(id, kind, file, photoConsent); setAutoRead(saved.file_id); await loadFiles(); }, "File saved. Reading it now."); }} />
           </label>
+          <button type="button" className={btn("secondary", "!min-h-9 text-xs")} disabled={busy} data-testid="load-sample-histo"
+            onClick={() => void act(async () => { const res = await referralApi.loadSampleFile(id, "HISTOPATHOLOGY_REPORT"); setAutoRead(res.file.file_id); await loadFiles(); }, "Sample histopathology report attached and read.")}>
+            Load sample histopathology
+          </button>
+          <button type="button" className={btn("secondary", "!min-h-9 text-xs")} disabled={busy} data-testid="load-sample-pap"
+            onClick={() => void act(async () => { const res = await referralApi.loadSampleFile(id, "PAP_REPORT"); setAutoRead(res.file.file_id); await loadFiles(); }, "Sample Pap smear report attached and read.")}>
+            Load sample Pap smear
+          </button>
         </div>
         {files.length === 0 ? <p className={ui.muted}>No reports yet.</p> : (
           <ul className="flex flex-col gap-3">{files.map((f) => (
@@ -117,7 +125,7 @@ export function CaseRecord({ referral, onChanged }: { referral: Referral; onChan
                 </div>
               </div>
               <p className="text-xs text-slate-500">{when(f.uploaded_at ?? f.created_at ?? "", true)}{f.uploaded_by ? ` · ${f.uploaded_by}` : ""}</p>
-              {!f.kind.endsWith("IMAGE") || f.kind === "VIA_IMAGE" ? <DocumentReview referralId={id} file={f} autoRead={f.file_id === autoRead} canConfirm={arrived} onSaved={async () => { await onChanged(); }} /> : null}
+              {!f.kind.endsWith("IMAGE") ? <DocumentReview referralId={id} file={f} autoRead={f.file_id === autoRead} canConfirm={true} onSaved={async () => { await onChanged(); }} /> : null}
             </li>
           ))}</ul>
         )}

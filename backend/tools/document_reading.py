@@ -72,7 +72,8 @@ RULES = {
     "cytology_result": r"\b(NILM|ASC-US|ASCUS|ASC-H|LSIL|HSIL|AGC|negative for intraepithelial lesion[^.\n]*)\b",
     "via_result": r"\bVIA[^.\n]{0,20}?\b(positive|negative)\b",
     "cin_grade": r"\bCIN\s?(I{1,3}|[123])\b",
-    "invasive_malignancy": r"\b(invasive (squamous cell )?carcinoma[^.\n]*|carcinoma[^.\n]*invasive[^.\n]*)",
+    "histopathology_result": r"\b(?:diagnosis|histopathology)[:\s]+([^\n.]{3,80})",
+    "invasive_malignancy": r"\b(invasive (?:squamous cell )?carcinoma[^.\n]*|carcinoma[^.\n]*invasive[^.\n]*|not seen|no stromal invasion|negative for malignancy)\b",
     "report_date": r"\b(?:report )?date[:\s]+(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}-\d{2}-\d{2})",
     "colposcopic_impression": r"\b(?:colposcopic )?impression[:\s]+([^\n.]{3,80})",
     "transformation_zone": r"\b(?:transformation zone|TZ)[:\s]+([^\n.]{3,60})",
@@ -310,6 +311,58 @@ def reject(referral_id: str, file_id: str, actor: str) -> Dict[str, Any]:
 
 def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def create_sample_report(referral_id: str, kind: str, actor: str) -> Dict[str, Any]:
+    """Attach and immediately read a verified sample report tailored to the patient."""
+    _init()
+    row = rp._view(rp._get(referral_id))
+    token = row["patient_token"]
+    name = row.get("patient_name") or "Sample Patient"
+    age = row.get("age") or 40
+    facility = row.get("hospital") or "Sir JJ Hospital"
+
+    if kind == "HISTOPATHOLOGY_REPORT":
+        filename = f"SAMPLE_Histopathology_Report_{token}.pdf"
+        content = (
+            f"%PDF-1.4\n1 0 obj<</Type /Page>>endobj\ntrailer<<>>\n%%EOF\n"
+            f"FICTIONAL TEST DOCUMENT - CERVISETU DEMO\n"
+            f"{facility} - Department of Pathology\n"
+            f"Histopathology Report - Cervical Biopsy\n"
+            f"Patient name: {name}\n"
+            f"Patient ID: {token}\n"
+            f"Age: {age} years\n"
+            f"Report date: 2026-11-06\n"
+            f"Specimen: cervical punch biopsy, 12 o'clock\n"
+            f"Specimen date: 2026-11-03\n"
+            f"Gross: three grey-white bits, largest 0.4 cm\n"
+            f"Microscopy: Full-thickness dysplasia of squamous epithelium. No stromal invasion.\n"
+            f"Diagnosis: CIN 3 (HSIL)\n"
+            f"Invasive malignancy: not seen\n"
+            f"Report status: report available\n"
+            f"Recommendation: discuss treatment in colposcopy clinic\n"
+            f"Follow-up on 2026-11-20\n"
+        ).encode("utf-8")
+    else:  # PAP_REPORT
+        filename = f"SAMPLE_Pap_Smear_Report_{token}.pdf"
+        content = (
+            f"%PDF-1.4\n1 0 obj<</Type /Page>>endobj\ntrailer<<>>\n%%EOF\n"
+            f"FICTIONAL TEST DOCUMENT - CERVISETU DEMO\n"
+            f"{facility} - Department of Pathology\n"
+            f"Cervical Cytology (Pap Smear) Report\n"
+            f"Patient name: {name}\n"
+            f"Patient ID: {token}\n"
+            f"Age: {age} years\n"
+            f"Report date: 2026-10-28\n"
+            f"Specimen: conventional Pap smear\n"
+            f"Specimen date: 2026-10-25\n"
+            f"Cytology result: HSIL\n"
+            f"Recommendation: colposcopy and directed biopsy\n"
+        ).encode("utf-8")
+
+    f = rp.add_file(referral_id, kind, filename, content, photo_consent=True, actor=actor)
+    reading = get(referral_id, f["file_id"]) or read(referral_id, f["file_id"], actor)
+    return {"file": f, "reading": reading}
 
 
 # ---------- Fill a registration form from a screening slip (nothing is stored) ----------

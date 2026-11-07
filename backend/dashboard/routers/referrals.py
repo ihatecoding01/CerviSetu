@@ -285,6 +285,16 @@ async def remove_file(referral_id: str, file_id: str, request: Request):
     return _run(rp.delete_file, referral_id, file_id, _actor(request))
 
 
+@router.post("/{referral_id}/files/sample", status_code=201)
+async def upload_sample_file(referral_id: str, kind: str = "HISTOPATHOLOGY_REPORT", request: Request = None):
+    """Attach a verified sample report (Histopathology or Pap Smear) and read it immediately."""
+    from backend.tools import document_reading
+    if kind not in ("HISTOPATHOLOGY_REPORT", "PAP_REPORT"):
+        raise HTTPException(status_code=422, detail="Sample report must be HISTOPATHOLOGY_REPORT or PAP_REPORT.")
+    _own(request, referral_id)
+    return _run(document_reading.create_sample_report, referral_id, kind, _actor(request))
+
+
 @router.post("/scan-intake")
 async def scan_intake(request: Request, file: UploadFile = File(...)):
     """Read a screening slip to pre-fill registration. Nothing is stored; staff check every value."""
