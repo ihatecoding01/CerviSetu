@@ -6,5 +6,8 @@
     "build": "cd frontend && npm install && npm run build",
     "tunnel": "cloudflared tunnel --url http://localhost:8000",
     "backend": ".venv\\Scripts\\python.exe main.py"
+  },
+  "devDependencies": {
+    "@vosjs/cli": "^0.87.0"
   }
 }

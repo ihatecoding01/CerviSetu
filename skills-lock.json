@@ -6,6 +6,60 @@
       "sourceType": "github",
       "skillPath": "skills/landing-page-design/SKILL.md",
       "computedHash": "c4f760690439298d9ef3238534919ee3fd558a3345c414ff6c7e7acacd973a08"
+    },
+    "launch-kit": {
+      "source": "vosjs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/launch-kit/SKILL.md",
+      "computedHash": "732b2566df60bee9f5196e78ab1342fca6bdd00aa7451f1e80908749a046aef0"
+    },
+    "vos-authoring": {
+      "source": "vosjs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/vos-authoring/SKILL.md",
+      "computedHash": "6b82a8b5f0ec12a9027e51e10606a9b58f9a959efe642cbe3a7bd6777103fbcc"
+    },
+    "vos-create": {
+      "source": "vosjs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/vos-create/SKILL.md",
+      "computedHash": "eca3c2b77b81a13217e1b338b272c81786b867c49a617006d68df47d4a49d12a"
+    },
+    "vos-cut": {
+      "source": "vosjs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/vos-cut/SKILL.md",
+      "computedHash": "b5885e2b93e5888342dd2f913540d5b8aae762ea39a75b04a45ff74261996ca6"
+    },
+    "vos-footage": {
+      "source": "vosjs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/vos-footage/SKILL.md",
+      "computedHash": "d36ff4ebab0c6d34e792ca40305cf0e06628a08d5f81d9698cca2eb7b243686e"
+    },
+    "vos-migrate": {
+      "source": "vosjs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/vos-migrate/SKILL.md",
+      "computedHash": "76946e4fbcd57dbf66278862d6ccdd63333936c73c88044755f7731ae58bd99c"
+    },
+    "vos-port": {
+      "source": "vosjs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/vos-port/SKILL.md",
+      "computedHash": "cf5fd7ac7d89db4ef959c4a087920cd2aeb26f8eb210395ca0b7ded3a2431919"
+    },
+    "vos-remix": {
+      "source": "vosjs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/vos-remix/SKILL.md",
+      "computedHash": "c0ce44117e2da4296c0e9379fb748c08dbf8a735ba068feaff7dcd8d0be314c3"
+    },
+    "vos-score": {
+      "source": "vosjs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/vos-score/SKILL.md",
+      "computedHash": "fbf52e6c715f73abaece336b7e3a099213a813ae16dcfb33e7605a31b90dbd83"
     }
   }
 }

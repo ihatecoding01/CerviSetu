@@ -386,7 +386,22 @@ VAULT_SECRET_KEY=your_32_byte_base64_key_here  # generate your own; never commit
 CERVISETU_ABDM_MODE=sandbox_simulated
 CERVISETU_OCR_ENABLED=1
 CERVISETU_DATA_DIR=data                        # database, encrypted files and translation cache
+
+# Maps & Navigation (OpenStreetMap)
+CERVISETU_MAP_TILE_URL=https://tile.openstreetmap.org/{z}/{x}/{y}.png
+CERVISETU_GEOCODER_URL=https://nominatim.openstreetmap.org/search
+CERVISETU_ROUTING_URL=https://router.project-osrm.org
 ```
+
+### Maps and Location Settings (OpenStreetMap)
+
+| Setting | Default | Use |
+|---|---|---|
+| `CERVISETU_MAP_TILE_URL` | OpenStreetMap tiles | Map images. Fine for testing; the OSM usage policy means production traffic needs a tile provider. |
+| `CERVISETU_GEOCODER_URL` | OpenStreetMap Nominatim | Looks up a typed area. Limited to about one request a second. |
+| `CERVISETU_ROUTING_URL` | OSRM Demo | OSRM-compatible service for road distance and travel time. |
+
+These services receive what they need to answer: map areas viewed, typed places and, if routing is on, coordinates. No API key is needed for the defaults.
 
 Generate a vault key with:
 ```bash
