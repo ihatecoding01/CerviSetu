@@ -1,3 +1,4 @@
+import { ScanToFill } from "../app/ScanToFill";
 import { useState, type ReactNode } from "react";
 import { ArrowLeft, Check, FileText, Loader2, X } from "lucide-react";
 import { referralApi, STATUS_LABELS, type AshaRegistration, type DuplicateMatch, type Referral } from "../../api/referrals";
@@ -153,6 +154,8 @@ export function RegisterPatient({ staff, centre, onCancel, onOpen, onDone }: {
 
       {step === 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="sm:col-span-2"><ScanToFill allowed={["patient_name", "age", "phone", "area", "screening_date", "screening_method", "screening_result"]}
+            onApply={(v) => { setF((cur) => ({ ...cur, ...Object.fromEntries(Object.entries(v).map(([k, x]) => [k, k === "screening_method" || k === "screening_result" ? x.toUpperCase() : k === "phone" ? x.replace(/\D/g, "").slice(-10) : x])) })); setMatches(null); }} /></div>
           <div className="sm:col-span-2"><Field label="Full name"><input className={ui.input} value={f.patient_name} onChange={(e) => { set("patient_name", e.target.value); setMatches(null); }} data-testid="reg-name" autoComplete="off" /></Field></div>
           <Field label="Age (optional)"><input type="number" inputMode="numeric" min={9} max={110} className={ui.input} value={f.age} onChange={(e) => set("age", e.target.value)} data-testid="reg-age" /></Field>
           <Field label="Mobile number (optional)" hint="10 digits"><input type="tel" inputMode="tel" className={ui.input} value={f.phone} onChange={(e) => { set("phone", e.target.value); setMatches(null); }} data-testid="reg-phone" /></Field>

@@ -233,7 +233,7 @@ def get_provider():
     return None
 
 
-def process_document(data: bytes, provider: Any = "default") -> Dict[str, Any]:
+def process_document(data: bytes, provider: Any = "default", use_cache: bool = True) -> Dict[str, Any]:
     """Validate, quality-check and OCR one uploaded document. Raises DocumentRejected for invalid files.
 
     The returned "text" is raw OCR output for in-memory use by intake only; callers must mask it before
@@ -264,7 +264,7 @@ def process_document(data: bytes, provider: Any = "default") -> Dict[str, Any]:
     key = ai_usage.cache_key("document_ocr", provider=provider.name, model=provider.model,
                              version=OCR_PROCESSING_VERSION, language=config.OCR_LANGUAGE,
                              max_pages=config.OCR_MAX_PAGES, document_sha256=_sha256(data))
-    cached = ai_usage.cache_get(key)
+    cached = ai_usage.cache_get(key) if use_cache else None  # the cache holds masked text only
     if cached is not None:
         ai_usage.record_usage("document_ocr", "doc-ai/parse", provider.model, True, cache_hit=True)
         return {**result, "status": "COMPLETED", "text": cached["masked_text"], "cache_hit": True,

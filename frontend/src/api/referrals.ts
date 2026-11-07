@@ -91,6 +91,8 @@ export interface ReferralFile {
   size_bytes: number;
   uploaded_by: string;
   uploaded_at: string;
+  created_at?: string;
+  review_status?: string;
 }
 
 async function call<T>(path: string, body?: unknown): Promise<T> {
@@ -148,6 +150,15 @@ export const referralApi = {
   duplicates: (q: { name?: string; phone?: string; query?: string }) => call<{ matches: DuplicateMatch[] }>("/duplicates", q),
   files: (id: string) => call<{ files: ReferralFile[] }>(`/${id}/files`),
   fileUrl: (id: string, fileId: string) => `${BASE_URL}/api/referrals/${id}/files/${fileId}`,
+  readDocument: (id: string, fileId: string) => call<DocumentReading>(`/${id}/files/${fileId}/read`, {}),
+  reading: (id: string, fileId: string) => call<{ reading: DocumentReading | null }>(`/${id}/files/${fileId}/reading`),
+  confirmReading: (id: string, fileId: string, values: Record<string, string>) => call<{ reading: DocumentReading; referral: Referral }>(`/${id}/files/${fileId}/confirm`, { values }),
+  rejectReading: (id: string, fileId: string) => call<{ reading: DocumentReading }>(`/${id}/files/${fileId}/reject`, {}),
+  removeFile: async (id: string, fileId: string) => {
+    const res = await apiFetch(`${BASE_URL}/api/referrals/${id}/files/${fileId}`, { method: "DELETE" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(typeof data.detail === "string" ? data.detail : "The file could not be removed.");
+  },
   upload: async (id: string, kind: string, file: File, photoConsent: boolean) => {
     const body = new FormData();
     body.append("kind", kind);
@@ -159,3 +170,13 @@ export const referralApi = {
     return data as ReferralFile;
   },
 };
+
+export interface ExtractedField {
+  key: string; label: string; group: string; value: string; source_text: string; page: number | null;
+  confidence: "High confidence" | "Needs review"; reasons: string[]; target: string | null; current: string | null;
+}
+export interface DocumentReading {
+  file_id: string; filename: string; kind: string; status: string; pages: number | null; error: string | null;
+  fields: ExtractedField[]; summary: string | null; warnings: string[]; source?: "AI" | "RULES";
+  review_status: "UNREVIEWED" | "CONFIRMED" | "REJECTED"; confirmed?: string[]; reviewed_by?: string | null;
+}

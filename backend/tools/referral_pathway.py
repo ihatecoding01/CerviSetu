@@ -31,7 +31,8 @@ FOLLOW_UP_DAYS = 14
 REMINDER = "Namaste. This is your health centre. Your hospital visit is still pending. Please go soon. Press 1 if you have visited, 2 for help, 3 for a nurse call back."
 
 FAMILY_REMINDER = "Namaste. This is your family's health centre. Please remind her about her pending hospital visit."
-UPLOAD_KINDS = {"VIA_IMAGE", "COLPOSCOPY_IMAGE", "HISTOPATHOLOGY_REPORT", "MRI_REPORT", "OTHER_REPORT", "SCREENING_REPORT", "REFERRAL_SLIP"}
+UPLOAD_KINDS = {"VIA_IMAGE", "COLPOSCOPY_IMAGE", "HISTOPATHOLOGY_REPORT", "MRI_REPORT", "OTHER_REPORT", "SCREENING_REPORT", "REFERRAL_SLIP",
+                "PAP_REPORT", "HPV_REPORT", "COLPOSCOPY_REPORT", "BIOPSY_REPORT", "LAB_REPORT", "CONSULT_NOTE"}
 # ASHA workers may attach screening paperwork only, never clinical reports
 ASHA_UPLOAD_KINDS = {"SCREENING_REPORT", "REFERRAL_SLIP", "OTHER_REPORT"}
 IMAGE_KINDS = {"VIA_IMAGE", "COLPOSCOPY_IMAGE"}
@@ -532,13 +533,20 @@ def add_file(referral_id: str, kind: str, filename: str, data: bytes, photo_cons
         raise ReferralError(422, "Only PNG, JPEG or PDF files are accepted.")
     if kind in IMAGE_KINDS and not photo_consent:
         raise ReferralError(422, "Record her consent for photographs first.")
+    from backend.tools import document_reading
+    document_reading._init()
+    digest = document_reading.sha256(data)
+    with global_db._get_conn() as conn:
+        same = conn.execute("SELECT file_id, kind, filename, content_type FROM referral_files WHERE referral_id = ? AND sha256 = ?", (referral_id, digest)).fetchone()
+    if same:  # the same file sent twice (double tap, retry) is kept once
+        return {**dict(same), "duplicate": True}
     file_id = secrets.token_hex(12)
     nonce = os.urandom(12)
     safe_name = "".join(c for c in os.path.basename(filename or "file") if c.isalnum() or c in "._- ")[:120] or "file"
     with global_db._get_conn() as conn:
-        conn.execute("""INSERT INTO referral_files (file_id, referral_id, kind, filename, content_type, nonce, ciphertext, photo_consent, uploaded_by)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                     (file_id, referral_id, kind, safe_name, content_type, nonce, _FILE_AES.encrypt(nonce, data, file_id.encode()), int(photo_consent), actor))
+        conn.execute("""INSERT INTO referral_files (file_id, referral_id, kind, filename, content_type, nonce, ciphertext, photo_consent, uploaded_by, sha256)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                     (file_id, referral_id, kind, safe_name, content_type, nonce, _FILE_AES.encrypt(nonce, data, file_id.encode()), int(photo_consent), actor, digest))
         conn.commit()
     _event(referral_id, "FILE_ADDED", detail=kind, actor=actor)
     _audit("REFERRAL_FILE_ADDED", row["patient_token"], actor, referral_id=referral_id, kind=kind)
@@ -547,8 +555,28 @@ def add_file(referral_id: str, kind: str, filename: str, data: bytes, photo_cons
 
 def list_files(referral_id: str) -> List[Dict[str, Any]]:
     with global_db._get_conn() as conn:
-        rows = conn.execute("SELECT file_id, kind, filename, content_type, created_at FROM referral_files WHERE referral_id = ? ORDER BY created_at", (referral_id,)).fetchall()
-    return [dict(r) for r in rows]
+        rows = conn.execute("SELECT file_id, kind, filename, content_type, created_at, uploaded_by FROM referral_files WHERE referral_id = ? ORDER BY created_at", (referral_id,)).fetchall()
+    from backend.tools import document_reading
+    reviewed = document_reading.statuses(referral_id)
+    return [{**dict(r), "review_status": reviewed.get(r["file_id"], "AWAITING_REVIEW")} for r in rows]
+
+
+def delete_file(referral_id: str, file_id: str, actor: str) -> Dict[str, Any]:
+    """Removes an uploaded file and its reading. Findings already confirmed into the record stay, because the doctor entered them."""
+    row = _get(referral_id)
+    with global_db._get_conn() as conn:
+        f = conn.execute("SELECT kind, filename FROM referral_files WHERE file_id = ? AND referral_id = ?", (file_id, referral_id)).fetchone()
+        if not f:
+            raise ReferralError(404, "File not found.")
+        conn.execute("DELETE FROM referral_files WHERE file_id = ?", (file_id,))
+        try:
+            conn.execute("DELETE FROM document_readings WHERE file_id = ?", (file_id,))
+        except Exception:  # table not created yet
+            pass
+        conn.commit()
+    _event(referral_id, "FILE_REMOVED", detail=f["kind"], actor=actor)
+    _audit("REFERRAL_FILE_REMOVED", row["patient_token"], actor, referral_id=referral_id, kind=f["kind"])
+    return {"removed": file_id}
 
 
 def read_file(referral_id: str, file_id: str) -> Tuple[bytes, str, str]:

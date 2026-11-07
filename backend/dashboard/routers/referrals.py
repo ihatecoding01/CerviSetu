@@ -244,3 +244,52 @@ async def download(referral_id: str, file_id: str, request: Request, inline: boo
     data, content_type, name = _run(rp.read_file, referral_id, file_id)
     return Response(data, media_type=content_type, headers={
         "Content-Disposition": f'{"inline" if inline and content_type.startswith("image/") else "attachment"}; filename="{name}"', "X-Content-Type-Options": "nosniff", "Cache-Control": "no-store"})
+
+
+class ConfirmIn(BaseModel):
+    values: Dict[str, str] = Field(default_factory=dict)
+
+
+@router.post("/{referral_id}/files/{file_id}/read")
+async def read_document(referral_id: str, file_id: str, request: Request):
+    """OCR an attached file and propose findings for review. Nothing reaches the record here."""
+    from backend.tools import document_reading
+    _own(request, referral_id)
+    return _run(document_reading.read, referral_id, file_id, _actor(request))
+
+
+@router.get("/{referral_id}/files/{file_id}/reading")
+async def get_reading(referral_id: str, file_id: str, request: Request):
+    from backend.tools import document_reading
+    _own(request, referral_id)
+    return {"reading": document_reading.get(referral_id, file_id)}
+
+
+@router.post("/{referral_id}/files/{file_id}/confirm")
+async def confirm_reading(referral_id: str, file_id: str, req: ConfirmIn, request: Request):
+    from backend.tools import document_reading
+    _own(request, referral_id)
+    return _run(document_reading.confirm, referral_id, file_id, req.values, _actor(request))
+
+
+@router.post("/{referral_id}/files/{file_id}/reject")
+async def reject_reading(referral_id: str, file_id: str, request: Request):
+    from backend.tools import document_reading
+    _own(request, referral_id)
+    return {"reading": _run(document_reading.reject, referral_id, file_id, _actor(request))}
+
+
+@router.delete("/{referral_id}/files/{file_id}")
+async def remove_file(referral_id: str, file_id: str, request: Request):
+    _own(request, referral_id)
+    return _run(rp.delete_file, referral_id, file_id, _actor(request))
+
+
+@router.post("/scan-intake")
+async def scan_intake(request: Request, file: UploadFile = File(...)):
+    """Read a screening slip to pre-fill registration. Nothing is stored; staff check every value."""
+    from backend.tools import document_reading
+    data = await file.read(rp.MAX_UPLOAD_BYTES + 1)
+    if len(data) > rp.MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="The file is larger than 10 MB.")
+    return _run(document_reading.scan_intake, data, _actor(request))

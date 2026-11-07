@@ -1,3 +1,4 @@
+import { ScanToFill } from "../app/ScanToFill";
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { Check, CheckCircle2, Loader2 } from "lucide-react";
 import { Notice } from "../app/Status";
@@ -182,6 +183,12 @@ export function ReferralIntake({ staff }: { staff: StaffProfile }) {
       <section className={`${ui.panel} p-4 sm:p-6 flex flex-col gap-4`}>
         {step === 0 && (
           <>
+            <ScanToFill allowed={["patient_name", "age", "phone", "area", "pap_result", "hpv_dna", "via_findings"]}
+              onApply={(v) => {
+                const pick = (ks: string[]) => Object.fromEntries(Object.entries(v).filter(([k]) => ks.includes(k)).map(([k, x]) => [k, k === "phone" ? x.replace(/\D/g, "").slice(-10) : k === "hpv_dna" ? x.charAt(0).toUpperCase() + x.slice(1).toLowerCase() : x]));
+                setCore((c) => ({ ...c, ...pick(["patient_name", "age", "phone", "area"]) }));
+                setForm((f) => ({ ...f, ...pick(["pap_result", "hpv_dna", "via_findings"]) }));
+              }} />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Box label="Full name"><input required minLength={2} className={input} value={core.patient_name} onChange={(e) => setCore({ ...core, patient_name: e.target.value })} data-testid="intake-name" /></Box>
               <Box label="Age"><input type="number" min={9} max={110} className={input} value={core.age} onChange={(e) => setCore({ ...core, age: e.target.value })} /></Box>
