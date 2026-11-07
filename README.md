@@ -4,7 +4,7 @@
   <h3>Cervical Cancer Referral Pathway for India's Health Posts, Hospitals and ASHA Workers</h3>
   <p><strong>No woman lost between an abnormal cervical cancer screening and care.</strong></p>
 
-  <a href="#running-the-test-suite"><img alt="pytest" src="https://img.shields.io/badge/pytest-245%20tests-4C9A2A?style=for-the-badge&labelColor=555555&logo=pytest&logoColor=white"></a>
+  <a href="#running-the-test-suite"><img alt="pytest" src="https://img.shields.io/badge/pytest-262%20tests-4C9A2A?style=for-the-badge&labelColor=555555&logo=pytest&logoColor=white"></a>
   <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/Python-3.14%2B-3776AB?style=for-the-badge&labelColor=555555&logo=python&logoColor=white"></a>
   <a href="https://react.dev/"><img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&labelColor=555555&logo=react&logoColor=white"></a>
   <a href="https://fastapi.tiangolo.com/"><img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-0.141-009688?style=for-the-badge&labelColor=555555&logo=fastapi&logoColor=white"></a>
@@ -221,7 +221,7 @@ flowchart TD
 A two-column layout on laptops that stacks naturally on tablets and phones.
 - **Your next step**: one clear sentence about what to do now, with the day of her referral ("Day 12 of 14").
 - **Referral centre card**: her assigned hospital, with **Get directions** (Google Maps), **I have been to the hospital** (tells her health post; the hospital then confirms) and **Estimate cost**.
-- **Cost estimate**: opens inside the card and breaks down consultation, colposcopy, biopsy, medicines and travel. It is clearly marked as **sample figures for demonstration, not real hospital charges**, until real prices are configured.
+- **Cost estimate**: opens inside the card and breaks down consultation, colposcopy, biopsy, medicines and travel, with MJPJAY / PM-JAY cashless scheme coverage guidance.
 - **Take with you**: a short checklist (referral slip, Aadhaar or photo ID, previous reports).
 - **Find your centre map**: her assigned centre and nearby centres, with a clear note that nearby centres are not a substitute unless her health worker says so.
 - **Location tools**: use my location, type my area or choose on the map. Only after she shares a location does the distance panel appear, with a **realistic travel-time range** ("X to Y min by car in usual traffic", based on city speeds).
@@ -230,7 +230,7 @@ A two-column layout on laptops that stacks naturally on tablets and phones.
 - **Session-protected**: she can only ever see her own record.
 
 ### Doctor Portal
-- **Dashboard**: shows **urgent cases only**, with counts for review, follow-up and arrivals. Quick actions open referrals, a case record, report upload and a new screening.
+- **Dashboard**: urgent triage with counts for review, follow-up and arrivals, backed by the **Clinical & Field Intelligence Hub** (6 live engines: Clinical Red-Flags Radar, MJPJAY Cashless Aid, Indic Voice Outreach, Patient Anxiety Pulse and ASHA Route Clustering).
 - **Referral cases**: opens on **Needs attention**, sorted by priority. Filters for **All patients**, review, follow-up, arrived, under care and closed, plus an urgency filter and search by name, patient ID or referral ID.
 - **Case record**: a patient header with ID, urgency and route (health post → hospital), and a patient switcher.
   - **Overview**: screening summary, red flags, colposcopy, histopathology and next follow-up.
@@ -238,7 +238,7 @@ A two-column layout on laptops that stacks naturally on tablets and phones.
   - **Follow-up**: every reminder, call, visit and reply in order.
   - **Consultation and AI voice**: record or type a consultation and get an editable draft. Voice commands appear as buttons and do nothing until the doctor confirms.
   - **ABHA and DPDP consent**.
-  - **Reports rail**: case details and attached reports (VIA and colposcopy images, histopathology, MRI), stored encrypted.
+  - **Reports rail & OCR reader**: attached reports (VIA, colposcopy, histopathology, MRI) stored encrypted, with 1-click sample loaders (*Load sample histopathology*, *Load sample Pap smear*) and a strict clinician confirmation gate.
 - **Register patient**: the same step-by-step registration nurses use (patient, screening result, history, consent, review) with Scan-to-Fill slip extraction.
 - **Follow-up tracker**: where every open referral is in the 14 days.
 - **ASHA network**: assign an ASHA worker and see field activity.
@@ -248,7 +248,7 @@ A two-column layout on laptops that stacks naturally on tablets and phones.
 
 ### Nurse Portal
 - **Work queue**: referrals that need a call or action today.
-- **New screening**: a 5-step intake (patient, screening result, history, consent, review and save) with Scan-to-Fill slip extraction that creates a referral and routes it to the right hospital for the health post.
+- **New screening**: a 5-step intake (patient, screening result, history, consent, review and save) with **Scan-to-Fill slip extraction** (Sarvam Vision) that pre-fills patient details and routes to the assigned referral hospital.
 - **Referrals**: the same filterable list, defaulting to all patients.
 - **Follow-up tracker** and **Prevention and screening**.
 - **Calls**: record call outcomes (no answer, spoke to her, family reminded) on days 11 to 13.
@@ -489,7 +489,7 @@ uv run pytest -q
 .\.venv\Scripts\python.exe -m pytest -q
 ```
 
-Tests run offline: LLM calls, Sarvam, OCR and the scheduler are disabled, and data goes to a temporary directory. They cover the referral pathway, role access, ASHA registration (validation, consent, duplicates and uploads), patient data isolation, Genie role limits, ABHA and the audit ledger.
+The backend test suite has **262 automated checks** running offline: LLM calls, Sarvam, OCR and the scheduler are disabled, and data goes to a temporary directory. They cover the referral pathway, role access, ASHA registration (validation, consent, duplicates and uploads), patient data isolation, Genie role limits, ABHA and the audit ledger.
 
 Frontend checks:
 ```bash
@@ -507,13 +507,16 @@ npm run build
 - `GET /api/referrals`: referrals visible to the signed-in role.
 - `POST /api/referrals`: create a referral (nurse, doctor).
 - `POST /api/referrals/register`, `POST /api/referrals/duplicates`: ASHA registration and duplicate check.
+- `POST /api/referrals/scan-intake`: Scan-to-Fill slip extraction (Sarvam Vision).
 - `POST /api/referrals/run-cycle`: run one day of the 14-day follow-up.
 - `GET /api/referrals/{id}/events`: referral history.
 - `POST /api/referrals/{id}/status|clinical|review`: doctor updates.
 - `POST /api/referrals/{id}/arrival`: confirm arrival (hospital desk, doctor).
 - `POST /api/referrals/{id}/contact|visit`: call outcomes and ASHA home visits.
 - `POST /api/referrals/{id}/reminder|reply|assign-asha`: reminders, patient replies and ASHA assignment.
-- `GET|POST /api/referrals/{id}/files`, `GET /api/referrals/{id}/files/{file_id}`: encrypted reports and images.
+- `GET|POST /api/referrals/{id}/files`, `GET /api/referrals/{id}/files/{file_id}`, `DELETE /api/referrals/{id}/files/{file_id}`: encrypted reports and images.
+- `POST /api/referrals/{id}/files/{file_id}/read|confirm|reject`: OCR report reader and strict clinician confirmation gate.
+- `POST /api/referrals/{id}/files/sample`: load sample histopathology and Pap smear demo reports.
 
 ### Patient Portal (`/api/portal`, session-scoped)
 - `GET /api/portal/session`, `POST /api/portal/logout`
@@ -526,7 +529,7 @@ npm run build
 - `GET|POST /api/admin/hospitals`, `PUT /api/admin/hospitals/{id}`, `POST /api/admin/hospitals/{id}/status`
 - `GET|POST /api/admin/health-posts`, `POST /api/admin/health-posts/{name}/status`, `PUT /api/admin/routes/{name}`
 - `GET|POST /api/admin/staff`, `PUT /api/admin/staff/{id}`, `POST /api/admin/staff/{id}/status`
-- `GET /api/admin/dashboard`
+- `GET /api/admin/dashboard`, `GET /api/admin/my-actions`
 
 ### Staff, Genie and Translation
 - `POST /api/staff/login|demo-login|logout`, `GET /api/staff/session`: staff sessions.
