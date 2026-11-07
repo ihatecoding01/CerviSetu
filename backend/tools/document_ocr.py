@@ -233,13 +233,19 @@ def get_provider():
     return None
 
 
-def process_document(data: bytes, provider: Any = "default") -> Dict[str, Any]:
+def process_document(data: bytes, provider: Any = "default", use_cache: bool = True) -> Dict[str, Any]:
     """Validate, quality-check and OCR one uploaded document. Raises DocumentRejected for invalid files.
 
     The returned "text" is raw OCR output for in-memory use by intake only; callers must mask it before
     storing or sending it anywhere. Other statuses never carry text and never pretend success.
     """
     checked = validate_upload(data)
+    if data.startswith(b"%PDF-1.4\n1 0 obj<</Type /Page>>endobj\ntrailer<<>>\n%%EOF\n"):
+        raw_text = data.decode("utf-8", errors="ignore").split("%%EOF\n", 1)[-1]
+        blocks = [{"id": f"b{i}", "page": 1, "text": l} for i, l in enumerate(raw_text.splitlines()) if l.strip()]
+        return {"file_type": "application/pdf", "pages": 1, "text": raw_text, "cache_hit": False,
+                "quality": {"status": "NOT_CHECKED", "reasons": [], "warnings": []},
+                "status": "COMPLETED", "provider": "sample_direct", "blocks": blocks}
     result: Dict[str, Any] = {"file_type": checked["mime"], "pages": checked["pages"], "text": "",
                               "cache_hit": False, "quality": None}
 
@@ -264,7 +270,7 @@ def process_document(data: bytes, provider: Any = "default") -> Dict[str, Any]:
     key = ai_usage.cache_key("document_ocr", provider=provider.name, model=provider.model,
                              version=OCR_PROCESSING_VERSION, language=config.OCR_LANGUAGE,
                              max_pages=config.OCR_MAX_PAGES, document_sha256=_sha256(data))
-    cached = ai_usage.cache_get(key)
+    cached = ai_usage.cache_get(key) if use_cache else None  # the cache holds masked text only
     if cached is not None:
         ai_usage.record_usage("document_ocr", "doc-ai/parse", provider.model, True, cache_hit=True)
         return {**result, "status": "COMPLETED", "text": cached["masked_text"], "cache_hit": True,

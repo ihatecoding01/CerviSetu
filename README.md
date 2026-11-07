@@ -313,6 +313,13 @@ Designed for a phone in the field.
 - **Voice consultation** drafts with confirmable voice commands. Recordings are encrypted and expire.
 - **Image quality guard**: blurry photos are rejected (Laplacian variance) before reading.
 
+### Document Reading (OCR, decision support)
+- In the doctor's case record, **Read document** runs OCR (Sarvam Vision) on an attached Pap, HPV, VIA, colposcopy, biopsy, histopathology, lab or consultation document, including multi-page PDFs.
+- Proposed findings are shown with the source text, page, a *High confidence* or *Needs review* label with reasons, and the value already in the record side by side.
+- The doctor edits and ticks the fields to keep. Only those are saved. Status, final diagnosis and treatment are never changed by OCR. A short AI summary is clearly labelled as unconfirmed.
+- Patient ID mismatches, blurred scans, unclear wording and conflicts are flagged. Duplicate uploads are kept once. Nurses can read, only doctors confirm, ASHA workers upload screening papers only, and patients and administrators have no access.
+- Full details: [docs/OCR_DOCUMENT_READING.md](docs/OCR_DOCUMENT_READING.md). Fictional test documents: `docs/demo_documents/`.
+
 ### Interoperability
 - ABDM / ABHA sandbox registration and mobile OTP login.
 - FHIR patient bundle export (`/api/fhir/patient/{token}`).
