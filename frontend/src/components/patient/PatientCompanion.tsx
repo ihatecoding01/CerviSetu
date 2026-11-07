@@ -17,6 +17,8 @@ const EXPECT = [
 
 export const PatientCompanion: React.FC<Props> = ({ patientToken, onExitToGateway }) => {
   const [referral, setReferral] = useState<Referral | null>(null);
+  const [allReferrals, setAllReferrals] = useState<Referral[]>([]);
+  const [currentToken, setCurrentToken] = useState(patientToken || "");
   const [state, setState] = useState<"loading" | "ready" | "missing" | "login">("loading");
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -24,12 +26,25 @@ export const PatientCompanion: React.FC<Props> = ({ patientToken, onExitToGatewa
     setState("loading");
     referralApi.board()
       .then((b) => {
-        const found = b.referrals.find((r) => r.patient_token === patientToken) ?? null;
-        setReferral(found);
-        setState(found ? "ready" : "missing");
+        setAllReferrals(b.referrals);
+        const target = currentToken || patientToken || b.referrals[0]?.patient_token || "PT-CASE-BINDU";
+        const found = b.referrals.find((r) => r.patient_token === target) ?? b.referrals[0] ?? null;
+        if (found) {
+          setCurrentToken(found.patient_token);
+          setReferral(found);
+          setState("ready");
+        } else {
+          setState("missing");
+        }
       })
       .catch(() => setState("login"));
-  }, [patientToken]);
+  }, [patientToken, currentToken]);
+
+  const selectPatient = (tok: string) => {
+    setCurrentToken(tok);
+    const found = allReferrals.find((r) => r.patient_token === tok) ?? null;
+    if (found) setReferral(found);
+  };
 
   const listen = () => {
     if (!("speechSynthesis" in window)) return;
@@ -68,6 +83,31 @@ export const PatientCompanion: React.FC<Props> = ({ patientToken, onExitToGatewa
 
   return wrap(
     <>
+      {allReferrals.length > 1 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-white rounded-2xl border border-black/10 shadow-2xs text-xs">
+          <div className="flex items-center gap-2 text-slate-700">
+            <span className="font-semibold text-slate-900">Clinician Preview:</span>
+            <span>Switch patient perspective:</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {allReferrals.slice(0, 5).map((r) => (
+              <button
+                key={r.referral_id}
+                type="button"
+                onClick={() => selectPatient(r.patient_token)}
+                className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${
+                  referral.patient_token === r.patient_token
+                    ? "bg-[#0369A1] text-white shadow-2xs"
+                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                {r.patient_name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-start gap-4">
           <div className="size-12 rounded-2xl bg-[#9D174D]/10 flex items-center justify-center shrink-0"><Heart className="size-6 text-[#9D174D]" /></div>

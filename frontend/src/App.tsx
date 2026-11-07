@@ -233,7 +233,7 @@ export default function App() {
       )}
 
       {currentTab === "patient-tab" && (
-        <PatientCompanion patientToken={selectedPatientToken} />
+        <PatientCompanion patientToken={selectedPatientToken} onExitToGateway={() => navigate("/gateway")} />
       )}
 
       {currentTab === "intake-tab" && (
