@@ -231,50 +231,50 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div className="max-w-7xl mx-auto px-6 sm:px-8 relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,560px)] gap-8 xl:gap-12 items-start mb-16">
               <div className="min-w-0">
-            {/* Top Credential Pill with Primary Border */}
-            <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-sky-50 border border-black/15 mb-8 shadow-xs">
-              <div className="size-4">
-                <CerviSetuLogo size={16} />
-              </div>
-              <span className="text-xs font-bold text-slate-900">
-                CerviSetu: building bridges to better health
-              </span>
-            </div>
+                {/* Top Credential Pill with Primary Border */}
+                <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-sky-50 border border-black/15 mb-8 shadow-xs">
+                  <div className="size-4">
+                    <CerviSetuLogo size={16} />
+                  </div>
+                  <span className="text-xs font-bold text-slate-900">
+                    CerviSetu: building bridges to better health
+                  </span>
+                </div>
 
-            {/* Authoritative Main Headline */}
-            <div className="max-w-4xl mb-6">
-              <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.1] text-balance">
-                No woman lost between an abnormal screening and care
-              </h1>
-            </div>
+                {/* Authoritative Main Headline */}
+                <div className="max-w-4xl mb-6">
+                  <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.1] text-balance">
+                    No woman lost between an abnormal cervical cancer screening and care
+                  </h1>
+                </div>
 
-            {/* Clear Subheadline */}
-            <p className="max-w-2xl text-base sm:text-lg text-slate-600 leading-relaxed mb-10 text-pretty">
-              CerviSetu connects health posts, tertiary hospitals, ASHA workers and patients across the cervical cancer referral pathway, with reminders in her language and a home visit if she does not respond.
-            </p>
+                {/* Clear Subheadline */}
+                <p className="max-w-2xl text-base sm:text-lg text-slate-600 leading-relaxed mb-10 text-pretty">
+                  CerviSetu connects health posts, tertiary hospitals, ASHA workers and patients across the cervical cancer referral pathway, with reminders in her language and a home visit if she does not respond.
+                </p>
 
-            {/* Dual Primary Call to Actions */}
-            <div className="flex flex-wrap items-center gap-4 mb-10 lg:mb-0">
-              <button
-                onClick={onBookScreening ?? onOpenGateway ?? onLaunchWorkstation}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[#9D174D] hover:bg-[#831843] text-white text-sm font-semibold transition-colors"
-              >
-                <span>Join the Pilot</span>
-                <SolarArrowRight size={16} />
-              </button>
-              <button
-                onClick={onLaunchWorkstation}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-white hover:bg-slate-50 border border-black/15 text-slate-900 text-sm font-semibold transition-colors"
-              >
-                Launch Workstation
-              </button>
-              <button
-                onClick={onOpenPatientCompanion}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-white hover:bg-slate-50 border border-black/15 text-slate-900 text-sm font-semibold transition-colors"
-              >
-                Find Your Centre
-              </button>
-            </div>
+                {/* Dual Primary Call to Actions */}
+                <div className="flex flex-wrap items-center gap-4 mb-10 lg:mb-0">
+                  <button
+                    onClick={onBookScreening ?? onOpenGateway ?? onLaunchWorkstation}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-[#9D174D] hover:bg-[#831843] text-white text-sm font-semibold transition-colors"
+                  >
+                    <span>Join the Pilot</span>
+                    <SolarArrowRight size={16} />
+                  </button>
+                  <button
+                    onClick={onLaunchWorkstation}
+                    className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-white hover:bg-slate-50 border border-black/15 text-slate-900 text-sm font-semibold transition-colors"
+                  >
+                    Launch Workstation
+                  </button>
+                  <button
+                    onClick={onOpenPatientCompanion}
+                    className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-white hover:bg-slate-50 border border-black/15 text-slate-900 text-sm font-semibold transition-colors"
+                  >
+                    Find Your Centre
+                  </button>
+                </div>
 
               </div>
               <Suspense fallback={<div className="h-[680px] rounded-2xl bg-white" />}>
@@ -301,31 +301,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <div className="flex items-center bg-white border border-black/15/60 rounded-lg p-1 gap-1">
                   <button
                     onClick={() => setActiveStudioTab("ivr")}
-                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                      activeStudioTab === "ivr"
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${activeStudioTab === "ivr"
                         ? "bg-[#9D174D] text-white shadow-xs"
                         : "text-slate-600 hover:text-slate-900"
-                    }`}
+                      }`}
                   >
                     Voice Reminders
                   </button>
                   <button
                     onClick={() => setActiveStudioTab("vault")}
-                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                      activeStudioTab === "vault"
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${activeStudioTab === "vault"
                         ? "bg-[#9D174D] text-white shadow-xs"
                         : "text-slate-600 hover:text-slate-900"
-                    }`}
+                      }`}
                   >
                     Identity Masking
                   </button>
                   <button
                     onClick={() => setActiveStudioTab("timeline")}
-                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${
-                      activeStudioTab === "timeline"
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer ${activeStudioTab === "timeline"
                         ? "bg-[#9D174D] text-white shadow-xs"
                         : "text-slate-600 hover:text-slate-900"
-                    }`}
+                      }`}
                   >
                     14-Day Follow-up
                   </button>
@@ -792,9 +789,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 return (
                   <div
                     key={index}
-                    className={`card-base card-gradient-subtle overflow-hidden transition-all duration-200 ${
-                      isOpen ? "border-[#0369A1] shadow-xs" : "hover:border-black/25"
-                    }`}
+                    className={`card-base card-gradient-subtle overflow-hidden transition-all duration-200 ${isOpen ? "border-[#0369A1] shadow-xs" : "hover:border-black/25"
+                      }`}
                   >
                     <button
                       onClick={() => setOpenFaqIndex(isOpen ? null : index)}
@@ -803,9 +799,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                       <span className="font-heading font-bold text-sm sm:text-base text-slate-900 pr-4">{item.q}</span>
                       <SolarCaretDown
                         size={18}
-                        className={`text-slate-400 transition-transform duration-300 shrink-0 ${
-                          isOpen ? "rotate-180 text-[#0369A1]" : ""
-                        }`}
+                        className={`text-slate-400 transition-transform duration-300 shrink-0 ${isOpen ? "rotate-180 text-[#0369A1]" : ""
+                          }`}
                       />
                     </button>
                     {isOpen && (
