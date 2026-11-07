@@ -641,6 +641,11 @@ def seed() -> None:
                                               "treatment_plan": case["plan"]}, "SEED")
         if rita["status"] == ARRIVED:
             update_status(rita["referral_id"], REPORT, "SEED")
+    radha = get_for_patient("PT-CASE-RADHA")
+    if radha and not radha.get("assigned_asha"):
+        with global_db._get_conn() as conn:
+            conn.execute("UPDATE referrals SET assigned_asha = 'AW-3001' WHERE patient_token = 'PT-CASE-RADHA'")
+            conn.commit()
 
 
 # ASHA registration ------------------------------------------------------------------------------------------
