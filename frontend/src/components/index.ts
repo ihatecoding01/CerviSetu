@@ -12,6 +12,7 @@ export * from "./auth/OtpBoxes";
 // 2. Patient & Care Companion
 export * from "./patient/PatientPortal";
 export * from "./patient/PatientCompanion";
+export * from "./patient/PatientGenie";
 export * from "./patient/ReferralJourney";
 export * from "./patient/PatientSessionRedirect";
 

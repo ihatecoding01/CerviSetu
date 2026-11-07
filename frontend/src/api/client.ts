@@ -77,15 +77,20 @@ export interface ActivitySummary {
 }
 
 export interface Facility {
-  facility_type: string;
-  role_label: string;
-  facility_name: string;
-  district: string;
-  approx_distance_km: number;
-  pmjay_empanelled: boolean;
+  name?: string;
+  facility_name?: string;
+  hospital_type?: string;
+  facility_type?: string;
+  area?: string;
+  address?: string;
+  phone?: string;
+  role_label?: string;
+  district?: string;
+  approx_distance_km?: number;
+  pmjay_empanelled?: boolean;
   has_dharamshala?: boolean;
   services: string[];
-  badge: string;
+  badge?: string;
 }
 
 export interface HealingClock {
@@ -1255,6 +1260,10 @@ export const api = {
 
   async askGenie(body: { question: string; language: string; history: { role: string; text: string }[]; board: unknown[] }): Promise<{ source: string; answer: string; patients: string[]; open_tab: string | null; suggestions: string[]; as_of_date: string }> {
     return request("/api/genie/ask", { method: "POST", body: JSON.stringify(body) });
+  },
+
+  async askPatientGenie(body: { token: string; question: string; language?: string; history?: { role: string; text: string }[] }): Promise<{ source: string; is_diagnostic_refusal: boolean; answer: string; suggestions?: string[] }> {
+    return request("/api/genie/patient-ask", { method: "POST", body: JSON.stringify(body) });
   },
 
   async genieTranscribe(audio: Blob): Promise<{ text: string }> {

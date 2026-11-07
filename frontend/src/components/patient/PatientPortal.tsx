@@ -5,6 +5,7 @@ import { portalApi, PortalError, type PortalOverview } from "../../api/portal";
 import { usePatientLang } from "../../i18n/patient";
 import { LanguageSwitch } from "../common/LanguageSwitch";
 import { ReferralJourney } from "./ReferralJourney";
+import { PatientGenie } from "./PatientGenie";
 
 const FindCentre = lazy(() => import("./FindCentre"));
 
@@ -172,6 +173,7 @@ export const PatientPortal: React.FC<Props> = ({ token, onRequireLogin, onOpenOw
     return shell(
       <>
         {welcome}
+        <PatientGenie token={token} patientName={o.display_name} hospital={null} initialExpanded={true} />
         <section className="bg-white border border-slate-200 rounded-2xl p-6 text-center space-y-2" aria-labelledby="noplan">
           <CalendarClock className="size-8 text-slate-500 mx-auto" aria-hidden="true" />
           <h2 id="noplan" className="text-lg font-bold">No referral yet</h2>
@@ -195,6 +197,7 @@ export const PatientPortal: React.FC<Props> = ({ token, onRequireLogin, onOpenOw
   return shell(
     <>
       {welcome}
+      <PatientGenie token={token} patientName={o.display_name} hospital={r.hospital} initialExpanded={true} />
       <Section title="Your Next Step" id="next">
         {r.following ? (
           <p className="text-sm text-slate-800" data-testid="next-step">Please go to {r.hospital}. Take your referral slip and any reports. Your visit counts once the hospital confirms you have arrived.</p>
