@@ -155,7 +155,7 @@ export const DistrictImpactCalculator: React.FC = () => {
                 Curative Pelvic Control Preservation
               </span>
               <h4 className="font-heading text-3xl font-extrabold text-slate-900">
-                {impactData?.biological_metrics.estimated_lives_saved_annually || 36} Lives Saved
+                {impactData?.biological_metrics?.estimated_lives_saved_annually || 36} Lives Saved
               </h4>
               <p className="text-xs text-slate-600 mt-1 font-sans">
                 Avoided clonogenic repopulation penalty by finishing in 48 days instead of 72 days.
@@ -174,7 +174,7 @@ export const DistrictImpactCalculator: React.FC = () => {
               </div>
               <span className="text-xs font-heading font-semibold text-slate-600 block mb-1">Travel Distance Spared</span>
               <h5 className="font-heading text-xl font-bold text-slate-900">
-                {((impactData?.social_metrics.total_travel_km_spared || 600000) / 1000).toFixed(0)}k Kilometers
+                {(((impactData?.social_metrics?.total_travel_km_spared ?? 600000)) / 1000).toFixed(0)}k Kilometers
               </h5>
               <p className="text-[11px] text-slate-600 mt-1 font-sans">
                 Patients complete 25 fractions locally near their village.
@@ -187,7 +187,7 @@ export const DistrictImpactCalculator: React.FC = () => {
               </div>
               <span className="text-xs font-heading font-semibold text-slate-600 block mb-1">Out-of-Pocket Savings</span>
               <h5 className="font-heading text-xl font-bold text-[#0369A1]">
-                {inrFormatted(impactData?.social_metrics.estimated_out_of_pocket_savings_inr || 2780000)}
+                {inrFormatted(impactData?.social_metrics?.estimated_out_of_pocket_savings_inr ?? 2780000)}
               </h5>
               <p className="text-[11px] text-slate-600 mt-1 font-sans">
                 Avoided daily bus tickets and attendant wage forfeiture.

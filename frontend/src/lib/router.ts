@@ -3,7 +3,7 @@
  * Enables real URL paths, deep-linking, browser back/forward history, and bookmarking.
  */
 import { useState, useEffect, useCallback } from "react";
-import type { Tab } from "../components/DashboardLayout";
+import type { Tab } from "../components/dashboard/DashboardLayout";
 
 export type ViewType = "landing" | "gateway" | "staff" | "patient";
 
@@ -15,39 +15,34 @@ export interface AppRoute {
 }
 
 const TAB_PATH_MAP: Record<string, Tab> = {
-  prevention: "prevention-tab",
-  immunization: "prevention-tab",
   overview: "overview-tab",
+  prevention: "prevention-tab",
   encounter: "encounter-tab",
   intake: "intake-tab",
   tracker: "tracker-tab",
   asha: "asha-tab",
-  specialist: "specialist-tab",
-  referral: "specialist-tab",
   audit: "privacy-tab",
   privacy: "privacy-tab",
+  patient: "patient-tab",
+  admin: "admin-tab",
 };
 
 const TAB_TO_SLUG: Record<Tab, string> = {
-  "prevention-tab": "prevention",
-  "asha-tab": "asha",
-  "specialist-tab": "specialist",
   "overview-tab": "overview",
+  "prevention-tab": "prevention",
   "encounter-tab": "encounter",
   "intake-tab": "intake",
   "tracker-tab": "tracker",
+  "asha-tab": "asha",
   "privacy-tab": "audit",
+  "patient-tab": "patient",
+  "admin-tab": "admin",
 };
 
 export function parsePath(pathname: string): AppRoute {
   const cleanPath = pathname.trim().replace(/\/+$/, "") || "/";
 
-  // Redirect legacy demo path to prevention workstation
-  if (cleanPath === "/demo" || cleanPath === "/dual") {
-    return { view: "staff", tab: "prevention-tab", path: "/staff/prevention" };
-  }
-
-  // 2. Patient Companion Paths (/patient or /patient/:token)
+  // 1. Patient Companion Paths (/patient or /patient/:token)
   if (cleanPath.startsWith("/patient")) {
     const parts = cleanPath.split("/").filter(Boolean);
     // No default patient: a bare /patient resolves to the logged-in patient's own record (or the login)
@@ -55,7 +50,7 @@ export function parsePath(pathname: string): AppRoute {
     return { view: "patient", patientToken: token, path: token ? `/patient/${token}` : "/patient" };
   }
 
-  // 3. Staff CareUI Workstation Paths (/staff or /staff/:tab)
+  // 2. Staff CareUI Workstation Paths (/staff or /staff/:tab)
   if (cleanPath.startsWith("/staff")) {
     const parts = cleanPath.split("/").filter(Boolean);
     const subSlug = parts[1] || "overview";
@@ -63,17 +58,17 @@ export function parsePath(pathname: string): AppRoute {
     return { view: "staff", tab: mappedTab, path: `/staff/${TAB_TO_SLUG[mappedTab]}` };
   }
 
-  // 4. Dedicated Gateway Path
+  // 3. Dedicated Gateway Path
   if (cleanPath === "/gateway") {
     return { view: "gateway", path: "/gateway" };
   }
 
-  // 5. Landing Page Paths (/ or /landing)
+  // 4. Landing Page Paths (/ or /landing)
   if (cleanPath === "/" || cleanPath === "/landing") {
     return { view: "landing", path: cleanPath };
   }
 
-  // 6. Default Fallback
+  // 5. Default Fallback
   return { view: "landing", path: "/" };
 }
 

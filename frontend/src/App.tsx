@@ -1,82 +1,41 @@
 import { useState, useEffect } from "react";
-import { api, type PatientCase, type AuditLog, type EscalationSimResult } from "./api/client";
-import { DashboardLayout, type Tab } from "./components/DashboardLayout";
-import { OverviewPanel } from "./components/OverviewPanel";
-import { ClinicalIntake } from "./components/ClinicalIntake";
-import { EscalationHeatmap } from "./components/EscalationHeatmap";
-import { AshaCoordination } from "./components/AshaCoordination";
-import { AuditLedger } from "./components/AuditLedger";
-import { CareGateway, PATIENT_LOGIN_FLAG } from "./components/CareGateway";
-import { PatientPortal } from "./components/PatientPortal";
-import { PatientSessionRedirect } from "./components/PatientSessionRedirect";
-import { SpecialistReviewPortal } from "./components/SpecialistReviewPortal";
-import { ClinicianEncounter } from "./components/ClinicianEncounter";
-import { PreventionScreening } from "./components/PreventionScreening";
-import { LandingPage } from "./components/LandingPage";
+import { api, type PatientCase, type AuditLog } from "./api/client";
+import {
+  DashboardLayout,
+  type Tab,
+  OverviewPanel,
+  ReferralIntake,
+  AshaHome,
+  HospitalDesk,
+  AdminWorkspace,
+  EscalationHeatmap,
+  AshaCoordination,
+  AuditLedger,
+  CareGateway,
+  PATIENT_LOGIN_FLAG,
+  PatientPortal,
+  PatientSessionRedirect,
+  PatientCompanion,
+  ClinicianEncounter,
+  PreventionScreening,
+  LandingPage,
+  StaffSignIn,
+} from "./components";
 import { useRouter } from "./lib/router";
-import { StaffSignIn } from "./components/StaffSignIn";
 import { staffApi, type StaffProfile } from "./api/staff";
+
+const NURSE_TABS: Tab[] = ["overview-tab", "prevention-tab", "intake-tab", "tracker-tab"];
+
+function RedirectTab({ onGo }: { onGo: () => void }) {
+  useEffect(onGo, []);
+  return null;
+}
 
 export default function App() {
   const { currentRoute, navigate } = useRouter();
-  const [selectedPatientToken, setSelectedPatientToken] = useState<string>("PT-RURAL-7891");
-  const [cases, setCases] = useState<PatientCase[]>([
-    {
-      patient_token: "PT-RURAL-7891",
-      status: "ACTIVE",
-      days_overdue: 8,
-      cancer_severity_score: 0.88,
-      current_escalation_tier: "Tier 4 · AUTHORITY",
-    },
-    {
-      patient_token: "PT-RURAL-4421",
-      status: "ACTIVE",
-      days_overdue: 6,
-      cancer_severity_score: 0.72,
-      current_escalation_tier: "Tier 3 · ASHA",
-    },
-    {
-      patient_token: "PT-RURAL-1102",
-      status: "ACTIVE",
-      days_overdue: 3,
-      cancer_severity_score: 0.45,
-      current_escalation_tier: "Tier 2 · IVR",
-    },
-    {
-      patient_token: "PT-RURAL-9034",
-      status: "ACTIVE",
-      days_overdue: 1,
-      cancer_severity_score: 0.35,
-      current_escalation_tier: "Tier 1 · SMS",
-    },
-  ]);
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([
-    {
-      event_id: "evt-001",
-      timestamp: "2026-10-21 12:00:00",
-      severity: "CRITICAL",
-      action: "TIER_4_AUTHORITY_ESCALATION",
-      actor: "ESCALATION_ENGINE",
-      patient_token: "PT-RURAL-7891",
-    },
-    {
-      event_id: "evt-002",
-      timestamp: "2026-10-21 11:00:00",
-      severity: "WARNING",
-      action: "TIER_3_ASHA_DISPATCH",
-      actor: "ESCALATION_ENGINE",
-      patient_token: "PT-RURAL-4421",
-    },
-    {
-      event_id: "evt-003",
-      timestamp: "2026-10-21 10:00:00",
-      severity: "INFO",
-      action: "AES256_PII_TOKENIZED",
-      actor: "INTAKE_AGENT",
-      patient_token: "PT-RURAL-9034",
-    },
-  ]);
-  const [lastSim, setLastSim] = useState<EscalationSimResult | null>(null);
+  const [selectedPatientToken, setSelectedPatientToken] = useState<string>("");
+  const [cases, setCases] = useState<PatientCase[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -85,11 +44,9 @@ export default function App() {
     setError(null);
     try {
       const data = await api.getCases();
-      if (data?.cases && data.cases.length > 0) {
-        setCases(data.cases);
-      }
-    } catch {
-      // Backend may be offline during dev; keep mock state seamlessly
+      setCases(data?.cases ?? []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Cases could not be loaded.");
     } finally {
       setLoading(false);
     }
@@ -98,11 +55,9 @@ export default function App() {
   const fetchAuditLogs = async () => {
     try {
       const data = await api.getAuditLogs();
-      if (data?.audit_logs && data.audit_logs.length > 0) {
-        setAuditLogs(data.audit_logs);
-      }
+      setAuditLogs(data?.audit_logs ?? []);
     } catch {
-      // Keep initial audit logs
+      setAuditLogs([]);
     }
   };
 
@@ -129,7 +84,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!staff) return;
+    if (!staff || staff.role !== "DOCTOR" && staff.role !== "NURSE") return;
     fetchCases();
     fetchAuditLogs();
   }, [staff?.staff_id]);
@@ -140,18 +95,11 @@ export default function App() {
     navigate("/gateway");
   };
 
-  const handleCaseSubmitted = (newCase?: any) => {
-    if (newCase && newCase.patient_token) {
-      setCases((prev) => [newCase, ...prev]);
-    }
-    // Stay on the intake screen so the clinician can review the AI output and sign off
-  };
-
   // 0. Landing Page View (URL: / or /landing)
   if (currentRoute.view === "landing") {
     return (
       <LandingPage
-        onLaunchWorkstation={() => navigate({ view: "staff", tab: "prevention-tab" })}
+        onLaunchWorkstation={() => navigate({ view: "staff", tab: "overview-tab" })}
         onOpenPatientCompanion={() => navigate("/patient")}
         onOpenGateway={() => navigate("/gateway")}
       />
@@ -166,12 +114,17 @@ export default function App() {
           // Always show the sign-in screen from the gateway, even if a session is still open.
           await staffApi.logout();
           setStaff(null);
-          navigate({ view: "staff", tab: "prevention-tab" });
+          navigate({ view: "staff", tab: "overview-tab" });
         }}
         onLoginAsha={async () => {
           await staffApi.logout();
           setStaff(null);
-          navigate({ view: "staff", tab: "prevention-tab" });
+          navigate({ view: "staff", tab: "asha-tab" });
+        }}
+        onLoginAdmin={async () => {
+          await staffApi.logout();
+          setStaff(null);
+          navigate({ view: "staff", tab: "admin-tab" });
         }}
         onLoginPatient={(token) => {
           if (token) navigate(`/patient/${token}`);
@@ -205,7 +158,8 @@ export default function App() {
   }
 
   // 3. Staff Workstation View (URL: /staff or /staff/:tab), only after staff sign-in
-  const currentTab: Tab = currentRoute.tab || "prevention-tab";
+  // Administrators only ever see their own page, whatever the address says.
+  const currentTab: Tab = staff?.role === "ADMIN" ? "admin-tab" : currentRoute.tab || "overview-tab";
 
   if (staff === undefined) {
     return (
@@ -218,14 +172,23 @@ export default function App() {
     return (
       <StaffSignIn
         sessionEnded={sessionEnded}
-        preferredRole={currentTab === "asha-tab" ? "ASHA" : undefined}
+        preferredRole={currentTab === "asha-tab" ? "ASHA" : currentTab === "admin-tab" ? "ADMIN" : undefined}
         onSignedIn={(s) => {
           setStaff(s);
-          if (s.role === "ASHA" && currentTab !== "asha-tab") navigate({ view: "staff", tab: "asha-tab" });
+          if (s.role === "ASHA") navigate({ view: "staff", tab: "asha-tab" });
+          if (s.role === "ADMIN") navigate({ view: "staff", tab: "admin-tab" });
+          if (s.role === "NURSE") navigate({ view: "staff", tab: "intake-tab" });
         }}
         onBack={() => navigate("/gateway")}
       />
     );
+  }
+
+  if (staff.role === "ASHA") return <AshaHome staff={staff} onSignOut={signOutStaff} />;
+  if (staff.role === "HOSPITAL") return <HospitalDesk staff={staff} onSignOut={signOutStaff} />;
+  if (staff.role === "ADMIN") return <AdminWorkspace staff={staff} onSignOut={signOutStaff} />;
+  if (staff.role === "NURSE" && !NURSE_TABS.includes(currentTab)) {
+    return <RedirectTab onGo={() => navigate({ view: "staff", tab: "intake-tab" })} />;
   }
 
   return (
@@ -253,39 +216,36 @@ export default function App() {
         />
       )}
 
-      {currentTab === "prevention-tab" && (
-        <PreventionScreening />
-      )}
-
-      {currentTab === "specialist-tab" && (
-        <SpecialistReviewPortal />
-      )}
+      {currentTab === "prevention-tab" && <PreventionScreening />}
 
       {currentTab === "encounter-tab" && (
         <ClinicianEncounter
           patientToken={selectedPatientToken}
           cases={cases}
           onSelectPatient={(token) => setSelectedPatientToken(token)}
-          onBackToDashboard={() => navigate({ view: "staff", tab: "prevention-tab" })}
+          onBackToDashboard={() => navigate({ view: "staff", tab: "overview-tab" })}
           onOpenPatientCompanion={(token) => navigate(`/patient/${token}`)}
         />
       )}
 
+      {currentTab === "patient-tab" && (
+        <div className="w-full max-w-6xl mx-auto py-2">
+          <PatientCompanion patientToken={selectedPatientToken} />
+        </div>
+      )}
+
       {currentTab === "intake-tab" && (
-        <ClinicalIntake onCaseSubmitted={handleCaseSubmitted} />
+        <ReferralIntake staff={staff} />
       )}
 
       {currentTab === "tracker-tab" && (
         <EscalationHeatmap
-          canReview={staff?.role === "DOCTOR" || staff?.role === "ADMIN"}
-          cases={cases}
-          lastSim={lastSim}
-          onSimulate={setLastSim}
+          canReview={staff?.role === "DOCTOR"}
         />
       )}
 
       {currentTab === "asha-tab" && (
-        <AshaCoordination cases={cases} loading={loading} />
+        <AshaCoordination />
       )}
 
       {currentTab === "privacy-tab" && (

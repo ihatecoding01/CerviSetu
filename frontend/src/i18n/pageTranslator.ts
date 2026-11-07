@@ -50,7 +50,7 @@ function lookup(source: string): string | null {
 // First character of each language's digit block. Tamil and Telugu keep 0-9: that is what readers and clinics
 // use day to day, and their native digits are easy to misread on clinical numbers.
 const ZERO: Partial<Record<SiteLang, number>> = { hi: 0x966, bho: 0x966, mr: 0x966, bn: 0x9e6 };
-// Stay exactly as issued, so they can be read out and matched: patient and staff codes (PT-RURAL-7891, AES-256),
+// Stay exactly as issued, so they can be read out and matched: patient and staff codes (PT-CASE-NISHI, AES-256),
 // short codes (R4), hashes, web and email addresses, and phone, OTP and ID numbers (5 or more digits)
 const KEEP = /https?:\S+|\S+@\S+|0x[0-9a-fA-F.]+|\b[A-Z][A-Za-z0-9]*(?:[-_][A-Za-z0-9]+)+\b|\b[A-Z]+\d+[A-Z0-9]*\b|\*+\d+|\d{5}\s\d{5}|\d{5,}/g;
 let digitZero: number | undefined;
