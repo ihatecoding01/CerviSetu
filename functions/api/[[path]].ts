@@ -1,26 +1,19 @@
 interface Env {
   BACKEND_TUNNEL_URL?: string;
+  VITE_API_BASE_URL?: string;
 }
 
-export const onRequest: PagesFunction<Env> = async (context) => {
-  const tunnel = context.env.BACKEND_TUNNEL_URL?.trim().replace(/\/+$/, "");
+const DEFAULT_BACKEND_URL = "https://health-hackathon-8bhk.onrender.com";
 
-  if (!tunnel) {
-    return new Response(
-      JSON.stringify({
-        error: "TUNNEL_NOT_CONFIGURED",
-        message:
-          "BACKEND_TUNNEL_URL is not configured in Cloudflare Pages. Set BACKEND_TUNNEL_URL in Pages Settings -> Environment Variables.",
-      }),
-      {
-        status: 503,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-  }
+export const onRequest: PagesFunction<Env> = async (context) => {
+  const targetBackend = (
+    context.env.BACKEND_TUNNEL_URL ||
+    context.env.VITE_API_BASE_URL ||
+    DEFAULT_BACKEND_URL
+  )?.trim().replace(/\/+$/, "");
 
   const url = new URL(context.request.url);
-  const targetUrl = `${tunnel}${url.pathname}${url.search}`;
+  const targetUrl = `${targetBackend}${url.pathname}${url.search}`;
 
   const headers = new Headers(context.request.headers);
   headers.set("X-Forwarded-Host", url.host);
@@ -39,8 +32,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     const message = err instanceof Error ? err.message : String(err);
     return new Response(
       JSON.stringify({
-        error: "TUNNEL_UNREACHABLE",
-        message: `Failed to reach backend tunnel at ${tunnel}. Ensure your local backend and cloudflared are running.`,
+        error: "BACKEND_UNREACHABLE",
+        message: `Failed to reach backend at ${targetBackend}.`,
         detail: message,
       }),
       {

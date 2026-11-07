@@ -58,7 +58,7 @@ export function StaffSignIn({ preferredRole, sessionEnded, onSignedIn, onBack }:
 
   return (
     <div className="min-h-screen w-full bg-[#FAFAFC] text-slate-900 font-sans antialiased flex flex-col relative">
-      {/* Codename Drake Ambient Backdrop */}
+      {/* Codename orion Ambient Backdrop */}
       <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden">
         <div className="w-[500px] h-[500px] rounded-full bg-radial from-pink-200/25 via-sky-100/20 to-transparent blur-3xl opacity-70 absolute top-6 left-1/2 -translate-x-1/2" />
       </div>
@@ -98,11 +98,10 @@ export function StaffSignIn({ preferredRole, sessionEnded, onSignedIn, onBack }:
                   disabled={busy !== null}
                   aria-pressed={role === selectedRole}
                   data-testid={`role-${role.toLowerCase()}`}
-                  className={`flex items-center gap-3 w-full rounded-lg border px-3.5 py-2.5 text-left transition-all cursor-pointer disabled:opacity-60 ${
-                    role === selectedRole
+                  className={`flex items-center gap-3 w-full rounded-lg border px-3.5 py-2.5 text-left transition-all cursor-pointer disabled:opacity-60 ${role === selectedRole
                       ? "border-[#0284C7] bg-white ring-2 ring-[#0284C7]/20 shadow-2xs"
                       : "border-black/10 bg-white/80 hover:bg-white hover:border-black/25"
-                  }`}
+                    }`}
                 >
                   <span
                     className="size-8 rounded-md flex items-center justify-center text-white shrink-0 shadow-2xs"

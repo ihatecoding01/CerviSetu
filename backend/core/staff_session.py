@@ -311,5 +311,6 @@ def set_session_cookie(response, request, staff_id: str) -> None:
 
 def write_cookie(response, request, value: str) -> None:
     secure = request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https"
+    samesite = "none" if secure else "lax"
     response.set_cookie(COOKIE_NAME, value, max_age=SESSION_TTL_SECONDS,
-                        httponly=True, samesite="strict", secure=secure, path="/api")
+                        httponly=True, samesite=samesite, secure=secure, path="/")

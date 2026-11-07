@@ -5,3 +5,5 @@ pages_build_output_dir = "dist"
 [vars]
 ENVIRONMENT = "production"
 PROJECT_NAME = "CerviSetu Rural Oncology Platform"
+BACKEND_TUNNEL_URL = "https://health-hackathon-8bhk.onrender.com"
+VITE_API_BASE_URL = "https://health-hackathon-8bhk.onrender.com"

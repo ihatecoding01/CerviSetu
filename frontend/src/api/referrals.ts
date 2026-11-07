@@ -1,5 +1,5 @@
 /** Cervical referral pathway: staff board, status changes, reminders, replies and ASHA consent. */
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+import { BASE_URL, apiFetch } from "./config";
 
 export type Lane = "on_track" | "attention" | "visit_due";
 
@@ -94,9 +94,8 @@ export interface ReferralFile {
 }
 
 async function call<T>(path: string, body?: unknown): Promise<T> {
-  const res = await fetch(`${BASE_URL}/api/referrals${path}`, {
+  const res = await apiFetch(`${BASE_URL}/api/referrals${path}`, {
     method: body === undefined ? "GET" : "POST",
-    credentials: "include",
     headers: body === undefined ? undefined : { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
@@ -145,7 +144,7 @@ export const referralApi = {
     body.append("kind", kind);
     body.append("photo_consent", String(photoConsent));
     body.append("file", file);
-    const res = await fetch(`${BASE_URL}/api/referrals/${id}/files`, { method: "POST", credentials: "include", body });
+    const res = await apiFetch(`${BASE_URL}/api/referrals/${id}/files`, { method: "POST", body });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(typeof data.detail === "string" ? data.detail : "The file could not be saved.");
     return data as ReferralFile;

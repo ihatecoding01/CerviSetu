@@ -1,5 +1,5 @@
 /** Administrator hospital directory: which hospital offers which cervical cancer services. */
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+import { BASE_URL, apiFetch } from "./config";
 
 export const HOSPITAL_TYPES = [
   { id: "URBAN_HEALTH_CENTRE", label: "Urban health centre" },
@@ -39,9 +39,8 @@ export interface Hospital extends HospitalInput {
 }
 
 async function call<T>(path: string, method = "GET", body?: unknown): Promise<T> {
-  const res = await fetch(`${BASE_URL}/api/admin${path}`, {
+  const res = await apiFetch(`${BASE_URL}/api/admin${path}`, {
     method,
-    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });

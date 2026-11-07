@@ -1,5 +1,5 @@
 /** Staff sign-in: staff ID + PIN, one-click demo sign-in per role, session check, logout. */
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+import { BASE_URL, apiFetch, setStaffToken } from "./config";
 
 export type StaffRole = "DOCTOR" | "NURSE" | "ASHA" | "HOSPITAL" | "ADMIN";
 
@@ -35,9 +35,8 @@ export class StaffLoginError extends Error {
 }
 
 async function call(path: string, body?: unknown): Promise<Response> {
-  return fetch(`${BASE_URL}/api/staff/${path}`, {
+  return apiFetch(`${BASE_URL}/api/staff/${path}`, {
     method: body === undefined ? "GET" : "POST",
-    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
@@ -49,6 +48,9 @@ async function signedIn(res: Response): Promise<StaffProfile> {
     const d = data.detail || {};
     throw new StaffLoginError(d.code || "LOGIN_FAILED", d.message || "Sign-in failed. Please try again.");
   }
+  if (data.token) {
+    setStaffToken(data.token);
+  }
   return data.staff as StaffProfile;
 }
 
@@ -59,9 +61,18 @@ export const staffApi = {
         call("session"),
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 6000)),
       ]);
-      if (!res.ok) return null;
+      if (!res.ok) {
+        if (res.status === 401) {
+          setStaffToken(null);
+        }
+        return null;
+      }
       const data = await res.json();
-      return data.authenticated ? data.staff : null;
+      if (data.authenticated && data.staff) {
+        if (data.token) setStaffToken(data.token);
+        return data.staff;
+      }
+      return null;
     } catch {
       return null;
     }
@@ -90,8 +101,8 @@ export const staffApi = {
   async logout(): Promise<void> {
     try {
       await call("logout", {});
-    } catch {
-      /* the session cookie expires on its own */
+    } finally {
+      setStaffToken(null);
     }
   },
 };

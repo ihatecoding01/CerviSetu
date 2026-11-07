@@ -22,14 +22,29 @@ class DemoLoginRequest(BaseModel):
     role: str
 
 
+def _extract_token(request: Request, cookie: Optional[str]) -> Optional[str]:
+    if cookie:
+        return cookie
+    auth = request.headers.get("authorization", "")
+    if auth.lower().startswith("bearer "):
+        return auth[7:].strip()
+    return request.headers.get("x-staff-session")
+
+
 def _signed_in(request: Request, staff_id: str, method: str) -> JSONResponse:
     profile = ss.public_profile(staff_id)
     global_audit.record_user_event(
         user_role=profile["role"], action="STAFF_SIGN_IN", actor_id=staff_id, patient_token="N/A",
         details={"method": method}, channel="WEB_CAREUI",
     )
-    resp = JSONResponse({"authenticated": True, "staff": profile, "demo": method == "DEMO_BUTTON"})
-    ss.set_session_cookie(resp, request, staff_id)
+    token = ss.issue_session(staff_id)
+    resp = JSONResponse({
+        "authenticated": True,
+        "staff": profile,
+        "demo": method == "DEMO_BUTTON",
+        "token": token,
+    })
+    ss.write_cookie(resp, request, token)
     return resp
 
 
@@ -54,21 +69,29 @@ async def demo_login(body: DemoLoginRequest, request: Request):
 
 
 @router.get("/session")
-async def current_session(cookie: Optional[str] = SessionCookie):
-    profile = ss.verify_session(cookie)
-    return {"authenticated": bool(profile), "staff": profile,
-            "auth_enforced": ss.auth_enforced(), "demo_signin": ss.demo_signin_allowed()}
+async def current_session(request: Request, cookie: Optional[str] = SessionCookie):
+    token = _extract_token(request, cookie)
+    profile = ss.verify_session(token)
+    return {
+        "authenticated": bool(profile),
+        "staff": profile,
+        "token": token if profile else None,
+        "auth_enforced": ss.auth_enforced(),
+        "demo_signin": ss.demo_signin_allowed(),
+    }
 
 
 @router.post("/logout")
-async def logout(cookie: Optional[str] = SessionCookie):
-    profile = ss.verify_session(cookie)
-    ss.revoke_session(cookie)
+async def logout(request: Request, cookie: Optional[str] = SessionCookie):
+    token = _extract_token(request, cookie)
+    profile = ss.verify_session(token)
+    ss.revoke_session(token)
     if profile:
         global_audit.record_user_event(
             user_role=profile["role"], action="STAFF_SIGN_OUT", actor_id=profile["staff_id"],
             patient_token="N/A", details={}, channel="WEB_CAREUI",
         )
     resp = JSONResponse({"logged_out": True})
+    resp.delete_cookie(ss.COOKIE_NAME, path="/")
     resp.delete_cookie(ss.COOKIE_NAME, path="/api")
     return resp

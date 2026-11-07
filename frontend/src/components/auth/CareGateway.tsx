@@ -61,12 +61,12 @@ export const CareGateway: React.FC<Props> = ({
 
   return (
     <div className="min-h-screen w-full bg-[#FAFAFC] relative flex items-center justify-center p-4 sm:p-6 md:p-10 font-sans antialiased text-slate-900">
-      {/* Codename Drake: Soft Ambient Radial Lighting Backdrop */}
+      {/* Codename Orion: Soft Ambient Radial Lighting Backdrop */}
       <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden">
         <div className="w-[520px] sm:w-[680px] h-[520px] sm:h-[680px] rounded-full bg-radial from-pink-200/30 via-sky-100/25 to-transparent blur-3xl opacity-75 absolute top-4 left-1/2 -translate-x-1/2" />
       </div>
 
-      {/* Main Care Gateway Card (Codename Drake Styling) */}
+      {/* Main Care Gateway Card (Codename Orion Styling) */}
       <div className="w-full max-w-5xl card-base card-gradient-warm rounded-2xl border border-black/12 shadow-sm p-6 sm:p-10 relative">
         {/* Top bar: back link + language picker */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
@@ -83,7 +83,7 @@ export const CareGateway: React.FC<Props> = ({
           <LanguageSwitch className="ml-auto" />
         </div>
 
-        {/* Top Branding (Codename Drake) */}
+        {/* Top Branding (Codename Orion) */}
         <div className="flex flex-col items-center justify-center mb-8">
           <div className="flex items-center gap-3">
             <div className="size-11 rounded-xl bg-white border border-black/15 flex items-center justify-center p-1.5 shadow-2xs">
@@ -99,14 +99,14 @@ export const CareGateway: React.FC<Props> = ({
             </div>
           </div>
 
-          
+
 
           <p className="font-subtitle-playfair text-xs sm:text-sm text-slate-600 mt-2 text-center max-w-lg leading-relaxed font-medium">
             Sovereign multi-cohort triage, point-of-care VIA verification, and rapid hospital referral pathways across health post networks.
           </p>
         </div>
 
-        {/* Section 1: Search for Available Facilities (Drake Bento Subcard) */}
+        {/* Section 1: Search for Available Facilities (orion Bento Subcard) */}
         <div className="card-base card-gradient-subtle rounded-xl p-5 sm:p-7 border border-black/12 mb-8 shadow-2xs">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -157,25 +157,23 @@ export const CareGateway: React.FC<Props> = ({
                 {facilities.map((fac) => (
                   <div
                     key={`${fac.name}-${fac.area}`}
-                    className={`rounded-xl p-4 sm:p-5 border shadow-2xs transition-all ${
-                      fac.hospital_type === "TERTIARY_HOSPITAL"
+                    className={`rounded-xl p-4 sm:p-5 border shadow-2xs transition-all ${fac.hospital_type === "TERTIARY_HOSPITAL"
                         ? "card-base card-gradient-pink border-pink-200"
                         : "card-base card-gradient-blue border-sky-200"
-                    }`}
+                      }`}
                   >
                     <div className="flex justify-between items-start gap-2 mb-2">
                       <span
-                        className={`text-[10px] font-mono-data font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white shadow-2xs border ${
-                          fac.hospital_type === "TERTIARY_HOSPITAL"
+                        className={`text-[10px] font-mono-data font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white shadow-2xs border ${fac.hospital_type === "TERTIARY_HOSPITAL"
                             ? "text-[#9D174D] border-pink-200"
                             : "text-[#0369A1] border-sky-200"
-                        }`}
+                          }`}
                       >
                         {fac.hospital_type === "TERTIARY_HOSPITAL"
                           ? "Tertiary Oncology Hub"
                           : fac.hospital_type === "PERIPHERAL_HOSPITAL"
-                          ? "District Spoke Daycare"
-                          : "Primary Health Spoke"}
+                            ? "District Spoke Daycare"
+                            : "Primary Health Spoke"}
                       </span>
                       <span className="text-xs font-mono-data font-semibold text-slate-600 flex items-center gap-1">
                         <MapPin className="size-3 text-[#0369A1]" /> {fac.area}
@@ -220,7 +218,7 @@ export const CareGateway: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Section 2: Four Distinct Login Pathways (Codename Drake Bento Grid) */}
+        {/* Section 2: Four Distinct Login Pathways (Codename Orion Bento Grid) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
           {/* Card 1: Log in as Doctor / Staff (Clinical Blue & Obsidian) */}
           <div className="card-base card-gradient-subtle rounded-xl border border-black/12 p-5 hover:border-[#0284C7] hover:shadow-sm transition-all flex flex-col justify-between items-center text-center group">
@@ -248,7 +246,7 @@ export const CareGateway: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Card 2: Log in as ASHA Worker (Drake Dark Pink) */}
+          {/* Card 2: Log in as ASHA Worker (Orion Dark Pink) */}
           <div className="card-base card-gradient-subtle rounded-xl border border-black/12 p-5 hover:border-[#9D174D] hover:shadow-sm transition-all flex flex-col justify-between items-center text-center group">
             <div className="size-11 rounded-lg bg-pink-50 border border-pink-200 flex items-center justify-center text-[#9D174D] mb-3.5 group-hover:scale-105 transition-transform shadow-2xs">
               <HeartHandshake className="size-5" />
@@ -274,7 +272,7 @@ export const CareGateway: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Card 3: Log in as Patient (Drake Clean Sky Blue / White) */}
+          {/* Card 3: Log in as Patient (Orion Clean Sky Blue / White) */}
           <div className="card-base card-gradient-subtle rounded-xl border border-black/12 p-5 hover:border-[#0284C7] hover:shadow-sm transition-all flex flex-col justify-between items-center text-center group">
             <div className="size-11 rounded-lg bg-sky-50 border border-sky-200 flex items-center justify-center text-[#0284C7] mb-3.5 group-hover:scale-105 transition-transform shadow-2xs">
               <Users className="size-5" />
@@ -300,7 +298,7 @@ export const CareGateway: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Card 4: Log in as Administrator (Drake Slate) */}
+          {/* Card 4: Log in as Administrator (Orion Slate) */}
           <div className="card-base card-gradient-subtle rounded-xl border border-black/12 p-5 hover:border-slate-800 hover:shadow-sm transition-all flex flex-col justify-between items-center text-center group">
             <div className="size-11 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 mb-3.5 group-hover:scale-105 transition-transform shadow-2xs">
               <UserCog className="size-5" />
@@ -328,7 +326,7 @@ export const CareGateway: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Patient login modal (Codename Drake) */}
+      {/* Patient login modal (Codename Orion) */}
       {showPatientLoginModal && (
         <PatientLoginModal
           method={authMethod}
@@ -411,11 +409,10 @@ const PatientLoginModal: React.FC<ModalProps> = ({ method, setMethod, notice, on
               role="tab"
               aria-selected={method === tab.id}
               onClick={() => setMethod(tab.id)}
-              className={`min-h-9 px-1 rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer text-xs ${
-                method === tab.id
+              className={`min-h-9 px-1 rounded-md transition-all flex items-center justify-center gap-1.5 cursor-pointer text-xs ${method === tab.id
                   ? "bg-white text-slate-900 shadow-2xs font-bold border border-black/10"
                   : "text-slate-600 hover:text-slate-900"
-              }`}
+                }`}
             >
               {tab.icon} <span>{tab.label}</span>
             </button>

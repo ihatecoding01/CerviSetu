@@ -74,17 +74,17 @@ export const PatientGenie: React.FC<Props> = ({
     suggestions:
       language === "hi"
         ? [
-            "सरकारी स्वास्थ्य योजनाएं क्या हैं?",
-            "अस्पताल कहाँ है और कैसे पहुँचें?",
-            "कौन से कागज़ात साथ ले जाने हैं?",
-            "क्या मुझे कैंसर है? (गार्डरेल टेस्ट)",
-          ]
+          "सरकारी स्वास्थ्य योजनाएं क्या हैं?",
+          "अस्पताल कहाँ है और कैसे पहुँचें?",
+          "कौन से कागज़ात साथ ले जाने हैं?",
+          "क्या मुझे कैंसर है? (गार्डरेल टेस्ट)",
+        ]
         : [
-            "What government schemes cover my costs?",
-            "Where is my hospital located?",
-            "What documents should I take with me?",
-            "Do I have cancer? (Test guardrail)",
-          ],
+          "What government schemes cover my costs?",
+          "Where is my hospital located?",
+          "What documents should I take with me?",
+          "Do I have cancer? (Test guardrail)",
+        ],
   };
 
   const [messages, setMessages] = useState<ChatMessage[]>([initialGreeting]);
@@ -240,7 +240,7 @@ export const PatientGenie: React.FC<Props> = ({
       aria-labelledby="genie-heading"
       className="bg-white border-2 border-pink-200/80 rounded-2xl shadow-sm overflow-hidden transition-all"
     >
-      {/* Header bar (Codename Drake Luminous Accent) */}
+      {/* Header bar (Codename orion Luminous Accent) */}
       <div className="bg-gradient-to-r from-sky-50 via-white to-pink-50/70 border-b border-black/10 px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="size-10 rounded-xl bg-gradient-to-br from-[#0284C7] to-[#9D174D] p-0.5 shadow-xs flex items-center justify-center text-white">
@@ -320,13 +320,12 @@ export const PatientGenie: React.FC<Props> = ({
                 className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}
               >
                 <div
-                  className={`max-w-[90%] sm:max-w-[80%] rounded-2xl p-3.5 ${
-                    m.role === "user"
+                  className={`max-w-[90%] sm:max-w-[80%] rounded-2xl p-3.5 ${m.role === "user"
                       ? "bg-[#0F172A] text-white rounded-br-xs shadow-xs"
                       : m.isDiagnosticRefusal
-                      ? "bg-rose-50/90 border-2 border-rose-300 text-rose-950 rounded-bl-xs"
-                      : "bg-slate-50 border border-slate-200/90 text-slate-900 rounded-bl-xs"
-                  }`}
+                        ? "bg-rose-50/90 border-2 border-rose-300 text-rose-950 rounded-bl-xs"
+                        : "bg-slate-50 border border-slate-200/90 text-slate-900 rounded-bl-xs"
+                    }`}
                 >
                   {/* Guardrail badge if refusal */}
                   {m.isDiagnosticRefusal && (
@@ -345,11 +344,10 @@ export const PatientGenie: React.FC<Props> = ({
                     <div className="mt-2.5 pt-2 border-t border-black/5 flex items-center justify-between gap-2 text-xs">
                       <button
                         onClick={() => playVoice(m.text, m.id, m.audioBase64)}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
-                          currentlyPlayingId === m.id
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer ${currentlyPlayingId === m.id
                             ? "bg-pink-100 text-[#9D174D] border border-pink-300"
                             : "bg-white hover:bg-slate-100 border border-slate-200 text-slate-700"
-                        }`}
+                          }`}
                         title="Listen using Sarvam Voice"
                       >
                         {currentlyPlayingId === m.id ? (
@@ -520,11 +518,10 @@ export const PatientGenie: React.FC<Props> = ({
                 type="button"
                 onClick={recorder.recording ? recorder.stop : recorder.start}
                 disabled={busy || hearing}
-                className={`size-11 rounded-xl flex items-center justify-center shrink-0 transition-all cursor-pointer ${
-                  recorder.recording
+                className={`size-11 rounded-xl flex items-center justify-center shrink-0 transition-all cursor-pointer ${recorder.recording
                     ? "bg-rose-600 text-white animate-pulse shadow-md"
                     : "bg-white hover:bg-pink-50 border border-slate-300 text-[#9D174D] shadow-2xs hover:border-[#9D174D]"
-                }`}
+                  }`}
                 title={
                   recorder.recording
                     ? "Click to stop recording"

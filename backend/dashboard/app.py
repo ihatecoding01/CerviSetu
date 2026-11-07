@@ -57,12 +57,20 @@ async def staff_role_guard(request: Request, call_next):
     """Staff-only API routes need a signed staff session whose role is allowed (see staff_session.ROLE_RULES).
 
     Registered before CORS so CORS stays the outer layer and 401/403 replies still carry CORS headers.
+    Supports either HttpOnly cookie or Authorization: Bearer / X-Staff-Session token header.
     """
     path = request.url.path
     if request.method != "OPTIONS" and path.startswith("/api/") and staff_session.auth_enforced():
         roles = staff_session.required_roles(request.method, path)
         if roles:
-            staff = staff_session.verify_session(request.cookies.get(staff_session.COOKIE_NAME))
+            token = request.cookies.get(staff_session.COOKIE_NAME)
+            if not token:
+                auth = request.headers.get("authorization", "")
+                if auth.lower().startswith("bearer "):
+                    token = auth[7:].strip()
+                elif request.headers.get("x-staff-session"):
+                    token = request.headers.get("x-staff-session")
+            staff = staff_session.verify_session(token)
             if not staff:
                 return JSONResponse({"detail": {"code": "STAFF_SIGN_IN_REQUIRED",
                                                 "message": "Please sign in as staff."}}, status_code=401)
@@ -72,9 +80,10 @@ async def staff_role_guard(request: Request, call_next):
                                     status_code=403)
             request.state.staff = staff
             response = await call_next(request)
-            renewed = staff_session.renewed_cookie(request.cookies.get(staff_session.COOKIE_NAME))
+            renewed = staff_session.renewed_cookie(token)
             if renewed:
                 staff_session.write_cookie(response, request, renewed)
+                response.headers["X-Staff-Token"] = renewed
             return response
     return await call_next(request)
 
@@ -89,10 +98,11 @@ app.add_middleware(
         "http://127.0.0.1:8000",
         "https://cervi-setu.pages.dev",
     ],
-    allow_origin_regex=r"https://.*\.pages\.dev|https://.*\.trycloudflare\.com",
+    allow_origin_regex=r"https://.*\.pages\.dev|https://.*\.trycloudflare\.com|https://.*\.onrender\.com",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*", "X-Staff-Token"],
 )
 
 # Mount Domain APIRouters

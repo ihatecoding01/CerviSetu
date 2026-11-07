@@ -103,5 +103,6 @@ def revoke_session(cookie: Optional[str]) -> None:
 
 def set_session_cookie(response, request, patient_token: str) -> None:
     secure = request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https"
+    samesite = "none" if secure else "lax"
     response.set_cookie(COOKIE_NAME, issue_session(patient_token), max_age=SESSION_TTL_SECONDS,
-                        httponly=True, samesite="strict", secure=secure, path="/api")
+                        httponly=True, samesite=samesite, secure=secure, path="/")

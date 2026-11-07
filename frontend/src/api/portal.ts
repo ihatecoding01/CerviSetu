@@ -1,7 +1,6 @@
 // Session-scoped patient portal API. The HttpOnly session cookie is sent automatically (credentials: include).
 import type { Referral } from "./referrals";
-
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+import { BASE_URL, apiFetch } from "./config";
 
 export type PortalErrorKind = "unauthenticated" | "forbidden" | "failed";
 
@@ -16,7 +15,7 @@ export class PortalError extends Error {
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(`${BASE_URL}/api/portal${path}`, { credentials: "include", ...init });
+    res = await apiFetch(`${BASE_URL}/api/portal${path}`, { ...init });
   } catch {
     throw new PortalError("failed");
   }
@@ -74,11 +73,10 @@ export const portalApi = {
   askGenie: async (token: string, question: string, language = "en", history: PatientGenieTurn[] = []): Promise<PatientGenieResponse> => {
     let res: Response;
     try {
-      res = await fetch(`${BASE_URL}/api/genie/patient-ask`, {
+      res = await apiFetch(`${BASE_URL}/api/genie/patient-ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, question, language, history }),
-        credentials: "include",
       });
     } catch {
       throw new PortalError("failed");
@@ -88,11 +86,10 @@ export const portalApi = {
   },
   speak: async (text: string, language = "en"): Promise<{ audio_base64: string | null }> => {
     try {
-      const res = await fetch(`${BASE_URL}/api/genie/speak`, {
+      const res = await apiFetch(`${BASE_URL}/api/genie/speak`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, language }),
-        credentials: "include",
       });
       if (!res.ok) return { audio_base64: null };
       return res.json();
@@ -103,10 +100,9 @@ export const portalApi = {
   transcribe: async (audio: Blob): Promise<{ text: string }> => {
     const form = new FormData();
     form.append("audio", audio, "genie.wav");
-    const res = await fetch(`${BASE_URL}/api/genie/transcribe`, {
+    const res = await apiFetch(`${BASE_URL}/api/genie/transcribe`, {
       method: "POST",
       body: form,
-      credentials: "include",
     });
     if (!res.ok) throw new Error("Could not transcribe voice");
     return res.json();

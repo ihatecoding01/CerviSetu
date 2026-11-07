@@ -3,10 +3,10 @@
  * Connects to the FastAPI backend running at localhost:8000
  */
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+import { BASE_URL, apiFetch } from "./config";
 
-// Send the staff session cookie with every API call (needed when the API is on another origin).
-const fetch: typeof window.fetch = (input, init) => window.fetch(input, { credentials: "include", ...init });
+// Send the staff session cookie and Bearer auth header with every API call (needed when the API is on another origin).
+const fetch: typeof window.fetch = (input, init) => apiFetch(input, init);
 
 export interface PatientCase {
   patient_token: string;

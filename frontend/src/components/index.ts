@@ -1,5 +1,5 @@
 // ============================================================================
-// CerviSetu Components Directory (Codename Drake Architecture)
+// CerviSetu Components Directory (Codename Orion Architecture)
 // ============================================================================
 
 // 1. Auth & Access Gateways
