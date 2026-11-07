@@ -79,7 +79,6 @@ def test_rejects_duplicate_and_missing(client):
 
 @pytest.mark.parametrize("method,path", [
     ("get", "/api/prevention/vaccinations"), ("get", "/api/vault/inspect/PT-X"), ("get", "/api/fhir/patient/PT-X"),
-    ("post", "/api/genie/ask"),
 ])
 def test_admin_is_kept_out_of_clinical_and_field_work(client, method, path):
     _sign_in(client, "ADMIN")

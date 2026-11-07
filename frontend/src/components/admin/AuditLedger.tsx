@@ -315,10 +315,10 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
         </Card>
 
         {/* SHA-256 Ledger Health Card */}
-        <Card className="border-l-4 border-l-[#BA2D0B] bg-white shadow-2xs">
+        <Card className="border-l-4 border-l-[#9D174D] bg-white shadow-2xs">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-[#BA2D0B] flex items-center gap-1.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[#9D174D] flex items-center gap-1.5">
                 <ShieldCheck className="size-3.5" />
                 SHA-256 Block Chain
               </p>
@@ -339,7 +339,7 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
       <Card className="bg-gray-50/80 border border-gray-200 shadow-2xs">
         <CardContent className="p-3.5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Activity className="size-4 text-[#BA2D0B]" />
+            <Activity className="size-4 text-[#9D174D]" />
             <span className="text-xs font-bold text-gray-800">Record an Action:</span>
             <span className="text-xs text-gray-500 hidden sm:inline">
               Each action is chained into the ledger with your role
@@ -383,7 +383,7 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-base font-bold text-black flex items-center gap-2">
-                  <KeyRound className="size-4 text-[#BA2D0B]" />
+                  <KeyRound className="size-4 text-[#9D174D]" />
                   PII Vault Decryption Gate
                 </CardTitle>
                 <CardDescription className="text-xs text-gray-500">Authorized medical officer role validation</CardDescription>
@@ -421,8 +421,8 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
             )}
 
             {vaultResult && (
-              <div className="p-3.5 rounded-xl bg-[#BA2D0B]/10 border border-[#BA2D0B]/20 flex flex-col gap-2">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-[#BA2D0B]">
+              <div className="p-3.5 rounded-xl bg-[#9D174D]/10 border border-[#9D174D]/20 flex flex-col gap-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-[#9D174D]">
                   <ShieldCheck className="size-4" />
                   <span>[STATUTORY ACCESS AUTHORIZED - LOGGED]</span>
                 </div>
@@ -440,7 +440,7 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <CardTitle className="text-base font-bold text-[#111418] flex items-center gap-2">
-                  <Lock className="size-4 text-[#90C3CB]" />
+                  <Lock className="size-4 text-[#BAE6FD]" />
                   Tamper-Evident Multi-Role Audit Ledger
                 </CardTitle>
                 <CardDescription className="text-xs text-gray-500">
@@ -577,7 +577,7 @@ export function AuditLedger({ logs: initialLogs, loading: parentLoading, onRefre
                           </TableCell>
 
                           {/* Patient Token */}
-                          <TableCell className="font-mono text-xs text-[#BA2D0B] font-semibold">
+                          <TableCell className="font-mono text-xs text-[#9D174D] font-semibold">
                             {log.patient_token || "SYSTEM"}
                           </TableCell>
 

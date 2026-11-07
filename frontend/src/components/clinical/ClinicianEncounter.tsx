@@ -170,12 +170,12 @@ export function ClinicianEncounter({
   return (
     <div className="flex flex-col h-full w-full bg-[#FAFAFA] text-[#111418] font-sans overflow-hidden">
       {/* 1. TOP AUTHORITATIVE PATIENT & ENCOUNTER BANNER */}
-      <header className="bg-white border-b border-gray-200 px-5 py-3 shrink-0 shadow-2xs z-20">
+      <header className="bg-white border-b border-gray-200 px-4 sm:px-5 py-3 shrink-0 shadow-2xs z-20">
         <div className="flex flex-wrap items-center justify-between gap-4">
           {/* Patient Identification & Clinical Tags */}
           <div className="flex items-center gap-3.5 min-w-0">
             {/* Avatar Initial */}
-            <div className="size-11 rounded-xl bg-[#DBFE87] text-black font-bold text-lg flex items-center justify-center border border-[#c4e872] shadow-2xs shrink-0">
+            <div className="size-11 rounded-xl bg-[#E0F2FE] text-black font-bold text-lg flex items-center justify-center border border-[#BAE6FD] shadow-2xs shrink-0">
               {patientDisplayName.charAt(0)}
             </div>
 
@@ -189,7 +189,7 @@ export function ClinicianEncounter({
                 <span className="text-gray-300">•</span>
                 <button
                   onClick={handleCopyToken}
-                  className="flex items-center gap-1 text-xs font-mono text-[#BA2D0B] font-semibold bg-[#BA2D0B]/10 hover:bg-[#BA2D0B]/20 px-2 py-0.5 rounded border border-[#BA2D0B]/20 transition-colors cursor-pointer"
+                  className="flex items-center gap-1 text-xs font-mono text-[#9D174D] font-semibold bg-[#9D174D]/10 hover:bg-[#9D174D]/20 px-2 py-0.5 rounded border border-[#9D174D]/20 transition-colors cursor-pointer"
                   title="Click to copy token"
                 >
                   <span>{patientToken}</span>
@@ -235,14 +235,14 @@ export function ClinicianEncounter({
               {/* Clinical Tags Row */}
               <div className="flex flex-wrap items-center gap-2 mt-1">
                 {referral?.urgent && <span className="text-[11px] font-semibold text-rose-900 bg-rose-50 px-2 py-0.5 rounded">Urgent</span>}
-                {referral?.fictional && <span className="text-[11px] font-semibold text-black bg-[#DBFE87]/40 px-2 py-0.5 rounded">Fictional</span>}
-                {referral && <span className="text-[11px] font-medium text-slate-800 bg-[#90C3CB]/20 px-2 py-0.5 rounded">{referral.health_post} → {referral.hospital ?? "Not referred"}</span>}
+                {referral?.fictional && <span className="text-[11px] font-semibold text-black bg-[#E0F2FE]/40 px-2 py-0.5 rounded">Fictional</span>}
+                {referral && <span className="text-[11px] font-medium text-slate-800 bg-[#BAE6FD]/20 px-2 py-0.5 rounded">{referral.health_post} → {referral.hospital ?? "Not referred"}</span>}
               </div>
             </div>
           </div>
 
           {/* Header Action Controls */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
             {/* Back to Dashboard Roster */}
             {onBackToDashboard && (
               <Button
@@ -313,7 +313,7 @@ export function ClinicianEncounter({
                     }}
                     className="w-full text-left px-3.5 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700 transition-colors"
                   >
-                    <Sparkles className="size-3.5 text-[#F19941]" />
+                    <Sparkles className="size-3.5 text-[#0284C7]" />
                     <span>AI Voice Notes</span>
                   </button>
 
@@ -372,9 +372,9 @@ export function ClinicianEncounter({
       </header>
 
       {/* 3. MAIN WORKSPACE WITH OPTIONAL COLLAPSIBLE INSPECTOR RAIL */}
-      <div className="flex flex-1 overflow-hidden relative">
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-y-auto lg:overflow-hidden relative">
         {/* CENTER SCROLLABLE WORKSPACE */}
-        <div className="flex-1 overflow-y-auto p-5 sm:p-6 lg:p-8 space-y-6">
+        <div className="lg:flex-1 min-w-0 lg:overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6">
           {activeTab === "overview" && referral && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
               <section className="bg-white border border-gray-200 rounded-2xl p-5" data-testid="case-overview">
@@ -432,7 +432,7 @@ export function ClinicianEncounter({
                     disabled={consultBusy || consultRecorder.starting}
                     data-testid="consult-mic"
                     className={`h-9 px-3.5 rounded-full flex items-center gap-2 text-white shadow-xs transition-all cursor-pointer ${
-                      isRecording ? "bg-black animate-pulse" : "bg-[#BA2D0B] hover:bg-[#a02609]"
+                      isRecording ? "bg-black animate-pulse" : "bg-[#9D174D] hover:bg-[#a02609]"
                     }`}
                   >
                     {isRecording ? <MicOff className="size-4" /> : <Mic className="size-4" />}
@@ -472,26 +472,26 @@ export function ClinicianEncounter({
                       </Button>
                     </div>
                     {(consultError || consultRecorder.error) && (
-                      <p role="alert" className="text-xs text-[#BA2D0B]">{consultError || consultRecorder.error}</p>
+                      <p role="alert" className="text-xs text-[#9D174D]">{consultError || consultRecorder.error}</p>
                     )}
                   </div>
 
                   {consult && (
-                    <div data-testid="consult-draft" className="p-4 bg-emerald-50/80 rounded-xl border border-emerald-200 space-y-3">
+                    <div data-testid="consult-draft" className="p-4 bg-sky-50 rounded-xl border border-sky-200 space-y-3">
                       <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-xs font-bold text-emerald-900">
-                          {consult.draft.source === "AI_DRAFT" ? "AI draft for your review" : "Transcript ready (AI draft unavailable)"}
+                        <span className="text-xs font-bold text-sky-900">
+                          {consult.draft.source === "AI_DRAFT" ? "AI draft. Not confirmed by a clinician. Check every line before applying." : "Transcript ready (AI draft unavailable)"}
                         </span>
                         <div className="flex items-center gap-2">
-                          <Button size="xs" variant="obsidian" onClick={handleApplyAiTranscript} className="bg-emerald-700 hover:bg-emerald-800 text-white font-semibold">
+                          <Button size="xs" variant="obsidian" onClick={handleApplyAiTranscript} className="bg-[#0369A1] hover:bg-[#075985] text-white font-semibold">
                             Apply to Form <Sym n="check" />
                           </Button>
-                          <button onClick={() => setConsult(null)} aria-label="Dismiss draft" className="p-1 rounded text-emerald-700 hover:bg-emerald-100 cursor-pointer">
+                          <button onClick={() => setConsult(null)} aria-label="Dismiss draft" className="p-1 rounded text-sky-800 hover:bg-sky-100 cursor-pointer">
                             <X className="size-4" />
                           </button>
                         </div>
                       </div>
-                      <p className="text-xs text-emerald-800 italic">"{consult.transcript}"</p>
+                      <p className="text-xs text-sky-900">Transcript: "{consult.transcript}"</p>
                       {consult.audio_id && (
                         <audio controls preload="none" src={api.consultAudioUrl(patientToken, consult.audio_id)} className="w-full h-8" />
                       )}
@@ -503,7 +503,7 @@ export function ClinicianEncounter({
                       )}
                       {([
                         ["Consider", consult.draft.differentials, "text-gray-800"],
-                        ["Red flags", consult.draft.red_flags, "text-[#BA2D0B]"],
+                        ["Red flags", consult.draft.red_flags, "text-[#9D174D]"],
                         ["Suggested next steps", consult.draft.next_steps, "text-gray-800"],
                       ] as const).map(([title, items, color]) =>
                         items.length > 0 ? (
@@ -577,7 +577,7 @@ export function ClinicianEncounter({
                             },
                           ])
                         }
-                        className="text-xs text-[#BA2D0B]"
+                        className="text-xs text-[#9D174D]"
                       >
                         <Plus className="size-3 mr-1" /> Add Medication
                       </Button>
@@ -646,21 +646,21 @@ export function ClinicianEncounter({
 
                   <div className="space-y-3 pt-1 text-gray-700">
                     <label className="flex items-start gap-2.5 cursor-pointer">
-                      <input type="checkbox" defaultChecked className="mt-0.5 rounded size-4 text-[#BA2D0B]" />
+                      <input type="checkbox" defaultChecked className="mt-0.5 rounded size-4 text-[#9D174D]" />
                       <span>
                         I voluntarily authorize sharing my health records with the referring health post and the hospital for my cervical care.
                       </span>
                     </label>
 
                     <label className="flex items-start gap-2.5 cursor-pointer">
-                      <input type="checkbox" defaultChecked className="mt-0.5 rounded size-4 text-[#BA2D0B]" />
+                      <input type="checkbox" defaultChecked className="mt-0.5 rounded size-4 text-[#9D174D]" />
                       <span>
                         I consent to the pseudonymization and cryptographic tokenization ({patientToken}) of my records for epidemiological tracking under DPDP Act 2023.
                       </span>
                     </label>
 
                     <label className="flex items-start gap-2.5 cursor-pointer">
-                      <input type="checkbox" defaultChecked className="mt-0.5 rounded size-4 text-[#BA2D0B]" />
+                      <input type="checkbox" defaultChecked className="mt-0.5 rounded size-4 text-[#9D174D]" />
                       <span>
                         Vernacular Audio Consent captured in Hindi: <em>"हाँ, मुझे सर्वाइसेतु से सहायता संदेश चाहिए।"</em> (Recorded on Day 1 Onboarding).
                       </span>
@@ -685,7 +685,7 @@ export function ClinicianEncounter({
             RIGHT COLLAPSIBLE INSPECTOR RAIL (DETAILS & REPORTS)
             ======================================================== */}
         {isRightPanelOpen && (
-          <aside className="w-80 min-w-80 bg-white border-l border-gray-200 flex flex-col justify-between shrink-0 overflow-y-auto z-10 shadow-xs">
+          <aside className="w-full lg:w-80 lg:min-w-80 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col justify-between shrink-0 lg:overflow-y-auto z-10 shadow-xs">
             <div className="p-4 space-y-4">
               {/* Tab Switcher: Details vs Reports */}
               <div className="flex items-center border border-gray-200 rounded-lg p-0.5 bg-gray-50">

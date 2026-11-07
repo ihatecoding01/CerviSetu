@@ -23,9 +23,9 @@ const KIND_LABELS: Record<string, string> = {
 
 function dayTone(day: number, current: number) {
   if (day > current) return "bg-gray-100 text-gray-400";
-  if (day <= 10) return "bg-[#DBFE87] text-black";
-  if (day <= 13) return "bg-[#F19941] text-black";
-  return "bg-[#BA2D0B] text-white";
+  if (day <= 10) return "bg-[#E0F2FE] text-black";
+  if (day <= 13) return "bg-[#0284C7] text-black";
+  return "bg-[#9D174D] text-white";
 }
 
 export function EscalationHeatmap({ canReview = true }: Props) {
@@ -81,7 +81,7 @@ export function EscalationHeatmap({ canReview = true }: Props) {
         </div>
         <div className="flex items-center gap-2">
           <Badge variant={mode === "twilio" ? "success" : "warning"} size="sm">{mode === "twilio" ? "Live Messaging" : "Messages Simulated"}</Badge>
-          <Button size="sm" disabled={busy} onClick={() => run(async () => { const r = await referralApi.runCycle(); setNotice(`${r.reminders} reminders, ${r.visits_ordered} home visits`); }, "Today's follow-up has run.")} className="text-xs bg-[#BA2D0B] hover:bg-[#a02609] text-white gap-1.5">
+          <Button size="sm" disabled={busy} onClick={() => run(async () => { const r = await referralApi.runCycle(); setNotice(`${r.reminders} reminders, ${r.visits_ordered} home visits`); }, "Today's follow-up has run.")} className="text-xs bg-[#9D174D] hover:bg-[#a02609] text-white gap-1.5">
             <CalendarClock className="size-3.5" /> Run Today's Follow-up
           </Button>
         </div>
@@ -103,7 +103,7 @@ export function EscalationHeatmap({ canReview = true }: Props) {
             <Card key={s.title} size="sm" className="bg-white border-gray-200 shadow-2xs hover:border-black transition-all">
               <CardHeader className="pb-1.5">
                 <div className="flex items-center justify-between">
-                  <div className="size-7 rounded-lg flex items-center justify-center bg-[#DBFE87]/40 text-black"><Icon className="size-3.5" /></div>
+                  <div className="size-7 rounded-lg flex items-center justify-center bg-[#E0F2FE]/40 text-black"><Icon className="size-3.5" /></div>
                   <Badge variant={s.variant} size="xs">{s.days}</Badge>
                 </div>
                 <CardTitle className="text-sm font-bold text-black mt-1.5">{s.title}</CardTitle>
@@ -129,7 +129,7 @@ export function EscalationHeatmap({ canReview = true }: Props) {
             <div className="overflow-x-auto">
               <div className="flex flex-col gap-2 min-w-[640px]">
                 {following.map((r) => (
-                  <button key={r.referral_id} onClick={() => setSelected(r.referral_id)} className={`flex items-center gap-3 p-2 rounded-lg border text-left cursor-pointer ${selected === r.referral_id ? "border-[#BA2D0B] bg-[#BA2D0B]/5" : "border-gray-200 hover:border-black"}`}>
+                  <button key={r.referral_id} onClick={() => setSelected(r.referral_id)} className={`flex items-center gap-3 p-2 rounded-lg border text-left cursor-pointer ${selected === r.referral_id ? "border-[#9D174D] bg-[#9D174D]/5" : "border-gray-200 hover:border-black"}`}>
                     <span className="w-44 shrink-0">
                       <span className="block text-xs font-bold text-black">{r.patient_name}</span>
                       <span className="block text-[11px] text-gray-500">{r.hospital}</span>

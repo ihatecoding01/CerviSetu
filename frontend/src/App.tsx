@@ -3,7 +3,6 @@ import { api, type PatientCase, type AuditLog } from "./api/client";
 import {
   DashboardLayout,
   type Tab,
-  OverviewPanel,
   ReferralIntake,
   AshaHome,
   HospitalDesk,
@@ -23,9 +22,10 @@ import {
   StaffSignIn,
 } from "./components";
 import { useRouter } from "./lib/router";
+import { CasesList, DoctorDashboard, NurseQueue } from "./components/clinical/Worklists";
 import { staffApi, type StaffProfile } from "./api/staff";
 
-const NURSE_TABS: Tab[] = ["overview-tab", "prevention-tab", "intake-tab", "tracker-tab"];
+const NURSE_TABS: Tab[] = ["overview-tab", "cases-tab", "prevention-tab", "intake-tab", "tracker-tab"];
 
 function RedirectTab({ onGo }: { onGo: () => void }) {
   useEffect(onGo, []);
@@ -38,7 +38,7 @@ export default function App() {
   const [cases, setCases] = useState<PatientCase[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
 
   const fetchCases = async () => {
     setLoading(true);
@@ -206,17 +206,18 @@ export default function App() {
         navigate({ view: "staff", tab: "encounter-tab" });
       }}
     >
-      {currentTab === "overview-tab" && (
-        <OverviewPanel
-          cases={cases}
-          loading={loading}
-          error={error}
-          onRefresh={fetchCases}
-          onSelectCase={(token) => {
+      {currentTab === "overview-tab" && (staff.role === "NURSE"
+        ? <NurseQueue staff={staff} onGo={(t) => navigate({ view: "staff", tab: t as Tab })} />
+        : <DoctorDashboard staff={staff} onGo={(t) => navigate({ view: "staff", tab: t as Tab })} onOpenCase={(token) => {
             setSelectedPatientToken(token);
             navigate({ view: "staff", tab: "encounter-tab" });
-          }}
-        />
+          }} />)}
+
+      {currentTab === "cases-tab" && (
+        <CasesList staff={staff} onOpenCase={staff.role === "DOCTOR" ? (token) => {
+          setSelectedPatientToken(token);
+          navigate({ view: "staff", tab: "encounter-tab" });
+        } : undefined} />
       )}
 
       {currentTab === "prevention-tab" && <PreventionScreening />}
@@ -232,9 +233,7 @@ export default function App() {
       )}
 
       {currentTab === "patient-tab" && (
-        <div className="w-full max-w-6xl mx-auto py-2">
-          <PatientCompanion patientToken={selectedPatientToken} />
-        </div>
+        <PatientCompanion patientToken={selectedPatientToken} />
       )}
 
       {currentTab === "intake-tab" && (

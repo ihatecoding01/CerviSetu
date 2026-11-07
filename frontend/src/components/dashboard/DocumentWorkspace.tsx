@@ -103,11 +103,11 @@ export function DocumentWorkspace({ onUseInIntake }: Props) {
         </label>
       </div>
 
-      {error && <p role="alert" className="text-xs text-[#BA2D0B]">{error}</p>}
+      {error && <p role="alert" className="text-xs text-[#9D174D]">{error}</p>}
       {doc?.status === "QUALITY_REJECTED" && (
-        <p role="alert" className="text-xs text-[#BA2D0B]">{doc.quality?.reasons.join(" ") || "This photo cannot be read. Please retake it."}</p>
+        <p role="alert" className="text-xs text-[#9D174D]">{doc.quality?.reasons.join(" ") || "This photo cannot be read. Please retake it."}</p>
       )}
-      {doc && STATUS_MESSAGE[doc.status] && <p role="alert" className="text-xs text-[#BA2D0B]">{STATUS_MESSAGE[doc.status]}</p>}
+      {doc && STATUS_MESSAGE[doc.status] && <p role="alert" className="text-xs text-[#9D174D]">{STATUS_MESSAGE[doc.status]}</p>}
       {doc?.quality?.warnings.map((w) => <p key={w} className="text-xs text-amber-700">{w}</p>)}
 
       {doc?.status === "COMPLETED" && (
@@ -126,7 +126,7 @@ export function DocumentWorkspace({ onUseInIntake }: Props) {
                     onClick={() => setActive(b.id)}
                     style={{ left: `${b.bbox[0] * 100}%`, top: `${b.bbox[1] * 100}%`, width: `${(b.bbox[2] - b.bbox[0]) * 100}%`, height: `${(b.bbox[3] - b.bbox[1]) * 100}%` }}
                     className={`absolute border cursor-pointer transition-colors ${
-                      active === b.id ? "bg-amber-300/50 border-amber-600" : flagged.has(b.id) ? "bg-red-200/30 border-red-500" : "border-[#0F766E]/40 hover:bg-[#0F766E]/10"
+                      active === b.id ? "bg-amber-300/50 border-amber-600" : flagged.has(b.id) ? "bg-red-200/30 border-red-500" : "border-[#0369A1]/40 hover:bg-[#0369A1]/10"
                     }`}
                   />
                 ))}
@@ -154,7 +154,7 @@ export function DocumentWorkspace({ onUseInIntake }: Props) {
                       className={`text-left p-2 rounded-lg border cursor-pointer ${l.abnormal ? "border-red-300 bg-red-50" : "border-gray-200"}`}
                     >
                       <span className="flex items-center gap-1.5 text-xs font-semibold text-gray-900">
-                        {l.abnormal ? <AlertTriangle className="size-3.5 text-[#BA2D0B]" /> : <CheckCircle2 className="size-3.5 text-[#0F766E]" />}
+                        {l.abnormal ? <AlertTriangle className="size-3.5 text-[#9D174D]" /> : <CheckCircle2 className="size-3.5 text-[#0369A1]" />}
                         {l.name}: {l.value} {l.unit}
                       </span>
                       <span className="block text-[11px] text-gray-600 mt-0.5">{l.note}</span>
@@ -172,7 +172,7 @@ export function DocumentWorkspace({ onUseInIntake }: Props) {
                   <div key={f.key} onClick={() => f.block_id && setActive(f.block_id)} className={`p-1.5 ${rowClass(f.block_id)}`}>
                     <label className="text-[11px] font-semibold text-gray-600 flex items-center gap-1.5">
                       {f.label}
-                      {!f.found_in_document && <span className="text-[#BA2D0B]">Not matched to the document, please check</span>}
+                      {!f.found_in_document && <span className="text-[#9D174D]">Not matched to the document, please check</span>}
                     </label>
                     <input
                       value={values[f.key] ?? ""}
@@ -187,7 +187,7 @@ export function DocumentWorkspace({ onUseInIntake }: Props) {
                 type="button"
                 onClick={useInIntake}
                 data-testid="document-use"
-                className="mt-2 w-full py-2 rounded-full bg-[#0F766E] text-white text-xs font-semibold cursor-pointer hover:bg-[#0d635c]"
+                className="mt-2 w-full py-2 rounded-full bg-[#0369A1] text-white text-xs font-semibold cursor-pointer hover:bg-[#0d635c]"
               >
                 {used ? <>Added to intake notes <Sym n="check" /></> : "Use in intake notes"}
               </button>

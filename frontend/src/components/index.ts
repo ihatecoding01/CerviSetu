@@ -12,7 +12,6 @@ export * from "./auth/OtpBoxes";
 // 2. Patient & Care Companion
 export * from "./patient/PatientPortal";
 export * from "./patient/PatientCompanion";
-export * from "./patient/PatientGenie";
 export * from "./patient/ReferralJourney";
 export * from "./patient/PatientSessionRedirect";
 
@@ -37,10 +36,8 @@ export * from "./admin/AuditLedger";
 
 // 6. Dashboard, Analytics & Intelligence
 export * from "./dashboard/DashboardLayout";
-export * from "./dashboard/OverviewPanel";
 export * from "./dashboard/EscalationHeatmap";
 export * from "./dashboard/DocumentWorkspace";
-export * from "./dashboard/GeniePanel";
 export * from "./dashboard/MessageCenter";
 
 // 7. Landing & 3D Interactive Hero

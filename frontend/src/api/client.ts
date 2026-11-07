@@ -1262,10 +1262,6 @@ export const api = {
     return request("/api/genie/ask", { method: "POST", body: JSON.stringify(body) });
   },
 
-  async askPatientGenie(body: { token: string; question: string; language?: string; history?: { role: string; text: string }[] }): Promise<{ source: string; is_diagnostic_refusal: boolean; answer: string; suggestions?: string[] }> {
-    return request("/api/genie/patient-ask", { method: "POST", body: JSON.stringify(body) });
-  },
-
   async genieTranscribe(audio: Blob): Promise<{ text: string }> {
     const form = new FormData();
     form.append("audio", audio, "genie.wav");

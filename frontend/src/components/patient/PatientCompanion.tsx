@@ -70,12 +70,12 @@ export const PatientCompanion: React.FC<Props> = ({ patientToken, onExitToGatewa
     <>
       <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-start gap-4">
-          <div className="size-12 rounded-2xl bg-[#BA2D0B]/10 flex items-center justify-center shrink-0"><Heart className="size-6 text-[#BA2D0B]" /></div>
+          <div className="size-12 rounded-2xl bg-[#9D174D]/10 flex items-center justify-center shrink-0"><Heart className="size-6 text-[#9D174D]" /></div>
           <div>
             <p className="text-lg font-bold text-black">Namaste, {referral.patient_name}</p>
             <p className="text-xs font-mono text-slate-600 mt-1">{referral.patient_token}</p>
             <p className="text-xs text-slate-600 mt-1 flex items-center gap-1.5"><MapPin className="size-3.5 text-slate-400" />{referral.health_post}</p>
-            {referral.fictional && <p className="text-xs font-semibold text-[#BA2D0B] mt-1">Fictional patient record</p>}
+            {referral.fictional && <p className="text-xs font-semibold text-[#9D174D] mt-1">Fictional patient record</p>}
           </div>
         </div>
         <LanguageSwitch />
@@ -92,7 +92,7 @@ export const PatientCompanion: React.FC<Props> = ({ patientToken, onExitToGatewa
           <p className="text-xs text-slate-600 mb-4">The same three choices are in your reminder call.</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             {[["VISITED", "I Have Visited"], ["NEEDS_HELP", "I Need Help"], ["NURSE_CALL_BACK", "Call Me Back"]].map(([id, label]) => (
-              <button key={id} onClick={() => reply(id, label)} className="min-h-12 px-4 rounded-xl border-2 border-[#BA2D0B] text-sm font-semibold text-black hover:bg-[#BA2D0B]/5 cursor-pointer">{label}</button>
+              <button key={id} onClick={() => reply(id, label)} className="min-h-12 px-4 rounded-xl border-2 border-[#9D174D] text-sm font-semibold text-black hover:bg-[#9D174D]/5 cursor-pointer">{label}</button>
             ))}
           </div>
           {notice && <p role="status" className="text-xs font-medium text-emerald-800 mt-3">{notice}</p>}

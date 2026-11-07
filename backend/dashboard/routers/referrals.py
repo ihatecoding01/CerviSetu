@@ -26,6 +26,29 @@ class ReferralIn(BaseModel):
     form: Dict[str, str] = Field(default_factory=dict)
 
 
+class AshaRegisterIn(BaseModel):
+    request_id: str = Field("", max_length=64)
+    patient_name: str = Field(..., min_length=2, max_length=120)
+    age: Optional[int] = Field(None, ge=9, le=110)
+    phone: str = Field("", pattern=r"^$|^(\+91[ -]?)?[6-9][0-9]{9}$")
+    preferred_language: str = Field("", max_length=20)
+    area: str = Field(..., min_length=2, max_length=80)
+    screening_date: str = Field(..., pattern=r"^\d{4}-\d{2}-\d{2}$")
+    screening_method: str
+    screening_result: str
+    refer: bool
+    referral_date: str = Field("", pattern=r"^$|^\d{4}-\d{2}-\d{2}$")
+    notes: str = Field("", max_length=400)
+    consent_contact: str
+    consent_followup: str
+
+
+class DuplicateIn(BaseModel):
+    name: str = Field("", max_length=120)
+    phone: str = Field("", max_length=20)
+    query: str = Field("", max_length=120)
+
+
 class StatusIn(BaseModel):
     status: str
 
@@ -105,6 +128,25 @@ async def create(req: ReferralIn, request: Request):
     return _out(request, _run(rp.create, req.model_dump(), _actor(request)))
 
 
+def _asha(request: Request) -> Dict[str, Any]:
+    staff = _staff(request)
+    if not staff or staff["role"] != "ASHA" or not staff.get("health_post"):
+        raise HTTPException(status_code=403, detail="Only an ASHA worker with a health post can do this.")
+    return staff
+
+
+@router.post("/register", status_code=201)
+async def register(req: AshaRegisterIn, request: Request):
+    """ASHA registers a woman screened at her own health post. The health post and ASHA come from her session."""
+    staff = _asha(request)
+    return _out(request, _run(rp.register_by_asha, req.model_dump(), staff))
+
+
+@router.post("/duplicates")
+async def duplicates(req: DuplicateIn, request: Request):
+    return {"matches": rp.find_duplicates(_asha(request), req.name, req.phone, req.query)}
+
+
 @router.post("/run-cycle")
 async def run_cycle():
     return rp.run_cycle()
@@ -175,18 +217,29 @@ async def assign(referral_id: str, request: Request):
 @router.get("/{referral_id}/files")
 async def files(referral_id: str, request: Request):
     _own(request, referral_id)
-    return {"files": rp.list_files(referral_id)}
+    files = rp.list_files(referral_id)
+    if (_staff(request) or {}).get("role") == "ASHA":  # never clinical reports
+        files = [f for f in files if f.get("kind") in rp.ASHA_UPLOAD_KINDS]
+    return {"files": files}
 
 
 @router.post("/{referral_id}/files", status_code=201)
 async def upload(referral_id: str, request: Request, kind: str = Form(...), photo_consent: bool = Form(False), file: UploadFile = File(...)):
     _own(request, referral_id)
+    staff = _staff(request) or {}
+    if staff.get("role") == "ASHA":
+        if kind not in rp.ASHA_UPLOAD_KINDS:
+            raise HTTPException(status_code=403, detail="ASHA workers can attach screening reports and referral slips only.")
+        if not photo_consent:
+            raise HTTPException(status_code=422, detail="Record her consent before attaching her documents.")
     data = await file.read(rp.MAX_UPLOAD_BYTES + 1)
     return _run(rp.add_file, referral_id, kind, file.filename or "file", data, photo_consent, _actor(request))
 
 
 @router.get("/{referral_id}/files/{file_id}")
 async def download(referral_id: str, file_id: str, request: Request, inline: bool = False):
+    if (_staff(request) or {}).get("role") == "ASHA" and not any(f.get("file_id") == file_id and f.get("kind") in rp.ASHA_UPLOAD_KINDS for f in rp.list_files(referral_id)):
+        raise HTTPException(status_code=403, detail="This file is for the clinical team only.")
     _own(request, referral_id)
     data, content_type, name = _run(rp.read_file, referral_id, file_id)
     return Response(data, media_type=content_type, headers={

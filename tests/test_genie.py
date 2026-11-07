@@ -7,7 +7,7 @@ from backend.dashboard.routers import genie
 
 
 def test_genie_is_staff_only():
-    assert set(required_roles("POST", "/api/genie/ask")) == {"DOCTOR", "NURSE", "ASHA"}
+    assert set(required_roles("POST", "/api/genie/ask")) == {"DOCTOR", "NURSE", "ASHA", "HOSPITAL", "ADMIN"}
 
 
 def test_fallback_answers_from_live_data(monkeypatch):

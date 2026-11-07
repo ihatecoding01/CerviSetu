@@ -1,68 +1,222 @@
-import { useCallback, useEffect, useState } from "react";
-import { Phone } from "lucide-react";
-import { referralApi, type Referral } from "../../api/referrals";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ArrowLeft, CheckCircle2, ClipboardList, Home, Phone, UserPlus } from "lucide-react";
+import { RegisterPatient } from "./RegisterPatient";
+import { referralApi, type Referral, type ReferralEvent } from "../../api/referrals";
 import type { StaffProfile } from "../../api/staff";
-import { FieldShell } from "./FieldShell";
+import { AppShell } from "../app/AppShell";
+import { staffGenie } from "../app/genieConfigs";
+import { Empty, FollowUpPill, Notice, Pill, laneTone, when } from "../app/Status";
+import { btn, ui } from "../app/ui";
 
-const btn = "h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold cursor-pointer disabled:opacity-50";
+const CONTACT: [string, string][] = [["REACHED", "Spoke to her"], ["NO_ANSWER", "No answer"], ["WRONG_NUMBER", "Wrong number"]];
+const VISIT: [string, string][] = [["MET_PATIENT", "Met her"], ["NOT_AT_HOME", "Not at home"], ["UNREACHABLE", "Could not find the house"]];
+const EVENT_TEXT: Record<string, string> = {
+  REGISTERED_BY_ASHA: "Registered by you", CONTACT_REACHED: "Call: spoke to her", CONTACT_NO_ANSWER: "Call: no answer", CONTACT_WRONG_NUMBER: "Call: wrong number",
+  VISIT_MET_PATIENT: "Visit: met her", VISIT_NOT_AT_HOME: "Visit: not at home", VISIT_UNREACHABLE: "Visit: house not found",
+  CONSENT_POSITIVE: "She agreed to go", CONSENT_NEGATIVE: "She does not want to go",
+};
 
-function Card({ r, onDone }: { r: Referral; onDone: () => Promise<void> }) {
+/** What the ASHA should do next for this woman, from server fields only. */
+function nextAction(r: Referral): string {
+  if (!r.following) return r.status === "DECLINED" ? "Closed. A doctor reviews her decision." : "Closed. She reached the hospital.";
+  if (r.consent === "POSITIVE") return "She agreed to go. Remind her until the hospital confirms she arrived.";
+  if (r.lane === "visit_due") return "Home visit due. Visit her and record what happened.";
+  if (r.lane === "attention") return "Call her today. Visit if you cannot reach her.";
+  return "Reminders are going out. Call her if she has not replied.";
+}
+
+function Followup({ r, onSaved, onBack }: { r: Referral; onSaved: (next: Referral) => void; onBack: () => void }) {
+  const [events, setEvents] = useState<ReferralEvent[] | null>(null);
   const [note, setNote] = useState("");
   const [met, setMet] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const act = async (fn: () => Promise<unknown>) => {
-    setBusy(true);
-    setError(null);
-    try { await fn(); setNote(""); setMet(false); await onDone(); }
-    catch (e) { setError(e instanceof Error ? e.message : "This could not be saved."); }
-    finally { setBusy(false); }
-  };
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const id = r.referral_id;
+  const load = useCallback(() => referralApi.events(id).then((e) => setEvents(e.events.filter((x) => x.kind in EVENT_TEXT))).catch(() => setEvents([])), [id]);
+  useEffect(() => { void load(); setMet(false); setNote(""); setMsg(null); }, [load]);
+
+  const save = async (fn: () => Promise<Referral>, done: string) => {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const next = await fn();
+      setMsg({ ok: true, text: done });
+      setNote("");
+      setMet(false);
+      onSaved(next);
+      await load();
+    } catch (e) {
+      setMsg({ ok: false, text: e instanceof Error ? e.message : "This could not be saved. Please try again." });
+    } finally {
+      setBusy(false);
+    }
+  };
+  const last = events?.[events.length - 1];
+  const open = r.following;
+
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-4 flex flex-col gap-3" data-testid="asha-card">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0"><h2 className="font-bold">{r.patient_name}</h2><p className="text-sm text-slate-600">{r.area} · Day {r.follow_up_day}</p><p className="text-sm text-slate-600">Hospital: {r.hospital}</p></div>
-        {r.contact_phone && <a href={`tel:${r.contact_phone}`} className="h-11 rounded-lg border border-slate-200 px-3 inline-flex items-center gap-1.5 text-sm font-semibold shrink-0"><Phone className="size-4" />Call</a>}
+    <div className="flex flex-col gap-4" data-testid="asha-detail">
+      <button type="button" onClick={onBack} className={`${ui.link} lg:hidden self-start inline-flex items-center gap-1`}><ArrowLeft className="size-4" />All follow-ups</button>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className={ui.h2}>{r.patient_name}{r.age ? `, ${r.age}` : ""}</h2>
+          <p className="text-sm text-slate-600">{r.area} · Referred to {r.hospital}</p>
+        </div>
+        <FollowUpPill r={r} />
       </div>
-      {!r.following ? <p className="text-sm text-slate-600">Follow-up closed.</p> : (
-        <>
-          <input className="h-11 w-full min-w-0 rounded-lg border border-slate-200 px-3 text-sm" placeholder="Note" value={note} onChange={(e) => setNote(e.target.value)} />
-          <div className="grid grid-cols-2 gap-2">
-            <button disabled={busy} className={btn} onClick={() => act(() => referralApi.contact(id, "NO_ANSWER", note))}>Call: no answer</button>
-            <button disabled={busy} className={btn} onClick={() => act(() => referralApi.contact(id, "REACHED", note))}>Call: spoke to her</button>
-            <button disabled={busy} className={btn} onClick={() => act(() => referralApi.visit(id, "NOT_AT_HOME", null, note))}>Visit: not at home</button>
-            <button disabled={busy} className={btn} onClick={() => act(() => referralApi.visit(id, "UNREACHABLE", null, note))}>Visit: unreachable</button>
-            <button disabled={busy} className={`${btn} col-span-2`} onClick={() => setMet(!met)} data-testid="asha-met">Visit: met her</button>
-          </div>
-          {met && (
-            <div className="grid grid-cols-2 gap-2">
-              <button disabled={busy} className={`${btn} border-emerald-300`} onClick={() => act(() => referralApi.visit(id, "MET_PATIENT", "POSITIVE", note))} data-testid="asha-agree">She will go</button>
-              <button disabled={busy} className={`${btn} border-rose-300`} onClick={() => act(() => referralApi.visit(id, "MET_PATIENT", "NEGATIVE", note))} data-testid="asha-refuse">She refuses</button>
+      <Notice tone={laneTone(r) === "critical" ? "attention" : "guidance"}>{nextAction(r)}</Notice>
+      {r.urgent && <Notice tone="critical">Marked urgent by the health post. Please contact her today.</Notice>}
+
+      {open && (
+        <ol className="flex flex-col gap-3">
+          <li className={`${ui.panel} p-4 flex flex-col gap-3`}>
+            <div className="flex items-center justify-between gap-2">
+              <h3 className={ui.h3}>1. Call her</h3>
+              {r.contact_phone && <a href={`tel:${r.contact_phone}`} className={btn("secondary", "!min-h-10")}><Phone className="size-4" />Call</a>}
             </div>
-          )}
-        </>
+            <p className="text-xs text-slate-500">After the call, choose what happened.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {CONTACT.map(([v, label]) => (
+                <button key={v} type="button" disabled={busy} onClick={() => save(() => referralApi.contact(id, v, note), `Call recorded: ${label.toLowerCase()}.`)} className={btn("secondary")} data-testid={`asha-call-${v}`}>{label}</button>
+              ))}
+            </div>
+          </li>
+          <li className={`${ui.panel} p-4 flex flex-col gap-3`}>
+            <h3 className={ui.h3}>2. Home visit</h3>
+            <p className="text-xs text-slate-500">If you cannot meet her, a doctor is asked to review her follow-up.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {VISIT.map(([v, label]) => v === "MET_PATIENT" ? (
+                <button key={v} type="button" disabled={busy} onClick={() => setMet(true)} aria-pressed={met} className={btn(met ? "primary" : "secondary")} data-testid="asha-met">{label}</button>
+              ) : (
+                <button key={v} type="button" disabled={busy} onClick={() => save(() => referralApi.visit(id, v, null, note), `Visit recorded: ${label.toLowerCase()}. A doctor will review.`)} className={btn("secondary")} data-testid={`asha-visit-${v}`}>{label}</button>
+              ))}
+            </div>
+            {met && (
+              <div className="rounded-md bg-slate-50 p-3 flex flex-col gap-2">
+                <p className="text-sm font-semibold">3. What did she decide?</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button type="button" disabled={busy} onClick={() => save(() => referralApi.visit(id, "MET_PATIENT", "POSITIVE", note), "Recorded: she will go to the hospital.")} className={btn("secondary", "border-emerald-300")} data-testid="asha-agree">She will go</button>
+                  <button type="button" disabled={busy} onClick={() => save(() => referralApi.visit(id, "MET_PATIENT", "NEGATIVE", note), "Recorded: she does not want to go. A doctor will review.")} className={btn("secondary", "border-rose-300")} data-testid="asha-refuse">She does not want to go</button>
+                </div>
+              </div>
+            )}
+          </li>
+          <li>
+            <label className="flex flex-col gap-1.5">
+              <span className={ui.label}>Note (optional, saved with your next entry)</span>
+              <input className={ui.input} value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} placeholder="For example: will go on Monday with her husband" data-testid="asha-note" />
+            </label>
+          </li>
+        </ol>
       )}
-      {r.visit_outcome && <p className="text-xs text-slate-500">Last visit recorded.</p>}
-      {error && <p className="text-sm text-rose-800" role="alert">{error}</p>}
-    </article>
+      {msg && <Notice tone={msg.ok ? "routine" : "critical"} role={msg.ok ? "status" : "alert"}>{msg.text}</Notice>}
+
+      <section className="flex flex-col gap-2">
+        <h3 className={ui.h3}>Contact history</h3>
+        {events === null ? <p className={ui.muted}>Loading...</p> : events.length === 0 ? <p className={ui.muted}>No calls or visits recorded yet.</p> : (
+          <ol className={`${ui.panel} divide-y divide-black/[0.06]`}>
+            {[...events].reverse().map((e) => (
+              <li key={e.event_id} className="px-3 py-2.5 text-sm flex flex-wrap justify-between gap-x-3">
+                <span className="font-medium">{EVENT_TEXT[e.kind]}{e.detail ? <span className="font-normal text-slate-600"> · {e.detail}</span> : null}</span>
+                <span className="text-xs text-slate-500">{when(e.event_date)} · day {e.follow_up_day}</span>
+              </li>
+            ))}
+          </ol>
+        )}
+        {last && <p className="text-xs text-slate-500">Last entry: {EVENT_TEXT[last.kind]}.</p>}
+      </section>
+    </div>
+  );
+}
+
+function Row({ r, active, onOpen }: { r: Referral; active: boolean; onOpen: () => void }) {
+  return (
+    <li>
+      <button type="button" onClick={onOpen} aria-current={active ? "true" : undefined} data-testid="asha-card"
+        className={`w-full text-left px-4 py-3 flex items-center justify-between gap-3 cursor-pointer ${active ? "bg-sky-50" : "hover:bg-slate-50"}`}>
+        <span className="min-w-0">
+          <span className="block font-semibold truncate">{r.patient_name}</span>
+          <span className="block text-xs text-slate-600 truncate">{r.area}{r.visit_outcome ? " · visit recorded" : ""}</span>
+        </span>
+        <span className="flex flex-col items-end gap-1 shrink-0">
+          {r.following ? <Pill tone={laneTone(r)}>{`Day ${r.follow_up_day}`}</Pill> : <Pill tone="neutral">Closed</Pill>}
+          {r.urgent && <span className="text-[11px] font-semibold text-rose-800">Urgent</span>}
+        </span>
+      </button>
+    </li>
   );
 }
 
 /** Only referrals assigned to this ASHA. No findings, reports or treatment here, by server rule too. */
 export function AshaHome({ staff, onSignOut }: { staff: StaffProfile; onSignOut: () => void }) {
+  const [view, setView] = useState<"today" | "closed">("today");
   const [rows, setRows] = useState<Referral[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const load = useCallback(async () => { try { setRows((await referralApi.board()).referrals); } catch (e) { setError(e instanceof Error ? e.message : "Could not load."); } }, []);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [registering, setRegistering] = useState(false);
+  const [routes, setRoutes] = useState<Record<string, string>>({});
+  const load = useCallback(async () => {
+    try { const b = await referralApi.board(); setRows(b.referrals); setRoutes(b.routes ?? {}); setError(null); }
+    catch (e) { setError(e instanceof Error ? e.message : "Could not load your follow-ups."); }
+  }, []);
   useEffect(() => { void load(); }, [load]);
+
+  const groups = useMemo(() => {
+    const all = rows ?? [];
+    const following = all.filter((r) => r.following);
+    return {
+      visit: following.filter((r) => r.lane === "visit_due"),
+      call: following.filter((r) => r.lane === "attention"),
+      watch: following.filter((r) => r.lane === "on_track"),
+      closed: all.filter((r) => !r.following),
+    };
+  }, [rows]);
+  const selected = rows?.find((r) => r.referral_id === openId) ?? null;
+  const open = (r: Referral) => { setRegistering(false); setOpenId(r.referral_id); };
+  const side = registering || !!selected;
+
+  const list = (title: string, hint: string, items: Referral[]) => items.length > 0 && (
+    <section className="flex flex-col gap-1.5">
+      <div className="flex items-baseline justify-between px-1"><h2 className={ui.h3}>{title} <span className="text-slate-500 font-normal">({items.length})</span></h2><span className="text-xs text-slate-500">{hint}</span></div>
+      <ul className={`${ui.panel} divide-y divide-black/[0.06] overflow-hidden`}>{items.map((r) => <Row key={r.referral_id} r={r} active={r.referral_id === openId} onOpen={() => open(r)} />)}</ul>
+    </section>
+  );
+
   return (
-    <FieldShell staff={staff} onSignOut={onSignOut} title="My Home Visits">
-      <div data-testid="asha-home" className="flex flex-col gap-3">
-        {error && <p className="text-sm text-rose-800" role="alert">{error}</p>}
-        {rows === null && !error && <p className="text-sm text-slate-500">Loading...</p>}
-        {rows?.length === 0 && <p className="rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-600">No referrals are assigned to you right now.</p>}
-        {rows?.map((r) => <Card key={r.referral_id} r={r} onDone={load} />)}
+    <AppShell staff={staff} portal="ASHA worker" title={view === "today" ? "My follow-ups" : "Closed referrals"} active={view}
+      nav={[{ id: "today", label: "My follow-ups", icon: ClipboardList, count: (rows ?? []).filter((r) => r.following).length }, { id: "closed", label: "Closed", icon: CheckCircle2 }]}
+      onNavigate={(id) => { setView(id as "today" | "closed"); setOpenId(null); setRegistering(false); }} onSignOut={onSignOut}
+      genie={staffGenie("ASHA")}>
+      <div data-testid="asha-home" className="grid grid-cols-1 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)] gap-6 items-start">
+        <div className={`flex flex-col gap-5 ${side ? "max-lg:hidden" : ""}`}>
+          <header className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <h1 className={ui.h1}>{view === "today" ? "Who needs you today" : "Closed referrals"}</h1>
+              {view === "today" && <button type="button" className={btn("primary", "!min-h-10")} onClick={() => { setOpenId(null); setRegistering(true); }} data-testid="register-patient-open"><UserPlus className="size-4" aria-hidden="true" />Register patient</button>}
+            </div>
+            <p className={`${ui.muted} mt-1`}>{view === "today" ? "Women referred from your health post who have not yet reached the hospital." : "She reached the hospital, or a doctor is reviewing her decision."}</p>
+          </header>
+          {error && <Notice tone="critical" role="alert">{error}</Notice>}
+          {rows === null && !error && <p className={ui.muted} role="status">Loading...</p>}
+          {rows && view === "today" && (groups.visit.length + groups.call.length + groups.watch.length === 0
+            ? <Empty title="No follow-ups assigned to you right now.">New referrals appear here when your health post assigns them.</Empty>
+            : <>
+                {list("Home visit due", "Day 14 or later", groups.visit)}
+                {list("Call today", "Days 11 to 13", groups.call)}
+                {list("Reminders running", "Days 1 to 10", groups.watch)}
+              </>)}
+          {rows && view === "closed" && (groups.closed.length === 0 ? <Empty title="Nothing closed yet." /> : list("Closed", "", groups.closed))}
+        </div>
+        <div className={side ? "" : "max-lg:hidden"}>
+          {registering
+            ? <RegisterPatient staff={staff} centre={staff.health_post ? routes[staff.health_post] ?? null : null} onCancel={() => setRegistering(false)}
+                onOpen={(id) => { setRegistering(false); setOpenId(id); }}
+                onDone={(r) => { setRegistering(false); void load().then(() => setOpenId(r.referral_id)); }} />
+            : selected
+            ? <div className="lg:sticky lg:top-0"><Followup key={selected.referral_id} r={selected} onBack={() => setOpenId(null)} onSaved={(next) => setRows((rs) => rs?.map((x) => x.referral_id === next.referral_id ? { ...x, ...next } : x) ?? rs)} /></div>
+            : <div className="hidden lg:flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-black/15 py-16 text-center"><Home className="size-6 text-slate-400" /><p className={ui.muted}>Choose a woman from the list to record a call or visit.</p></div>}
+        </div>
       </div>
-    </FieldShell>
+    </AppShell>
   );
 }

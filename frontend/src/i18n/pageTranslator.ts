@@ -8,6 +8,38 @@ const ATTRS = ["placeholder", "title", "aria-label", "alt"] as const;
 const SKIP = new Set(["SCRIPT", "STYLE", "NOSCRIPT", "TEXTAREA", "CODE", "PRE", "SVG"]);
 
 let dict: Record<string, string> = {};
+// Text the dictionaries cannot know in advance (names, hospitals, sentences built around them) is translated
+// by the server once and cached here and in this browser.
+let lang: SiteLang = "en";
+let runtime: Record<string, string> = {};
+const pending = new Set<string>();
+let flushTimer: ReturnType<typeof setTimeout> | undefined;
+let switchSeq = 0;
+const RT_KEY = (l: string) => `cervisetu_rt_${l}`;
+const worthAsking = (s: string) => s.length <= 400 && /[A-Za-z]{2}/.test(s) && !/^[\s\d\W]*$/.test(s) && !/^[A-Z]{1,6}[-_]?[A-Z0-9-]*$/.test(s);
+
+function queue(key: string) {
+  if (lang === "en" || !worthAsking(key) || pending.has(key)) return;
+  pending.add(key);
+  clearTimeout(flushTimer);
+  flushTimer = setTimeout(flush, 250);
+}
+
+async function flush() {
+  const forLang = lang;
+  const texts = [...pending].slice(0, 60);
+  texts.forEach((t) => pending.delete(t));
+  if (!texts.length) return;
+  try {
+    const res = await fetch("/api/i18n/translate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ lang: forLang, texts }) });
+    const data = res.ok ? await res.json() : { translations: {} };
+    if (forLang !== lang) return;
+    Object.assign(runtime, data.translations ?? {});
+    try { localStorage.setItem(RT_KEY(forLang), JSON.stringify(runtime)); } catch { /* cache is a convenience */ }
+    apply();
+  } catch { /* stays in English until the next change */ }
+  if (pending.size) flushTimer = setTimeout(flush, 250);
+}
 let patterns: { re: RegExp; names: string[]; out: string }[] = [];
 const textSource = new WeakMap<Text, string>();
 const textWritten = new WeakMap<Text, string>();
@@ -36,7 +68,7 @@ function buildPatterns() {
 function lookup(source: string): string | null {
   const key = norm(source);
   if (!key) return null;
-  const hit = dict[key];
+  const hit = dict[key] ?? runtime[key];
   if (hit) return hit;
   // "Label:" and "Label" share one entry
   if (key.endsWith(":") && dict[key.slice(0, -1).trim()]) return dict[key.slice(0, -1).trim()] + ":";
@@ -75,7 +107,7 @@ function translated(source: string): string {
 
 function translatedWords(source: string): string {
   const tr = lookup(source);
-  if (tr === null) return source;
+  if (tr === null) { if (lang !== "en" && norm(source)) queue(norm(source)); return source; }
   const lead = source.match(/^\s*/)![0];
   const trail = source.match(/\s*$/)![0];
   return lead + tr + trail;
@@ -89,14 +121,36 @@ function skipped(el: Element | null): boolean {
   return false;
 }
 
-function doText(node: Text) {
-  if (skipped(node.parentElement)) return;
+function sourceOf(node: Text): string {
   const written = textWritten.get(node);
   if (written === undefined || node.data !== written) textSource.set(node, node.data); // new source from React
-  const source = textSource.get(node)!;
-  const next = translated(source);
+  return textSource.get(node)!;
+}
+
+function write(node: Text, next: string) {
   if (node.data !== next) node.data = next;
   textWritten.set(node, next);
+}
+
+// React renders "Go to {hospital} for a check-up." as several adjacent text nodes. They are translated
+// together as one sentence: the result goes in the first node and the rest are emptied.
+function doText(node: Text) {
+  if (skipped(node.parentElement)) return;
+  let head = node;
+  while (head.previousSibling?.nodeType === Node.TEXT_NODE) head = head.previousSibling as Text;
+  const run: Text[] = [];
+  for (let n: ChildNode | null = head; n && n.nodeType === Node.TEXT_NODE; n = n.nextSibling) run.push(n as Text);
+  const sources = run.map(sourceOf);
+  const whole = sources.join("");
+  if (lang === "en" || !norm(whole)) return run.forEach((n, i) => write(n, sources[i]));
+  const tr = lookup(whole);
+  if (tr === null) {
+    queue(norm(whole));
+    // Until the whole sentence is ready, show single known pieces; never stitch half-translated sentences
+    return run.forEach((n, i) => write(n, run.length === 1 ? translated(sources[i]) : sources[i]));
+  }
+  const lead = whole.match(/^\s*/)![0], trail = whole.match(/\s*$/)![0];
+  run.forEach((n, i) => write(n, i === 0 ? localizeDigits(lead + tr + trail) : ""));
 }
 
 function doAttrs(el: Element) {
@@ -141,9 +195,15 @@ function apply() {
 
 const dictListeners = new Set<() => void>();
 
-async function switchTo(lang: SiteLang) {
-  dict = await loadDictionary(lang);
-  digitZero = ZERO[lang];
+async function switchTo(next: SiteLang) {
+  const seq = ++switchSeq;
+  const loaded = await loadDictionary(next);
+  if (seq !== switchSeq) return; // a later choice won; an older dictionary must not overwrite it
+  dict = loaded;
+  lang = next;
+  pending.clear();
+  try { runtime = next === "en" ? {} : JSON.parse(localStorage.getItem(RT_KEY(next)) ?? "{}"); } catch { runtime = {}; }
+  digitZero = ZERO[next];
   buildPatterns();
   apply();
   dictListeners.forEach((fn) => fn());

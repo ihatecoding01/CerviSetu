@@ -144,7 +144,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-slate-200/90 text-slate-900 font-sans selection:bg-pink-100 selection:text-[#9D174D] antialiased relative">
+    <div className="min-h-screen bg-slate-200/90 text-slate-900 font-sans selection:bg-pink-100 selection:text-[#9D174D] antialiased relative overflow-x-clip">
       {/* Blurred Out Effect Backdrop (No CSS gradient background; authentic ambient depth) */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute -top-20 -left-20 size-[32rem] rounded-full bg-pink-300/20 blur-[72px]" />
@@ -211,7 +211,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </button>
             <button
               onClick={(onBookScreening ?? onOpenGateway ?? onLaunchWorkstation)}
-              className="h-9 px-3.5 sm:px-5 inline-flex items-center whitespace-nowrap text-xs font-heading font-bold text-white bg-[#0F172A] hover:bg-slate-800 rounded-md transition-all cursor-pointer shadow-xs active:scale-95"
+              className="h-9 px-3.5 sm:px-5 hidden sm:inline-flex items-center whitespace-nowrap text-xs font-heading font-bold text-white bg-[#0F172A] hover:bg-slate-800 rounded-md transition-all cursor-pointer shadow-xs active:scale-95"
             >
               Book Screening
             </button>
