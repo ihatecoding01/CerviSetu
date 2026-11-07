@@ -2,7 +2,7 @@
   <img src="./docs/screenshots/cervisetu-logo.png" alt="CerviSetu logo" width="112" />
   <h1>CerviSetu</h1>
   <h3>Cervical Cancer Referral Pathway for India's Health Posts, Hospitals and ASHA Workers</h3>
-  <p><strong>No woman lost between an abnormal screening and care.</strong></p>
+  <p><strong>No woman lost between an abnormal cervical cancer screening and care.</strong></p>
 
   <a href="#running-the-test-suite"><img alt="pytest" src="https://img.shields.io/badge/pytest-245%20tests-4C9A2A?style=for-the-badge&labelColor=555555&logo=pytest&logoColor=white"></a>
   <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/Python-3.14%2B-3776AB?style=for-the-badge&labelColor=555555&logo=python&logoColor=white"></a>
